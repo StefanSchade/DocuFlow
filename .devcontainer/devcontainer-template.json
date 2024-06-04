@@ -1,0 +1,25 @@
+{
+  "name": "Dev Container",
+  "dockerFile": "../docker/Dockerfile.dev",
+  "workspaceFolder": "/workspace",
+  "context": "..",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind",
+    "source=C:/Users/schades/.ssh,target=/root/.ssh,type=bind"
+  ],
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "extensions": [
+    "ms-python.python",
+    "ms-azuretools.vscode-docker",
+    "GitHub.vscode-pull-request-github",
+    "asciidoctor.asciidoctor-vscode",
+    "mhutchie.git-graph"
+  ],
+  "postCreateCommand": "chmod +x /workspace/scripts/setup_ssh_git.sh && /workspace/scripts/setup_ssh_git.sh && git config --global user.name 'Stefan Schade' && git config --global user.email 'dr_stefan_schade@yahoo.com' && python3 -m venv /workspace/venv && /workspace/venv/bin/pip install --no-cache-dir -r /workspace/requirements.txt",
+  "remoteUser": "root"
+}
+
+
+

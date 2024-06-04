@@ -1,0 +1,591 @@
+= Developer Guide
+
+== Abstract
+
+== Setup for development in a Container (VSCode)
+
+*Sources:* We heavly rely on an official https://code.visualstudio.com/docs/devcontainers/containers[blog article] and a https://code.visualstudio.com/docs/devcontainers/tutorial[tutorial], but make mor narrow choices for wich we apply the concepts laid out there.
+
+*Assumptions:*
+
+* *VSCode* as IDE
+* *local* Docker agent (Windows or MacOS: Docker Desktop)footnote:[As detailed in the article use of a remote Docker host or even a Kubernetes Cluster would be other viable options]
+
+=== Use of other IDEs
+
+The strategy we are about to follow is based on a standard (Dev Container), so this setup could likely be transfered to other IDEs as for instance IntelliJ. We focus on VSCode for the moment to keep things simple.
+
+For an IDE agnostic setup, we do not check in IDE config directly, however it will be checked in as part of the documentation to be used as a template.
+
+It is a good idea to avoid committing the actual configuration to Git because:
+
+  * The configuration contains user specific data that need to be replaced when using the template.
+
+  * The individual developer might have the need to further individualize the template:
+
+    ** User specific path names/
+
+    ** Additional extentions need to be configured.
+
+is also good practice because the individual configuration might vary (e.g. additional plugins, paths on the home system etc).
+
+=== Why develop in a Container
+
+The setup makes the project less accessible for inexperienced developers as they need to deal with Docker, but it comes with strong advantages:
+
+* *Lack of features under Windows* +
+The Python library https://pyenchant.github.io/pyenchant/install.html#on-windows[Enchanted] offers limited support for German under Windows.
+
+* *local setup closer to CI/CD and production* +
+For an effective dev-cycle, it is best practice for your local dev setup to represent the target environment closely. While esp. Java (Write once run anywhere) abstracts away the OS, the implementation of compiled languages like RUST might differ between OS systems. Having access to Linux / Unix is therefore a good plattform outside the niche of desktop development.
+
+* *Dependency Management* +
+As we depend on a range of dependencies (Tesseract_ORC, Python, a multitude of python libs sometimes requiring further dependencies like dictionaries) the following problems we face are alleviated having them checked into the project:
+
+** Setup and maintenance of dev or production systems.
+
+** code becomes clustered with parameters, heuristics and conditions that deal with varying local dependencies (e.g. path names) 
+
+=== Setup of the IDE
+
+==== Install and Configure Plugin from the Marketplace
+
+Load the plugin "Dev Containers" published by Microsoft and put the following config into `/.devcontainer/devcontainer.json`.
+
+Key settings in `devcontainer.json`:
+
+- **dockerFile**: Points to the Dev-Dockerfile in the `docker` directory.
+- **workspaceFolder**: Sets the working directory inside the container.
+- **mounts**: Binds the local directories to the container directories.
+- **settings**: Configures the terminal shell to use bash.
+- **extensions**: Installs the necessary VS Code extensions inside the container.
+- **postCreateCommand**: runs some commands after creation to configure git and load necessary python packages.
+- **remoteUser**: Sets the user as `root` to ensure necessary permissions.
+
+[source, json]
+-----
+{
+  "name": "Dev Container",
+  "dockerFile": "../docker/Dockerfile.dev",
+  "workspaceFolder": "/workspace",
+  "context": "..",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind",
+    "source=C:/Users/schades/.ssh,target=/root/.ssh,type=bind"
+  ],
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "extensions": [
+    "ms-python.python",
+    "ms-azuretools.vscode-docker",
+    "GitHub.vscode-pull-request-github",
+    "asciidoctor.asciidoctor-vscode",
+    "mhutchie.git-graph"
+  ],
+  "postCreateCommand": "chmod +x /workspace/scripts/setup_ssh_git.sh && /workspace/scripts/setup_ssh_git.sh && git config --global user.name 'Stefan Schade' && git config --global user.email 'dr_stefan_schade@yahoo.com' && python3 -m venv /workspace/venv && /workspace/venv/bin/pip install --no-cache-dir -r /workspace/requirements.txt",
+  "remoteUser": "root"
+}
+-----
+
+IMPORTANT: change `<YourUsername>`, `<your.email@example.com>`, and `<Your Name>`  into the to your Windows login, your email and the User that should appear on the Git commits!
+
+* The Post Create Command does the following
+
+    ** Setup Git
+
+    ** Install packages
+
+==== Setup Dockerfile Dependencies
+
+The fact, that our project requires a complex setup on the target environment was one motivation, to move to a container. Conclusively the Dockerfiles depend on secondary files
+
+===== Python requirements
+
+`requirements.txt` is a textfile that contains the python packages that need to be installed with 'pip'
+
+[source]
+-----
+pyenchant
+tqdm
+hunspell
+-----
+
+===== Tesseract config
+
+`tessdata.txt` is a textfile that contains additiona training files optimised for the relevant languages
+
+[source]
+-----
+https://github.com/tesseract-ocr/tessdata/raw/main/eng.traineddata
+https://github.com/tesseract-ocr/tessdata/raw/main/spa.traineddata
+-----
+
+==== Setup Dockerfile
+
+The `Dockerfile` represents the development environment. It is common practice to use a different Docker file to generate the production setup because the two environments have drastically different requirements: While development environments need various tools and libraries for editing, debugging, and testing code, production environments need a lean and optimized setup for performance and security.
+
+===== Dockerfile for development (`Dockerfile.dev`)
+
+[source, dockerfile]
+----
+# Use an official Ubuntu as a parent image
+FROM ubuntu:latest
+
+# Install required tools
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    wget \
+    git \
+    vim \
+    python3 \
+    python3-pip \
+    python3-venv \
+    tesseract-ocr \
+    asciidoctor \
+    bash \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory for the project
+WORKDIR /workspace
+
+# Copy the requirements file
+COPY ../requirements.txt /workspace
+
+# Copy the tessdata.txt file
+COPY ../tessdata.txt /workspace
+
+# Copy the Zscaler certificate if it exists and update CA certificates
+RUN if [ -f ../zscaler.crt ]; then \
+    cp ../zscaler.crt /usr/local/share/ca-certificates/zscaler.crt && \
+    update-ca-certificates; \
+    fi
+
+# Copy the source code
+COPY ../src /workspace/src
+
+# Download Tesseract language data, removing any carriage return characters
+RUN cat /workspace/tessdata.txt | tr -d '\r' | xargs -n 1 wget --no-check-certificate -P /usr/share/tesseract-ocr/4.00/tessdata/
+
+
+# Create and activate a virtual environment
+RUN python3 -m venv /workspace/venv
+
+# Install any Python dependencies in the virtual environment
+RUN /workspace/venv/bin/pip install --no-cache-dir -r /workspace/requirements.txt
+
+# Set environment variables for the virtual environment
+ENV PATH="/workspace/venv/bin:$PATH"
+
+# Run bash by default
+CMD ["bash"]
+----
+
+===== Dockerfile for production (`Dockerfile.prod`)
+
+[source, dockerfile]
+----
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the source code
+COPY ./src /app/src
+
+# Copy the requirements file
+COPY requirements.txt /app
+
+# Copy the tessdata list
+COPY tessdata.txt /app
+
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# Install Tesseract OCR and necessary language data
+RUN apt-get update && apt-get install -y tesseract-ocr wget \
+    && cat /app/tessdata.txt | tr -d '\r' | xargs -n 1 wget -P /usr/share/tesseract-ocr/4.00/tessdata/ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set environment variables for the virtual environment
+ENV PATH="/app/venv/bin:$PATH"
+
+# Set the entrypoint to ensure additional arguments are passed to the Python script
+ENTRYPOINT ["python", "/app/src/main_script.py"]
+----
+
+====== The base image is a lightweight version of Python
+
+[source]
+----
+FROM python:3.9-slim
+----
+
+====== Install required tools
+
+`wget` is required to download language data
+
+====== Installation of the Python dependencies
+
+[source]
+----
+RUN pip install --no-cache-dir -r /app/requirements.txt
+----
+
+====== Installation of the Tessdata dependencies
+
+* Install `wget`
+
+[source]
+----
+RUN apt-get update && apt-get install -y tesseract-ocr \
+    && apt-get install -y wget \
+----
+
+* Download Language Data Files
+
+These lines download the English (eng.traineddata) and Spanish (spa.traineddata) language data files from the Tesseract GitHub repository and place them in the appropriate directory (`/usr/share/tesseract-ocr/4.00/tessdata/`)
+
+[source]
+----
+&& wget -P /usr/share/tesseract-ocr/4.00/tessdata/ https://github.com/tesseract-ocr/tessdata/raw/main/eng.traineddata \
+&& wget -P /usr/share/tesseract-ocr/4.00/tessdata/ https://github.com/tesseract-ocr/tessdata/raw/main/spa.traineddata \
+...
+----
+
+* Streamline the download
+
+Use `xargs` to read each URL from `tessdata.txt` and download the corresponding file(s). This makes it easy to manage and update the list of languages without modifying the Dockerfile directly.
+
+[source]
+----
+xargs -n 1 wget -P /usr/share/tesseract-ocr/4.00/tessdata/ < /app/tessdata.txt \
+----
+
+* This removes the package lists to reduce the image size.
+
+[source]
+----
+rm -rf /var/lib/apt/lists/*
+----
+
+====== Handle Carriage Return Characters when downloading languages
+
+The `cat` command is used to read `tessdata.txt`, and `tr -d '\r'` is used to remove any carriage return characters before passing the URLs to `xargs` and `wget`.
+
+====== Set entrypoint
+
+The `ENTRYPOINT` directive ensures that any additional arguments passed to the Docker container are forwarded to the Python script.
+
+==== Setup ssh for Github
+
+We assume the following
+
+* The `.ssh` directory contains the private / public key pair to be used for communication with gitfootnote:[if not `ssh-keygen -t rsa -b 4096 -C "<your email>"` will generate it, you have to configure it in your github settings] *The name must end on rsa*
+
+* The `.ssh` directory contains a config file that associates this key with github
+
+[source]
+----
+# GitHub configuration
+Host github.com
+  HostName github.com
+  User <my_email>
+  IdentityFile ~/.ssh/<my_key_ending_on_rsa>
+----
+
+==== Start the Container
+
+Make sure that the Docker Daemon is running (e.g. by starting Docker Desktop)
+
+In the Dialog `Ctrl+Shift+P` Choose the option "Dev Container: Open Folder in Container" or (in case you retry after a configuration change) "Dev Container: Rebuild Container"
+
+You can view the setup steps in the terminal which gives you an indication for the problems if anything fails.
+
+If everything is running, you can test the SSH connection to GitHub:
+[source, shell]
+----
+ssh -T git@github.com
+----
+
+==== Managing the connection between the IDE and the development container
+
+The connection between the  IDE and the development container is managed by an https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers[extention]
+
+* Start Docker Daemon (usually by starting Docker Desktop)
+* Make sure the service is running:`docker info` (optional)
+* Make sure there is no container lingering from the last session:`docker ps -a` (optional)
+* Stop and remove a lingering container: `docker stop <container_id>` and `docker rm <container_id>`
+* Open VS Code will start in local mode
+* Switch to Container mode: `Str + Shift + P` and type "Dev Containers: Open Folder in Container"
+* Switch back to Local mode `Str + Shift + P` and type "Dev Containers: Open Folder Locally"
+* Perform a container restart, e.g. after a config change `Str + Shift + P` and type "Dev Containers: Reopen Folder Locally"
+* Trouble-Shooting: If you get tangled. Stop VS Code and make sure there is no process running (Code), stop all containers and start afresh.
+
+==== Adding Extentions to VSCode
+
+If you install a new extension in VS Code while using a Dev Container, it will not automatically persist across container restarts or rebuilds unless specified in the devcontainer.json configuration. To ensure that the extension is always available in your Dev Container, you need to add it to the extensions list in your devcontainer.json. This can be done directly from the Marketplace view via the context menu.
+
+You might also have to restart VS Code to complete the process.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=== Project Structure from inside and outside the development Container
+
+
+
+* *data* +
+store sample input files for development.
+
+* *Documentation (`/docs`)* +
+project documentation in asciidoc format.
+
+* *scripts (`/scripts/`)* +
+scripts for development (windows command shell and unix bash).
+
+* *Soruce Code (`/src/`)* +
+project source code.
+
+* *Target directory (`/target/`)* +
+build artifacts (incl. generated PDFs).
+
+* *Docker Setup (`/docker/`)* +
+dockerfiles for dev and production containers.
+
+* *VC Code Setup for Container development (/.devcontainer/)* +
+configuration of the develompent container for VS-Code.
+
+* *VC Code Setup for Container development (/.github/)* +
+configuration github pipelines.
+
+These folders are inaccessible for the container - you have to edit them locally
+
+* *project root (/)*
+contains GITIGNORE and README.adoc
+
+* "Readme resources (`/README/`)"
+contains resources associated with the README file (e.g. images)
+
+If you want to make a new folder accessible to the container, it has to be lsited among the mount points in `/.devcontainer/devcontainer.json`. as long as the container side of the mout point is below `/workspace/` a change to the `Dockerfile` is not necessary.
+
+====  Using the scripts during development
+
+For typical development activities we developed shell-scripts, see `/scripts/`
+
+Building and starting the development container is normally done by the IDE - you need these scripts, if you want to perform something directly on the comand line, not within the IDE.
+
+you will need the bash (*.sh) or the windows shell (*.cmd) version of the script, depending on wether you are within the container or outside when you perform the action. Take care not to use windows powershell, since the scripts are optimised for the normal comand shell.
+
+==== Using Git and Dev Containers
+
+===== Manage Git from Local Machine
+
+====== Pros and Cons
+
+* Pro
+** simpler
+** avoids the need to duplicate SSH key management in the container
+
+====== Setup
+
+. Generate or Use Existing SSH Keys: +
+
+  If you don’t already have SSH keys, generate them on your local machine:
+[source, shell]
+----------------
+Copy code
+ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+----------------
+
+. Add the SSH key to your GitHub account +
+
+  Copying the public key content (~/.ssh/id_rsa.pub)
+
+. Configure VS Code to Use Local Git
+
+  When using VS Code on your local machine, it will use the SSH keys from your local .ssh directory.
+
+===== Manage Git from Within the Container
+
+====== Pros and Cons
+
+* Pro
+** more comfort and consistency
+* Con
+** SSH key management and git configuration in the container necessary
+
+====== Implications
+
+If we want to manage git from within the container it does not make sense anymore to rely on binding seleced folders in our project to the container because we need access to the project as a whole and `.gitignore` in particular, which resides in the (otherwise inaccessible) root dir. Instead we should mount the whole project directory in one go.
+
+We have to store the ssh keys and they have to be in a location separate from the project.
+
+
+====== Setup
+
+*update Dockerfile*
+
+[source, dockerfile]
+----
+# Use an official Ubuntu as a parent image
+FROM ubuntu:latest
+
+# Install required tools
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    wget \
+    git \
+    vim \
+    python3 \
+    python3-pip \
+    python3-venv \
+    tesseract-ocr \
+    asciidoctor \
+    bash
+
+# Set the working directory for the project
+WORKDIR /workspace
+
+# Create and activate a virtual environment
+RUN python3 -m venv /workspace/venv
+
+# Set environment variables for the virtual environment
+ENV PATH="/workspace/venv/bin:$PATH"
+
+# Create a separate directory for SSH keys
+RUN mkdir /root/.ssh
+
+# Run bash by default
+CMD ["bash"]
+----
+
+*Update `devcontainer.json` to mount the ssh and the project as a whole and mount the ssh directory thus making the keys accessible in the container.*
+
+[source, json]
+----
+ {
+  "name": "Dev Container",
+  "dockerFile": "../docker/Dockerfile.dev",
+  "workspaceFolder": "/workspace",
+  "context": "..",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind",
+    "source=C:/Users/schades/.ssh,target=/root/.ssh,type=bind"
+  ],
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "extensions": [
+    "ms-python.python",
+    "ms-azuretools.vscode-docker",
+    "GitHub.vscode-pull-request-github",
+    "asciidoctor.asciidoctor-vscode"
+  ],
+  "postCreateCommand": "chmod +x /workspace/scripts/setup_ssh_git.sh && /workspace/scripts/setup_ssh_git.sh && git config --global user.name 'Stefan Schade' && git config --global user.email 'dr_stefan_schade@yahoo.com' && python3 -m venv /workspace/venv && /workspace/venv/bin/pip install --no-cache-dir -r /workspace/requirements.txt",
+  "remoteUser": "root"
+}
+----
+
+*Configure ssh in the container*
+
+abc
+
+
+Ensure the SSH configuration inside the container recognizes your keys:
+
+[source, shell]
+----
+eval "$(ssh-agent -s)"
+ssh-add /root/.ssh/id_rsa
+----
+
+Test the SSH connection to GitHub:
+[source, shell]
+----
+ssh -T git@github.com
+----
+
+Using Git and SSH in VS Code
+VS Code SSH Configuration:
+
+If you are using VS Code locally with the Remote - Containers extension, it will use the SSH keys from your local .ssh directory.
+If you are working inside a container, ensure the container has access to the SSH keys as described above.
+VS Code Git Integration:
+
+You can use the Source Control view in VS Code to perform Git operations.
+Ensure the SSH key used for authentication is accessible (either from the local machine or within the container, depending on your setup).
+
+
+
+
+
+{
+  "name": "Dev Container",
+  "dockerFile": "../docker/Dockerfile",
+  "workspaceFolder": "/workspace",
+  "context": "..",
+  "mounts": [
+    "source=${localWorkspaceFolder}/src,target=/workspace/src,type=bind",
+    "source=${localWorkspaceFolder}/data,target=/workspace/data,type=bind",
+    "source=${localWorkspaceFolder}/docs,target=/workspace/docs,type=bind",
+    "source=${localWorkspaceFolder}/scripts,target=/workspace/scripts,type=bind",
+    "source=${localWorkspaceFolder}/docker,target=/workspace/docker,type=bind",
+    "source=${localWorkspaceFolder}/target,target=/workspace/target,type=bind",
+    "source=${localWorkspaceFolder}/requirements.txt,target=/workspace/requirements.txt,type=bind",
+    "source=${localWorkspaceFolder}/.github,target=/workspace/.github,type=bind",
+    "source=${localWorkspaceFolder}/.github,target=/workspace/.git,type=bind",
+    "source=${localWorkspaceFolder}/.devcontainer,target=/workspace/.devcontainer,type=bind"
+  ],
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "extensions": [
+    "ms-python.python",
+    "ms-azuretools.vscode-docker",
+    "asciidoctor.asciidoctor-vscode",
+    "mhutchie.git-graph"
+  ],
+  "postCreateCommand": "/workspace/venv/bin/pip install --no-cache-dir -r /workspace/requirements.txt",
+  "remoteUser": "root"
+}
+
+
+
+RUN pip3 install --no-cache-dir -r requirements.txt || true
+
+ssh -T git@github.com
