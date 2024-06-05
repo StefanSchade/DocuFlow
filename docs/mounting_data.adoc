@@ -1,0 +1,174 @@
+= Containerized Development with Dev Containers
+:author: ChatGPT
+:date: 2024-06-04
+
+== Introduction
+
+This document provides an overview of how to pass data to your application while developing in a containerized environment using dev containers. It outlines strategies for using volume mounts and configuring your development environment to closely mimic production setups.
+
+== Strategies for Passing Data
+
+=== Using Volume Mounts
+
+Volume mounts allow you to specify directories on the host machine that will be accessible within the container. This is ideal for development environments as it provides seamless data sharing between the host and the container.
+
+Example `devcontainer.json` configuration:
+
+[source,json]
+----
+{
+  "name": "My Dev Container",
+  "image": "my-app-image",
+  "mounts": [
+    "source=/path/on/host,target=/path/in/container,type=bind"
+  ],
+  "runArgs": [
+    "--volume", "/path/on/host:/path/in/container"
+  ]
+}
+----
+
+Example `docker-compose.yml` configuration:
+
+[source,yaml]
+----
+version: '3'
+services:
+  app:
+    image: my-app-image
+    volumes:
+      - /path/on/host:/path/in/container
+----
+
+Running the container with a volume mount:
+
+[source,bash]
+----
+docker run -v /path/on/host:/path/in/container my-app-image
+----
+
+=== Copying Data to Container
+
+If you prefer to copy data to the container instead of mounting it, you can use Docker commands or the `postCreateCommand` in `devcontainer.json`.
+
+Using Docker command:
+
+[source,bash]
+----
+docker cp /path/on/host container_id:/path/in/container
+----
+
+Using `postCreateCommand`:
+
+[source,json]
+----
+{
+  "name": "My Dev Container",
+  "image": "my-app-image",
+  "postCreateCommand": "cp -r /path/on/host /path/in/container"
+}
+----
+
+=== Using a Fixed Folder Approach
+
+For consistent development, you can set up a specific directory on your host machine and mount it into your container.
+
+Example setup with `devcontainer.json`:
+
+[source,json]
+----
+{
+  "name": "OCR Dev Container",
+  "image": "ocr-app-image",
+  "mounts": [
+    "source=/Users/yourusername/data/dev-container-input,target=/app/data,type=bind"
+  ],
+  "runArgs": [
+    "--volume", "/Users/yourusername/data/dev-container-input:/app/data"
+  ]
+}
+----
+
+Example setup with `docker-compose.yml`:
+
+[source,yaml]
+----
+version: '3'
+services:
+  ocr-app:
+    image: ocr-app-image
+    volumes:
+      - /Users/yourusername/data/dev-container-input:/app/data
+----
+
+Running the container directly with Docker:
+
+[source,bash]
+----
+docker run -v /Users/yourusername/data/dev-container-input:/app/data ocr-app-image
+----
+
+== Practical Example
+
+1. **Create the Directory:**
+   
+[source,bash]
+----
+mkdir /path/to/repo_data
+----
+
+2. **Configure `devcontainer.json`:**
+
+[source,json]
+----
+{
+  "name": "My Dev Container",
+  "image": "my-app-image",
+  "mounts": [
+    "source=/path/to/repo_data,target=/app/data,type=bind"
+  ],
+  "runArgs": [
+    "--volume", "/path/to/repo_data:/app/data"
+  ]
+}
+----
+
+3. **Modify Your Application to Use the Mount Point:**
+
+Example in Python:
+
+[source,python]
+----
+import os
+
+data_directory = "/app/data"
+for filename in os.listdir(data_directory):
+    if filename.endswith(".jpg"):
+        file_path = os.path.join(data_directory, filename)
+        # Process the file
+----
+
+== Example Directory Structure
+
+------
+/path/to/
+├── project_folder/
+│ ├── devcontainer.json
+│ ├── app.py
+│ └── other_project_files
+└── repo_data/
+├── image1.jpg
+├── image2.jpg
+└── more_images
+------
+
+
+== Summary
+
+By using volume mounts, you can ensure that your development environment closely mimics your production setup. This approach allows you to:
+
+- Access host machine data directly from within the container.
+- Simplify the process of passing data to your application during development.
+- Ensure consistency between development and production environments.
+
+This strategy will help you efficiently develop and test your OCR processing application, ensuring that it works correctly when deployed in production.

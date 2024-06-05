@@ -1,2 +1,6 @@
 pyenchant
 tqdm
+fuzzywuzzy
+pillow
+pytesseract
+prompt_toolkit

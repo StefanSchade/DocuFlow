@@ -5,6 +5,7 @@
   "context": "..",
   "mounts": [
     "source=${localWorkspaceFolder},target=/workspace,type=bind",
+    "source=${localWorkspaceFolder}/../ocr_dev_data,target=/workspace/data,type=bind",
     "source=C:/Users/schades/.ssh,target=/root/.ssh,type=bind"
   ],
   "settings": {
@@ -15,8 +16,10 @@
     "ms-azuretools.vscode-docker",
     "GitHub.vscode-pull-request-github",
     "asciidoctor.asciidoctor-vscode",
-    "mhutchie.git-graph"
+    "mhutchie.git-graph",
+    "njqdev.vscode-python-typehint",
+    "VisualStudioExptTeam.vscodeintellicode"
   ],
-  "postCreateCommand": "ls -la /workspace/scripts && chmod +x /workspace/scripts/setup_ssh_git.sh && bash /workspace/scripts/setup_ssh_git.sh && git config --global user.name 'Stefan Schade' && git config --global user.email 'dr_stefan_schade@yahoo.com' && python3 -m venv /workspace/venv && /workspace/venv/bin/pip install --no-cache-dir -r /workspace/requirements.txt",
+  "postCreateCommand": "ls -la /workspace/scripts && chmod +x /workspace/scripts/setup_ssh_git.sh && bash /workspace/scripts/setup_ssh_git.sh && git config --global user.name 'Stefan Schade' && git config --global user.email 'dr_stefan_schade@yahoo.com'",
   "remoteUser": "root"
 }
