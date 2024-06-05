@@ -20,6 +20,6 @@
     "njqdev.vscode-python-typehint",
     "VisualStudioExptTeam.vscodeintellicode"
   ],
-  "postCreateCommand": "ls -la /workspace/scripts && chmod +x /workspace/scripts/setup_ssh_git.sh && bash /workspace/scripts/setup_ssh_git.sh && git config --global user.name 'Stefan Schade' && git config --global user.email 'dr_stefan_schade@yahoo.com'",
+  "postCreateCommand": "ls -la /workspace/scripts && chmod +x /workspace/scripts/setup_ssh_git.sh && bash /workspace/scripts/setup_ssh_git.sh && git config --global user.name 'Stefan Schade' && git config --global user.email 'dr_stefan_schade@yahoo.com' && /workspace/scripts/setup_docker_proxy.sh && /workspace/scripts/install_python_dependencies.sh",
   "remoteUser": "root"
 }

@@ -331,181 +331,104 @@ If you install a new extension in VS Code while using a Dev Container, it will n
 
 You might also have to restart VS Code to complete the process.
 
+==== Setup Dev Container for Zscaler environment
 
+To ensure that your development environment functions correctly behind a Zscaler proxy, follow these steps to configure your development container:
 
+1. **Proxy and Certificate Configuration**:
+   We need to configure the proxy settings and install the Zscaler certificate to allow secure HTTPS access and dependency installation. This setup is automated using a script that is executed within the container.
 
+2. **Scripts for Configuration**:
+   Two main scripts are used:
+   
+   - `setup_docker_proxy.sh`: Configures proxy settings and installs the Zscaler certificate.
+   - `install_python_dependencies.sh`: Installs Python dependencies listed in `requirements.txt`.
 
+3. **Adding the Scripts**:
+   Place the scripts in the `/workspace/scripts` directory of your project.
 
+   `setup_docker_proxy.sh`:
 
+[source, bash]
+-----
+   #!/bin/bash
 
+   # Ensure we are in the correct working directory
+   cd /workspace
 
+   # Example proxy settings (replace with actual proxy information)
+   HTTP_PROXY="http://your.proxy.address:8080"
+   HTTPS_PROXY="http://your.proxy.address:8080"
+   NO_PROXY="localhost,127.0.0.1"
 
+   # Export proxy settings for the Docker build process
+   export http_proxy=$HTTP_PROXY
+   export https_proxy=$HTTPS_PROXY
+   export no_proxy=$NO_PROXY
 
+   # Path to the Zscaler certificate in the workspace directory
+   CERT_PATH="/workspace/zscaler.crt"
 
+   # Copy the Zscaler certificate to the appropriate directory
+   cp $CERT_PATH /usr/local/share/ca-certificates/zscaler.crt
 
+   # Update CA certificates
+   update-ca-certificates
 
+   # Verify the certificate installation
+   ls -l /etc/ssl/certs/ca-certificates.crt
 
+   # Configure Git to use the updated CA certificates
+   git config --global http.sslCAInfo /etc/ssl/certs/ca-certificates.crt
 
+   # Verify Git configuration
+   git config --global --get http.sslCAInfo
 
+   echo "Proxy and certificate setup completed successfully."
+-----
 
+install_python_dependencies.sh:
 
+[source, bash]
+-----
+#!/bin/bash
 
+# Ensure we are in the correct working directory
+cd /workspace
 
+# Activate the virtual environment
+source /workspace/venv/bin/activate
 
+# Install Python dependencies from requirements.txt
+pip install --no-cache-dir -r /workspace/requirements.txt
 
+# List installed packages to verify installation
+pip list
+=====
 
+Configure the Dev Container:
+Update the .devcontainer/devcontainer.json file to include the post-create commands that execute these scripts automatically after the container is created.
 
+Example .devcontainer/devcontainer.json:
 
+json
+-----
 
+Configure the Dev Container:
+Update the .devcontainer/devcontainer.json file to include the post-create commands that execute these scripts automatically after the container is created.
 
-
-
-
-
-
-
-=== Project Structure from inside and outside the development Container
-
-
-
-* *data* +
-store sample input files for development.
-
-* *Documentation (`/docs`)* +
-project documentation in asciidoc format.
-
-* *scripts (`/scripts/`)* +
-scripts for development (windows command shell and unix bash).
-
-* *Soruce Code (`/src/`)* +
-project source code.
-
-* *Target directory (`/target/`)* +
-build artifacts (incl. generated PDFs).
-
-* *Docker Setup (`/docker/`)* +
-dockerfiles for dev and production containers.
-
-* *VC Code Setup for Container development (/.devcontainer/)* +
-configuration of the develompent container for VS-Code.
-
-* *VC Code Setup for Container development (/.github/)* +
-configuration github pipelines.
-
-These folders are inaccessible for the container - you have to edit them locally
-
-* *project root (/)*
-contains GITIGNORE and README.adoc
-
-* "Readme resources (`/README/`)"
-contains resources associated with the README file (e.g. images)
-
-If you want to make a new folder accessible to the container, it has to be lsited among the mount points in `/.devcontainer/devcontainer.json`. as long as the container side of the mout point is below `/workspace/` a change to the `Dockerfile` is not necessary.
-
-====  Using the scripts during development
-
-For typical development activities we developed shell-scripts, see `/scripts/`
-
-Building and starting the development container is normally done by the IDE - you need these scripts, if you want to perform something directly on the comand line, not within the IDE.
-
-you will need the bash (*.sh) or the windows shell (*.cmd) version of the script, depending on wether you are within the container or outside when you perform the action. Take care not to use windows powershell, since the scripts are optimised for the normal comand shell.
-
-==== Using Git and Dev Containers
-
-===== Manage Git from Local Machine
-
-====== Pros and Cons
-
-* Pro
-** simpler
-** avoids the need to duplicate SSH key management in the container
-
-====== Setup
-
-. Generate or Use Existing SSH Keys: +
-
-  If you don’t already have SSH keys, generate them on your local machine:
-[source, shell]
-----------------
-Copy code
-ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
-----------------
-
-. Add the SSH key to your GitHub account +
-
-  Copying the public key content (~/.ssh/id_rsa.pub)
-
-. Configure VS Code to Use Local Git
-
-  When using VS Code on your local machine, it will use the SSH keys from your local .ssh directory.
-
-===== Manage Git from Within the Container
-
-====== Pros and Cons
-
-* Pro
-** more comfort and consistency
-* Con
-** SSH key management and git configuration in the container necessary
-
-====== Implications
-
-If we want to manage git from within the container it does not make sense anymore to rely on binding seleced folders in our project to the container because we need access to the project as a whole and `.gitignore` in particular, which resides in the (otherwise inaccessible) root dir. Instead we should mount the whole project directory in one go.
-
-We have to store the ssh keys and they have to be in a location separate from the project.
-
-
-====== Setup
-
-*update Dockerfile*
-
-[source, dockerfile]
-----
-# Use an official Ubuntu as a parent image
-FROM ubuntu:latest
-
-# Install required tools
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    wget \
-    git \
-    vim \
-    python3 \
-    python3-pip \
-    python3-venv \
-    tesseract-ocr \
-    asciidoctor \
-    bash
-
-# Set the working directory for the project
-WORKDIR /workspace
-
-# Create and activate a virtual environment
-RUN python3 -m venv /workspace/venv
-
-# Set environment variables for the virtual environment
-ENV PATH="/workspace/venv/bin:$PATH"
-
-# Create a separate directory for SSH keys
-RUN mkdir /root/.ssh
-
-# Run bash by default
-CMD ["bash"]
-----
-
-*Update `devcontainer.json` to mount the ssh and the project as a whole and mount the ssh directory thus making the keys accessible in the container.*
+Example .devcontainer/devcontainer.json:
 
 [source, json]
-----
- {
+-----
+{
   "name": "Dev Container",
   "dockerFile": "../docker/Dockerfile.dev",
   "workspaceFolder": "/workspace",
   "context": "..",
   "mounts": [
     "source=${localWorkspaceFolder},target=/workspace,type=bind",
-    "source=C:/Users/schades/.ssh,target=/root/.ssh,type=bind"
+    "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind"
   ],
   "settings": {
     "terminal.integrated.shell.linux": "/bin/bash"
@@ -514,78 +437,48 @@ CMD ["bash"]
     "ms-python.python",
     "ms-azuretools.vscode-docker",
     "GitHub.vscode-pull-request-github",
-    "asciidoctor.asciidoctor-vscode"
-  ],
-  "postCreateCommand": "chmod +x /workspace/scripts/setup_ssh_git.sh && /workspace/scripts/setup_ssh_git.sh && git config --global user.name 'Stefan Schade' && git config --global user.email 'dr_stefan_schade@yahoo.com' && python3 -m venv /workspace/venv && /workspace/venv/bin/pip install --no-cache-dir -r /workspace/requirements.txt",
-  "remoteUser": "root"
-}
-----
-
-*Configure ssh in the container*
-
-abc
-
-
-Ensure the SSH configuration inside the container recognizes your keys:
-
-[source, shell]
-----
-eval "$(ssh-agent -s)"
-ssh-add /root/.ssh/id_rsa
-----
-
-Test the SSH connection to GitHub:
-[source, shell]
-----
-ssh -T git@github.com
-----
-
-Using Git and SSH in VS Code
-VS Code SSH Configuration:
-
-If you are using VS Code locally with the Remote - Containers extension, it will use the SSH keys from your local .ssh directory.
-If you are working inside a container, ensure the container has access to the SSH keys as described above.
-VS Code Git Integration:
-
-You can use the Source Control view in VS Code to perform Git operations.
-Ensure the SSH key used for authentication is accessible (either from the local machine or within the container, depending on your setup).
-
-
-
-
-
-{
-  "name": "Dev Container",
-  "dockerFile": "../docker/Dockerfile",
-  "workspaceFolder": "/workspace",
-  "context": "..",
-  "mounts": [
-    "source=${localWorkspaceFolder}/src,target=/workspace/src,type=bind",
-    "source=${localWorkspaceFolder}/data,target=/workspace/data,type=bind",
-    "source=${localWorkspaceFolder}/docs,target=/workspace/docs,type=bind",
-    "source=${localWorkspaceFolder}/scripts,target=/workspace/scripts,type=bind",
-    "source=${localWorkspaceFolder}/docker,target=/workspace/docker,type=bind",
-    "source=${localWorkspaceFolder}/target,target=/workspace/target,type=bind",
-    "source=${localWorkspaceFolder}/requirements.txt,target=/workspace/requirements.txt,type=bind",
-    "source=${localWorkspaceFolder}/.github,target=/workspace/.github,type=bind",
-    "source=${localWorkspaceFolder}/.github,target=/workspace/.git,type=bind",
-    "source=${localWorkspaceFolder}/.devcontainer,target=/workspace/.devcontainer,type=bind"
-  ],
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash"
-  },
-  "extensions": [
-    "ms-python.python",
-    "ms-azuretools.vscode-docker",
     "asciidoctor.asciidoctor-vscode",
-    "mhutchie.git-graph"
+    "mhutchie.git-graph",
+    "njqdev.vscode-python-typehint",
+    "VisualStudioExptTeam.vscodeintellicode"
   ],
-  "postCreateCommand": "/workspace/venv/bin/pip install --no-cache-dir -r /workspace/requirements.txt",
+  "postCreateCommand": "ls -la /workspace/scripts && chmod +x /workspace/scripts/setup_ssh_git.sh && bash /workspace/scripts/setup_ssh_git.sh && git config --global user.name 'Stefan Schade' && git config --global user.email 'dr_stefan_schade@yahoo.com' && /workspace/scripts/setup_docker_proxy.sh && /workspace/scripts/install_python_dependencies.sh",
   "remoteUser": "root"
 }
+-----
+
+Rebuild the Container:
+Use the VS Code command palette (Ctrl+Shift+P) to select Remote-Containers: Rebuild Container to apply all the changes and ensure everything is set up correctly.
+
+By following these steps, your development environment will be configured to work seamlessly with the Zscaler proxy, ensuring secure access to necessary resources and successful dependency installations.
+
+This section explains the steps we took to set up the development container for a Zscaler environment, ensuring the explanation is clear and fits smoothly into your AsciiDoc document.
 
 
 
-RUN pip3 install --no-cache-dir -r requirements.txt || true
 
-ssh -T git@github.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
