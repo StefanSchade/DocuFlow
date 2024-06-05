@@ -2,8 +2,12 @@
 FROM ubuntu:latest
 
 # Set proxy environment variables
-# ENV http_proxy=https://198.50.248.220:3130/
-# ENV https_proxy=https://198.50.248.220:3130/
+ARG http_proxy
+ARG https_proxy
+ARG no_proxy
+ENV http_proxy=${http_proxy}
+ENV https_proxy=${https_proxy}
+ENV no_proxy=${no_proxy}
 
 # Install required tools
 RUN apt-get update && apt-get install -y \
@@ -39,27 +43,12 @@ COPY ../src /workspace/src
 # Copy the scripts
 COPY ../scripts /workspace/scripts
 
-# Copy the Zscaler certificate if it exists and update CA certificates
-RUN if [ -f ../zscaler.crt ]; then \
-    cp ../zscaler.crt /usr/local/share/ca-certificates/zscaler.crt && \
-    update-ca-certificates; \
-    fi
-
 # Download Tesseract language data, removing any carriage return characters
 RUN cat /workspace/tessdata.txt | tr -d '\r' | xargs -n 1 wget --no-check-certificate -P /usr/share/tesseract-ocr/4.00/tessdata/
 
 # Create and activate a virtual environment and install dependencies
 RUN python3 -m venv /workspace/venv && \
     /bin/bash -c "source /workspace/venv/bin/activate && pip install --no-cache-dir -r /workspace/requirements.txt && pip list"
-
-# Verify CA certificates installation
-RUN ls -l /etc/ssl/certs/ca-certificates.crt
-
-# Configure Git to use CA certificates
-RUN git config --global http.sslCAInfo /etc/ssl/certs/ca-certificates.crt
-
-# Verify Git configuration
-RUN git config --global --get http.sslCAInfo
 
 # Set environment variables for the virtual environment
 ENV PATH="/workspace/venv/bin:$PATH"
