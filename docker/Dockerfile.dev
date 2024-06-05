@@ -47,8 +47,8 @@ RUN cat /workspace/tessdata.txt | tr -d '\r' | xargs -n 1 wget --no-check-certif
 # Create and activate a virtual environment
 RUN python3 -m venv /workspace/venv
 
-# Install any Python dependencies in the virtual environment
-RUN /workspace/venv/bin/pip install --no-cache-dir -r /workspace/requirements.txt
+# Activate the virtual environment and install any Python dependencies
+RUN /bin/bash -c "source /workspace/venv/bin/activate && pip install --no-cache-dir -r /workspace/requirements.txt"
 
 # Verify CA certificates installation
 RUN ls -l /etc/ssl/certs/ca-certificates.crt
