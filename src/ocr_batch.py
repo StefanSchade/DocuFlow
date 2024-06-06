@@ -13,6 +13,7 @@ DEFAULT_PSM = 6
 DEFAULT_THRESHOLD = 0
 DEFAULT_SMALL_ROTATION_STEP = 1  # degrees
 DEFAULT_MAX_ROTATION_STEPS = 10  # steps
+HIGH_CONFIDENCE_THRESHOLD = 60  # Set an appropriate threshold for high confidence
 
 def load_valid_languages(tessdata_dir):
     try:
@@ -26,8 +27,8 @@ def validate_language(language, valid_languages):
         raise ValueError(f"Invalid language '{language}'. Valid options are: {', '.join(valid_languages)}")
 
 def preprocess_image(image, args):
-    # Convert to grayscale
-    if args.grayscale:
+    # Convert to grayscale if necessary
+    if args.grayscale or args.threshold > 0:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     
     # Noise removal
@@ -90,64 +91,97 @@ def tesseract_ocr(image, language, tessdata_dir_config, psm):
     logging.debug(f"Processed text with average confidence: {average_confidence}")
     return text, average_confidence
 
+def rotate_image(image, angle):
+    """Rotate the image by a specific angle."""
+    (h, w) = image.shape[:2]
+    center = (w // 2, h // 2)
+    M = cv2.getRotationMatrix2D(center, angle, 1.0)
+    rotated = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+    return rotated
+
 def check_orientations(image, language, tessdata_dir_config, psm, check_orientation):
     orientations = [0, 90, 180, 270]
     best_text = ''
     highest_confidence = -1
-    best_confidence_found = -1
     final_angle = 0
+
+    logging.debug("Starting coarse orientation check")
 
     # Coarse orientation check
     for angle in orientations:
-        rotated_image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE if angle == 90 else 
-                                            cv2.ROTATE_180 if angle == 180 else 
-                                            cv2.ROTATE_90_COUNTERCLOCKWISE if angle == 270 else 0)
+        rotated_image = rotate_image(image, angle)
         text, confidence = tesseract_ocr(rotated_image, language, tessdata_dir_config, psm)
+        logging.debug(f"Coarse check at {angle} degrees: Confidence={confidence}")
+
         if confidence > highest_confidence:
             highest_confidence = confidence
             best_text = text
             final_angle = angle
-            if confidence > 60:  # High confidence threshold to stop early
-                break
 
-    best_confidence_found = highest_confidence
+        # Early stopping if confidence is high enough
+        if confidence >= HIGH_CONFIDENCE_THRESHOLD:
+            logging.debug(f"High confidence {confidence} at {angle} degrees, stopping coarse check early.")
+            break
+
     logging.debug(f"Basic orientation correction result: Confidence={highest_confidence}, orientation={final_angle}")
+
 
     # Fine orientation check
     if check_orientation > 1:
-        direction = 1
+        logging.debug("Starting fine orientation check")
+        best_confidence_found = highest_confidence
         step = DEFAULT_SMALL_ROTATION_STEP
-        while step <= DEFAULT_MAX_ROTATION_STEPS:
-            adjusted_image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE if angle == 90 else 
-                                               cv2.ROTATE_180 if angle == 180 else 
-                                               cv2.ROTATE_90_COUNTERCLOCKWISE if angle == 270 else 0)
-            adjusted_image = cv2.rotate(adjusted_image, direction * step)
-            adjusted_text, adjusted_confidence = tesseract_ocr(adjusted_image, language, tessdata_dir_config, psm)
-            if adjusted_confidence > best_confidence_found:
-                best_confidence_found = adjusted_confidence
-                final_angle += direction * step
-                best_text = adjusted_text
-                step += 1
+        improved = True
+
+        while step <= DEFAULT_MAX_ROTATION_STEPS and improved:
+            # Fine adjustments clockwise
+            adjusted_angle_clockwise = final_angle + step
+            adjusted_image_clockwise = rotate_image(image, adjusted_angle_clockwise)
+            adjusted_text_clockwise, adjusted_confidence_clockwise = tesseract_ocr(adjusted_image_clockwise, language, tessdata_dir_config, psm)
+            logging.debug(f"Fine check at {adjusted_angle_clockwise} degrees: Confidence={adjusted_confidence_clockwise}")
+
+            # Fine adjustments counter-clockwise
+            adjusted_angle_counterclockwise = final_angle - step
+            adjusted_image_counterclockwise = rotate_image(image, adjusted_angle_counterclockwise)
+            adjusted_text_counterclockwise, adjusted_confidence_counterclockwise = tesseract_ocr(adjusted_image_counterclockwise, language, tessdata_dir_config, psm)
+            logging.debug(f"Fine check at {adjusted_angle_counterclockwise} degrees: Confidence={adjusted_confidence_counterclockwise}")
+
+            # Determine the best fine-tuned angle
+            if adjusted_confidence_clockwise > best_confidence_found:
+                best_confidence_found = adjusted_confidence_clockwise
+                best_text = adjusted_text_clockwise
+                final_angle = adjusted_angle_clockwise
+                improved = True
+            elif adjusted_confidence_counterclockwise > best_confidence_found:
+                best_confidence_found = adjusted_confidence_counterclockwise
+                best_text = adjusted_text_counterclockwise
+                final_angle = adjusted_angle_counterclockwise
+                improved = True
             else:
-                # Switch direction if no improvement
-                direction *= -1
-                step = 1 if direction == -1 else step
-                if direction == -1:
-                    break
+                improved = False
+            
+            step += 1
 
     logging.info(f"Orientation correction result: Confidence={best_confidence_found}, orientation={final_angle}")
     return best_text, final_angle, best_confidence_found
 
 def save_preprocessed_image(image, input_path, args):
+    # Create a subfolder 'preprocessed-images' within the input directory
+    save_dir = os.path.join(os.path.dirname(input_path), 'preprocessed-images')
+    os.makedirs(save_dir, exist_ok=True)
     filename, ext = os.path.splitext(os.path.basename(input_path))
     arg_str = '_'.join([f'{k}-{v}' for k, v in vars(args).items() if v is not None and k not in ['input_directory', 'log_level', 'save_preprocessed']])
-    save_path = os.path.join(os.path.dirname(input_path), f'{filename}_preprocessed_{arg_str}{ext}')
+    save_path = os.path.join(save_dir, f'{filename}_preprocessed_{arg_str}{ext}')
     cv2.imwrite(save_path, image)
     logging.debug(f"Saved preprocessed image to: {save_path}")
 
 def process_images(input_dir, language, save_preprocessed, threshold, tessdata_dir, check_orientation, psm, args):
     tessdata_dir_config = f'--tessdata-dir "{tessdata_dir}"'
     output_file = os.path.join(input_dir, 'ocr_result.txt')
+
+    # Create subdirectory for preprocessed images
+    preprocessed_dir = os.path.join(input_dir, 'preprocessed-images')
+    os.makedirs(preprocessed_dir, exist_ok=True)
 
     image_files = sorted([f for f in os.listdir(input_dir) if f.endswith(('.jpeg', '.jpg', '.png'))])
 
