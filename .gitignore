@@ -1,4 +1,8 @@
 .idea/
+.vscode/
+
+.devcontainer/devcontainer.json
+
 
 zscaler.crt
 repo.txt
