@@ -1,17 +1,16 @@
 import argparse
 import os
 import pytesseract
-from PIL import Image
-import cv2
-import numpy as np
+from PIL import Image, ImageFilter
 import logging
+import json
 
 # Constants for default paths
 DEFAULT_TESSDATA_DIR = '/usr/share/tesseract-ocr/4.00/tessdata'
 DEFAULT_LANGUAGE = 'eng'
 DEFAULT_PSM = 6
 DEFAULT_THRESHOLD = 0
-DEFAULT_SMALL_ROTATION_STEP = 1  # degrees
+DEFAULT_SMALL_ROTATION_STEP = 2  # degrees
 DEFAULT_MAX_ROTATION_STEPS = 10  # steps
 
 def load_valid_languages(tessdata_dir):
@@ -25,51 +24,12 @@ def validate_language(language, valid_languages):
     if language not in valid_languages:
         raise ValueError(f"Invalid language '{language}'. Valid options are: {', '.join(valid_languages)}")
 
-def preprocess_image(image, args):
-    # Convert to grayscale
-    if args.grayscale:
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    
-    # Noise removal
-    if args.remove_noise:
-        image = cv2.medianBlur(image, 5)
-    
-    # Thresholding
-    if args.threshold > 0:
-        _, image = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    
-    # Dilation
-    if args.dilate:
-        kernel = np.ones((5, 5), np.uint8)
-        image = cv2.dilate(image, kernel, iterations=1)
-    
-    # Erosion
-    if args.erode:
-        kernel = np.ones((5, 5), np.uint8)
-        image = cv2.erode(image, kernel, iterations=1)
-    
-    # Opening (erosion followed by dilation)
-    if args.opening:
-        kernel = np.ones((5, 5), np.uint8)
-        image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
-    
-    # Canny edge detection
-    if args.canny:
-        image = cv2.Canny(image, 100, 200)
-    
-    # Deskewing
-    if args.deskew:
-        coords = np.column_stack(np.where(image > 0))
-        angle = cv2.minAreaRect(coords)[-1]
-        if angle < -45:
-            angle = -(90 + angle)
-        else:
-            angle = -angle
-        (h, w) = image.shape[:2]
-        center = (w // 2, h // 2)
-        M = cv2.getRotationMatrix2D(center, angle, 1.0)
-        image = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
-    
+def preprocess_image(image, threshold, apply_sharpening):
+    if apply_sharpening:
+        image = image.filter(ImageFilter.SHARPEN)
+    if threshold > 0:
+        image = image.convert('L')
+        image = image.point(lambda p: p > threshold and 255)
     return image
 
 def tesseract_ocr(image, language, tessdata_dir_config, psm):
@@ -78,7 +38,7 @@ def tesseract_ocr(image, language, tessdata_dir_config, psm):
 
     lines = {}
     for i, word in enumerate(data['text']):
-        if int(data['conf'][i]) > 45:  # Only consider somewhat confident recognitions
+        if int(data['conf'][i]) > 30:  # Also consider mediocre results to avoid blanks
             line_num = data['line_num'][i]
             if line_num in lines:
                 lines[line_num].append(word)
@@ -91,7 +51,7 @@ def tesseract_ocr(image, language, tessdata_dir_config, psm):
     return text, average_confidence
 
 def check_orientations(image, language, tessdata_dir_config, psm, check_orientation):
-    orientations = [0, 90, 180, 270]
+    orientations = [0, 90, 180, 270, 45, 135, 315]
     best_text = ''
     highest_confidence = -1
     best_confidence_found = -1
@@ -99,9 +59,7 @@ def check_orientations(image, language, tessdata_dir_config, psm, check_orientat
 
     # Coarse orientation check
     for angle in orientations:
-        rotated_image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE if angle == 90 else 
-                                            cv2.ROTATE_180 if angle == 180 else 
-                                            cv2.ROTATE_90_COUNTERCLOCKWISE if angle == 270 else 0)
+        rotated_image = image.rotate(angle, expand=True)
         text, confidence = tesseract_ocr(rotated_image, language, tessdata_dir_config, psm)
         if confidence > highest_confidence:
             highest_confidence = confidence
@@ -118,10 +76,7 @@ def check_orientations(image, language, tessdata_dir_config, psm, check_orientat
         direction = 1
         step = DEFAULT_SMALL_ROTATION_STEP
         while step <= DEFAULT_MAX_ROTATION_STEPS:
-            adjusted_image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE if angle == 90 else 
-                                               cv2.ROTATE_180 if angle == 180 else 
-                                               cv2.ROTATE_90_COUNTERCLOCKWISE if angle == 270 else 0)
-            adjusted_image = cv2.rotate(adjusted_image, direction * step)
+            adjusted_image = image.rotate(final_angle + direction * step, expand=True)
             adjusted_text, adjusted_confidence = tesseract_ocr(adjusted_image, language, tessdata_dir_config, psm)
             if adjusted_confidence > best_confidence_found:
                 best_confidence_found = adjusted_confidence
@@ -138,7 +93,7 @@ def check_orientations(image, language, tessdata_dir_config, psm, check_orientat
     logging.info(f"Orientation correction result: Confidence={best_confidence_found}, orientation={final_angle}")
     return best_text, final_angle, best_confidence_found
 
-def process_images(input_dir, language, save_preprocessed, threshold, tessdata_dir, check_orientation, psm, args):
+def process_images(input_dir, language, save_preprocessed, threshold, tessdata_dir, check_orientation, psm, apply_sharpening):
     tessdata_dir_config = f'--tessdata-dir "{tessdata_dir}"'
     output_file = os.path.join(input_dir, 'ocr_result.txt')
 
@@ -147,15 +102,15 @@ def process_images(input_dir, language, save_preprocessed, threshold, tessdata_d
     with open(output_file, 'w', encoding='utf-8') as file_out:
         for index, filename in enumerate(image_files, start=1):
             full_path = os.path.join(input_dir, filename)
-            img = cv2.imread(full_path)
-            img = preprocess_image(img, args)
+            img = Image.open(full_path)
+            img = preprocess_image(img, threshold, apply_sharpening)
             if check_orientation:
                 text, final_angle, confidence = check_orientations(img, language, tessdata_dir_config, psm, check_orientation)
             else:
                 text, confidence = tesseract_ocr(img, language, tessdata_dir_config, psm)
                 final_angle = 0
             json_output = {"new_page": True, "number": index, "file": filename, "final_angle": final_angle, "confidence": confidence}
-            file_out.write(f"'{json_output}'\n{text}\n")
+            file_out.write(f"'{json.dumps(json_output)}'\n{text}\n")
             logging.debug(f"Processed {filename} with final angle: {final_angle}")
 
 def main():
@@ -168,13 +123,6 @@ def main():
     parser.add_argument('--psm', type=int, choices=list(range(14)), default=DEFAULT_PSM, help='Tesseract Page Segmentation Mode (PSM)')
     parser.add_argument('--sharpen', action='store_true', help='Apply sharpening filter before OCR')
     parser.add_argument('--log-level', type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='INFO', help='Set the logging level')
-    parser.add_argument('--grayscale', action='store_true', help='Convert image to grayscale')
-    parser.add_argument('--remove-noise', action='store_true', help='Apply noise removal')
-    parser.add_argument('--dilate', action='store_true', help='Apply dilation')
-    parser.add_argument('--erode', action='store_true', help='Apply erosion')
-    parser.add_argument('--opening', action='store_true', help='Apply opening (erosion followed by dilation)')
-    parser.add_argument('--canny', action='store_true', help='Apply Canny edge detection')
-    parser.add_argument('--deskew', action='store_true', help='Apply deskewing (skew correction)')
 
     args = parser.parse_args()
 
@@ -197,7 +145,7 @@ def main():
 
     logging.debug(f"Processed arguments: {args}")
 
-    process_images(args.input_directory, args.language, args.save_preprocessed, args.threshold, DEFAULT_TESSDATA_DIR, args.check_orientation, args.psm, args)
+    process_images(args.input_directory, args.language, args.save_preprocessed, args.threshold, DEFAULT_TESSDATA_DIR, args.check_orientation, args.psm, args.sharpen)
 
 if __name__ == "__main__":
     main()

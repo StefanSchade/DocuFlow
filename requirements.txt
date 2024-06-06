@@ -4,3 +4,4 @@ fuzzywuzzy
 pillow
 pytesseract
 prompt_toolkit
+opencv-python-headless

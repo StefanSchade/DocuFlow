@@ -32,5 +32,5 @@ RUN git config --global http.sslCAInfo /etc/ssl/certs/ca-certificates.crt
 # Set environment variables for the virtual environment
 ENV PATH="/app/venv/bin:$PATH"
 
-# Set the entrypoint to ensure additional arguments are passed to the Python script
-ENTRYPOINT ["python", "/app/src/main_script.py"]
+# Set the entry point to the pipeline script
+ENTRYPOINT ["python", "/workspace/src/pipeline.py"]
