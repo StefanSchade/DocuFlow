@@ -6,7 +6,7 @@
   "mounts": [
     "source=${localWorkspaceFolder},target=/workspace,type=bind",
     "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind",
-    "source=/path/to/local/data,target=/workspace/data,type=bind"
+    "source=${localWorkspaceFolder}/../ocr_dev_data,target=/workspace/data,type=bind"
   ],
   "settings": {
     "terminal.integrated.shell.linux": "/bin/bash"
@@ -20,6 +20,6 @@
     "njqdev.vscode-python-typehint",
     "VisualStudioExptTeam.vscodeintellicode"
   ],
-  "postCreateCommand": "ls -la /workspace/scripts && chmod +x /workspace/scripts/setup_ssh_git.sh && bash /workspace/scripts/setup_ssh_git.sh && git config --global user.name 'Your Name' && git config --global user.email 'your_email@example.com'",
+  "postCreateCommand": "ls -la /workspace/scripts && chmod +x /workspace/scripts/setup_ssh_git.sh && bash /workspace/scripts/setup_ssh_git.sh && git config --global user.name 'Your Name' && git config --global user.email 'Your Email' && /workspace/scripts/setup_docker_proxy.sh && /workspace/scripts/install_python_dependencies.sh",
   "remoteUser": "root"
 }
