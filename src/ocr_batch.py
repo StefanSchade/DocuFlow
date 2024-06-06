@@ -78,7 +78,7 @@ def tesseract_ocr(image, language, tessdata_dir_config, psm):
 
     lines = {}
     for i, word in enumerate(data['text']):
-        if int(data['conf'][i]) > 45:  # Only consider somewhat confident recognitions
+        if int(data['conf'][i]) > 45:  # Only consider confident recognitions
             line_num = data['line_num'][i]
             if line_num in lines:
                 lines[line_num].append(word)
@@ -138,6 +138,13 @@ def check_orientations(image, language, tessdata_dir_config, psm, check_orientat
     logging.info(f"Orientation correction result: Confidence={best_confidence_found}, orientation={final_angle}")
     return best_text, final_angle, best_confidence_found
 
+def save_preprocessed_image(image, input_path, args):
+    filename, ext = os.path.splitext(os.path.basename(input_path))
+    arg_str = '_'.join([f'{k}-{v}' for k, v in vars(args).items() if v is not None and k not in ['input_directory', 'log_level', 'save_preprocessed']])
+    save_path = os.path.join(os.path.dirname(input_path), f'{filename}_preprocessed_{arg_str}{ext}')
+    cv2.imwrite(save_path, image)
+    logging.debug(f"Saved preprocessed image to: {save_path}")
+
 def process_images(input_dir, language, save_preprocessed, threshold, tessdata_dir, check_orientation, psm, args):
     tessdata_dir_config = f'--tessdata-dir "{tessdata_dir}"'
     output_file = os.path.join(input_dir, 'ocr_result.txt')
@@ -149,11 +156,16 @@ def process_images(input_dir, language, save_preprocessed, threshold, tessdata_d
             full_path = os.path.join(input_dir, filename)
             img = cv2.imread(full_path)
             img = preprocess_image(img, args)
+
+            if save_preprocessed:
+                save_preprocessed_image(img, full_path, args)
+
             if check_orientation:
                 text, final_angle, confidence = check_orientations(img, language, tessdata_dir_config, psm, check_orientation)
             else:
                 text, confidence = tesseract_ocr(img, language, tessdata_dir_config, psm)
                 final_angle = 0
+
             json_output = {"new_page": True, "number": index, "file": filename, "final_angle": final_angle, "confidence": confidence}
             file_out.write(f"'{json_output}'\n{text}\n")
             logging.debug(f"Processed {filename} with final angle: {final_angle}")
