@@ -1,2 +1,5 @@
 https://github.com/tesseract-ocr/tessdata/raw/main/eng.traineddata
 https://github.com/tesseract-ocr/tessdata/raw/main/spa.traineddata
+https://github.com/tesseract-ocr/tessdata/raw/main/deu.traineddata
+https://github.com/tesseract-ocr/tessdata/raw/main/ita.traineddata
+https://github.com/tesseract-ocr/tessdata/raw/main/lat.traineddata
