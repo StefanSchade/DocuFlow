@@ -1,0 +1,101 @@
+=== Verify Using OpenSSL 
+
+The key takeaway from the openssl s_client output is that the ZScaler certificate is being used and trusted correctly in the certificate chain when establishing a connection to GitHub. This indicates that the certificate has been successfully added to the CA store and is recognized by OpenSSL.
+
+
+
+Use OpenSSL to verify that the ZScaler certificate is recognized
+
+[source, bash]
+-----
+openssl s_client -CApath /usr/local/share/custom-ca-certificates -connect github.com:443
+-----
+
+the output is rather lengthy, so we walk through it in steps
+
+*Connected Succesfully*
+
+-----
+openssl s_client -CApath /usr/local/share/custom-ca-certificates -connect github.com:443
+-----
+
+This indicates that the client has successfully connected to the GitHub server.
+
+*Certificate Chain Verification*
+
+-----
+depth=3 C = US, ST = California, L = San Jose, O = Zscaler Inc., OU = Zscaler Inc., CN = Zscaler Root CA, emailAddress = support@zscaler.com
+verify return:1
+depth=2 C = US, ST = California, O = Zscaler Inc., OU = Zscaler Inc., CN = Zscaler Intermediate Root CA (zscloud.net), emailAddress = support@zscaler.com
+verify return:1
+depth=1 C = US, ST = California, O = Zscaler Inc., OU = Zscaler Inc., CN = "Zscaler Intermediate Root CA (zscloud.net) (t) "
+verify return:1
+depth=0 CN = github.com
+verify return:1
+-----
+
+This shows the chain of certificates leading up to the GitHub certificate, starting from the ZScaler Root CA. Each `verify return:1` indicates that the certificate at that depth is valid and trusted.
+
+*Certificate Chain*
+
+----
+Certificate chain
+ 0 s:CN = github.com
+   i:C = US, ST = California, O = Zscaler Inc., OU = Zscaler Inc., CN = "Zscaler Intermediate Root CA (zscloud.net) (t) "
+   a:PKEY: rsaEncryption, 2048 (bit); sigalg: RSA-SHA256
+   v:NotBefore: Jun  2 03:49:54 2024 GMT; NotAfter: Jun 16 03:49:54 2024 GMT
+ 1 s:C = US, ST = California, O = Zscaler Inc., OU = Zscaler Inc., CN = "Zscaler Intermediate Root CA (zscloud.net) (t) "
+   i:C = US, ST = California, O = Zscaler Inc., OU = Zscaler Inc., CN = Zscaler Intermediate Root CA (zscloud.net), emailAddress = support@zscaler.com
+   a:PKEY: rsaEncryption, 2048 (bit); sigalg: RSA-SHA256
+   v:NotBefore: Jun  2 03:49:54 2024 GMT; NotAfter: Jun 16 03:49:54 2024 GMT
+ 2 s:C = US, ST = California, O = Zscaler Inc., OU = Zscaler Inc., CN = Zscaler Intermediate Root CA (zscloud.net), emailAddress = support@zscaler.com
+   i:C = US, ST = California, L = San Jose, O = Zscaler Inc., OU = Zscaler Inc., CN = Zscaler Root CA, emailAddress = support@zscaler.com
+   a:PKEY: rsaEncryption, 2048 (bit); sigalg: RSA-SHA256
+   v:NotBefore: Jun  5 05:33:19 2020 GMT; NotAfter: Jun 23 05:33:19 2041 GMT
+----
+
+*Server Certficate details*
+
+----
+
+-----BEGIN CERTIFICATE-----
+MIID1jCCAr6gAwIBAgIQfn17/7ZsGjuULNLEDrdCpTANBgkqhkiG9w0BAQsFADCB
+...
+-----END CERTIFICATE-----
+
+----
+
+The actual server certificate in PEM format
+
+*SSL Handshake Details*
+
+----
+SSL handshake has read 3856 bytes and written 737 bytes
+Verification: OK
+----
+Indicates that the SSL handshake was successful and the server certificate was verified successfully.
+
+*Final Verification Result*
+
+----
+Verify return code: 0 (ok)
+----
+
+This confirms that the certificate verification was successful.
+
+*HTTP Response*
+
+----
+HTTP/1.1 400 Bad request
+Content-length: 90
+Cache-Control: no-cache
+Connection: close
+Content-Type: text/html
+
+<html><body><h1>400 Bad request</h1>
+Your browser sent an invalid request.
+</body></html>
+----
+
+The HTTP response from the server is a 400 Bad Request, which is unrelated to the SSL certificate verification.
+

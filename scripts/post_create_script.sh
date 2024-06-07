@@ -13,7 +13,7 @@ git config --global user.email "$GIT_EMAIL"
 
 git config --list
 
-# make sure scripts are executable
+# make sure scripts are executablev
 chmod +x /workspace/scripts/*.sh
 
 # execute scripts
