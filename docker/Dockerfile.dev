@@ -32,20 +32,20 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /workspace
 
 # Copy the requirements file
-COPY ../requirements.txt /workspace
+COPY requirements.txt /workspace
 
 # Copy the tessdata.txt file
-COPY ../tessdata.txt /workspace
+COPY tessdata.txt /workspace
 
-# Copy the Zscaler certificate if it exists and update CA certificates
-COPY ../zscaler.crt /usr/local/share/ca-certificates/zscaler.crt
-RUN update-ca-certificates
+# Conditionally copy the Zscaler certificate if it exists
+COPY --chown=root:root zscaler.crt /usr/local/share/ca-certificates/zscaler.crt
+RUN if [ -f /usr/local/share/ca-certificates/zscaler.crt ]; then update-ca-certificates; fi
 
 # Copy the source code
-COPY ../src /workspace/src
+COPY src /workspace/src
 
 # Copy the scripts
-COPY ../scripts /workspace/scripts
+COPY scripts /workspace/scripts
 
 # Download Tesseract language data, removing any carriage return characters
 RUN cat /workspace/tessdata.txt | tr -d '\r' | xargs -n 1 wget --no-check-certificate -P /usr/share/tesseract-ocr/4.00/tessdata/

@@ -13,17 +13,19 @@ export http_proxy=$HTTP_PROXY
 export https_proxy=$HTTPS_PROXY
 export no_proxy=$NO_PROXY
 
-# Path to the Zscaler certificate in the workspace directory
-CERT_PATH="/workspace/zscaler.crt"
+# Verify proxy settings
+echo "Proxy settings applied: http_proxy=$http_proxy, https_proxy=$https_proxy, no_proxy=$no_proxy"
 
-# Copy the Zscaler certificate to the appropriate directory
-cp $CERT_PATH /usr/local/share/ca-certificates/zscaler.crt
-
-# Update CA certificates
-update-ca-certificates
+# Check for the custom CA certificates path in OpenSSL configuration
+if ! grep -q "CApath = /usr/local/share/custom-ca-certificates" /etc/ssl/openssl.cnf; then
+    echo "Custom CApath not found in OpenSSL configuration. Adding it."
+    echo "CApath = /usr/local/share/custom-ca-certificates" >> /etc/ssl/openssl.cnf
+else
+    echo "Custom CApath already present in OpenSSL configuration."
+fi
 
 # Verify the certificate installation
-ls -l /etc/ssl/certs/ca-certificates.crt
+openssl s_client -CApath /usr/local/share/custom-ca-certificates -connect github.com:443
 
 # Configure Git to use the updated CA certificates
 git config --global http.sslCAInfo /etc/ssl/certs/ca-certificates.crt
