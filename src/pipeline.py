@@ -2,8 +2,8 @@
 
 import os
 import logging
-from preprocess_step import PreprocessStep
-from ocr_step import OCRStep
+from preprocess.preprocess_step import PreprocessStep
+from ocr.ocr_step import OCRStep
 
 # Constants
 INPUT_DIRECTORY = '/workspace/data'
@@ -23,7 +23,7 @@ def run_pipeline(args):
     input("Press Enter to continue to OCR step...")
 
     # Step 2: OCR
-    ocr_step = OCRStep('eng', '/usr/share/tesseract-ocr/4.00/tessdata')
+    ocr_step = OCRStep(args.language, '/usr/share/tesseract-ocr/4.00/tessdata', args.check_orientation, args.psm)
     ocr_step.run(os.path.join(INPUT_DIRECTORY, 'preprocessed'))
 
     logging.info("Pipeline execution completed successfully")
@@ -39,5 +39,8 @@ if __name__ == "__main__":
     parser.add_argument('--opening', action='store_true', help='Apply opening (erosion followed by dilation)')
     parser.add_argument('--canny', action='store_true', help='Apply Canny edge detection')
     parser.add_argument('--deskew', action='store_true', help='Apply deskewing (skew correction)')
+    parser.add_argument('--language', type=str, default='eng', help='Language for Tesseract OCR')
+    parser.add_argument('--check-orientation', type=int, choices=[0, 1], default=0, help='Check and correct orientation')
+    parser.add_argument('--psm', type=int, choices=list(range(14)), default=6, help='Tesseract Page Segmentation Mode (PSM)')
     args = parser.parse_args()
     run_pipeline(args)
