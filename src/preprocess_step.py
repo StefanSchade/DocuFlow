@@ -37,6 +37,7 @@ class PreprocessStep(PipelineStep):
 
     def run(self, input_data):
         image_files = [f for f in os.listdir(input_data) if f.endswith(('.jpeg', '.jpg', '.png'))]
+        os.makedirs(os.path.join(input_data, 'preprocessed'), exist_ok=True)
         for image_file in image_files:
             img_path = os.path.join(input_data, image_file)
             img = cv2.imread(img_path)

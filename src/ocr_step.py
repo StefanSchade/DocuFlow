@@ -1,5 +1,3 @@
-# src/ocr_step.py
-
 import pytesseract
 import os
 from PIL import Image
