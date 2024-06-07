@@ -2,8 +2,8 @@
 
 import os
 from PIL import Image
-from pipeline_step import PipelineStep
-from ocr.utils import tesseract_ocr, check_orientations
+from src.pipeline_step import PipelineStep
+from src.ocr.utils import tesseract_ocr, check_orientations
 
 class OCRStep(PipelineStep):
     def __init__(self, language, tessdata_dir, check_orientation, psm):

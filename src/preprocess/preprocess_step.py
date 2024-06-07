@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import os
-from pipeline_step import PipelineStep
+from src.pipeline_step import PipelineStep
 
 class PreprocessStep(PipelineStep):
     def __init__(self, args):
