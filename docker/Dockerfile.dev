@@ -31,20 +31,17 @@ RUN apt-get update && apt-get install -y \
 # Set the working directory for the project
 WORKDIR /workspace
 
-# Copy the requirements file
-COPY requirements.txt /workspace
+# Copy the scripts
+COPY scripts /workspace/scripts
 
 # Copy the tessdata.txt file
 COPY tessdata.txt /workspace
 
-# Copy the source code
-COPY src /workspace/src
-
-# Copy the scripts
-COPY scripts /workspace/scripts
-
 # Download Tesseract language data, removing any carriage return characters
 RUN cat /workspace/tessdata.txt | tr -d '\r' | xargs -n 1 wget --no-check-certificate -P /usr/share/tesseract-ocr/4.00/tessdata/
+
+# Copy the requirements file
+COPY requirements.txt /workspace
 
 # Create and activate a virtual environment and install dependencies
 RUN python3 -m venv /workspace/venv && \
@@ -52,6 +49,9 @@ RUN python3 -m venv /workspace/venv && \
 
 # Set environment variables for the virtual environment
 ENV PATH="/workspace/venv/bin:$PATH"
+
+# Copy the source code
+COPY src /workspace/src
 
 # Run bash by default
 CMD ["bash"]
