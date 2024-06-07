@@ -17,5 +17,6 @@ git config --list
 chmod +x /workspace/scripts/*.sh
 
 # execute scripts
+source /workspace/scripts/setup_ssh_git.sh 
 source /workspace/scripts/setup_docker_proxy.sh 
 source /workspace/scripts/install_python_dependencies.sh

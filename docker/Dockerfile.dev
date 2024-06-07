@@ -37,6 +37,10 @@ COPY ../requirements.txt /workspace
 # Copy the tessdata.txt file
 COPY ../tessdata.txt /workspace
 
+# Copy the Zscaler certificate if it exists and update CA certificates
+COPY ../zscaler.crt /usr/local/share/ca-certificates/zscaler.crt
+RUN update-ca-certificates
+
 # Copy the source code
 COPY ../src /workspace/src
 
