@@ -19,9 +19,8 @@ def run_pipeline(args):
     step_01.run(INPUT_DIRECTORY)
 
     # Step 2: OCR
-    preprocessed_directory = os.path.join(INPUT_DIRECTORY, 'preprocessed')
     step_02 = OCRStep(args)
-    step_02.run(preprocessed_directory)
+    step_02.run(INPUT_DIRECTORY)
 
     logging.info("Pipeline execution completed successfully")
 

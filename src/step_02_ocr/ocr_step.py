@@ -14,14 +14,17 @@ class OCRStep(PipelineStep):
         self.psm = args.psm
         self.save_preprocessed = args.save_preprocessed
 
-    def run(self, input_data):
+    def run(self, main_directory):
+        preprocessed_dir = os.path.join(main_directory, 'preprocessed')
+        ocr_result_dir = os.path.join(main_directory, 'ocr_result')
+        os.makedirs(ocr_result_dir, exist_ok=True)
         tessdata_dir_config = f'--tessdata-dir "{self.tessdata_dir}"'
-        image_files = [f for f in os.listdir(input_data) if f.endswith(('.jpeg', '.jpg', '.png'))]
-        output_file = os.path.join(input_data, 'ocr_result.json')
+        image_files = [f for f in os.listdir(preprocessed_dir) if f.endswith(('.jpeg', '.jpg', '.png'))]
+        output_file = os.path.join(ocr_result_dir, 'ocr_result.json')
 
         with open(output_file, 'w', encoding='utf-8') as file_out:
             for index, image_file in enumerate(image_files, start=1):
-                img_path = os.path.join(input_data, image_file)
+                img_path = os.path.join(preprocessed_dir, image_file)
                 logging.info(f"Starting analysis of file: {image_file}")
                 img = Image.open(img_path)
                 text, final_angle, confidence = check_orientations(img, self.language, tessdata_dir_config, self.psm, self.check_orientation)
@@ -39,4 +42,4 @@ class OCRStep(PipelineStep):
 
                 # Save processed image if required
                 if self.save_preprocessed:
-                    img.save(os.path.join(input_data, f"processed_{image_file}"))
+                    img.save(os.path.join(ocr_result_dir, f"processed_{image_file}"))
