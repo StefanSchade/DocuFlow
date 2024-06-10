@@ -21,10 +21,7 @@ class OCRStep(PipelineStep):
             for image_file in image_files:
                 img_path = os.path.join(input_data, image_file)
                 img = Image.open(img_path)
-                if self.check_orientation:
-                    text, final_angle, confidence = check_orientations(img, self.language, tessdata_dir_config, self.psm)
-                else:
-                    text, confidence = tesseract_ocr(img, self.language, tessdata_dir_config, self.psm)
+                text, final_angle, confidence = check_orientations(img, self.language, tessdata_dir_config, self.psm, self.check_orientation)
                 file_out.write(text + '\n')
                 # Save processed image if required
                 if self.save_preprocessed:

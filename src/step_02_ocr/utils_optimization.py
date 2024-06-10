@@ -18,6 +18,10 @@ def rotate_image(image, angle):
     return Image.fromarray(rotated)  # Convert back to PIL Image if necessary
 
 def check_orientations(image, language, tessdata_dir_config, psm, check_orientation):
+    if check_orientation == 'NONE':
+        text, confidence = tesseract_ocr(image, language, tessdata_dir_config, psm)
+        return text, 0, confidence
+
     orientations = [0, 90, 180, 270]
     best_text = ''
     highest_confidence = -1
@@ -43,41 +47,47 @@ def check_orientations(image, language, tessdata_dir_config, psm, check_orientat
 
     logging.debug(f"Basic orientation correction result: Confidence={highest_confidence}, orientation={final_angle}")
 
-    # Fine orientation check
-    if check_orientation > 1:
+    if check_orientation == 'FINE':
         logging.debug("Starting fine orientation check")
-        best_confidence_found = highest_confidence
         step = DEFAULT_SMALL_ROTATION_STEP
+
+        # Fine adjustments in one direction
         improved = True
-
         while step <= DEFAULT_MAX_ROTATION_STEPS and improved:
-            # Fine adjustments clockwise
-            adjusted_angle_clockwise = final_angle + step
-            adjusted_image_clockwise = rotate_image(image, adjusted_angle_clockwise)
-            adjusted_text_clockwise, adjusted_confidence_clockwise = tesseract_ocr(adjusted_image_clockwise, language, tessdata_dir_config, psm)
-            logging.debug(f"Fine check at {adjusted_angle_clockwise} degrees: Confidence={adjusted_confidence_clockwise}")
+            adjusted_angle = final_angle + step
+            adjusted_image = rotate_image(image, adjusted_angle)
+            adjusted_text, adjusted_confidence = tesseract_ocr(adjusted_image, language, tessdata_dir_config, psm)
+            logging.debug(f"Fine check at {adjusted_angle} degrees: Confidence={adjusted_confidence}")
 
-            # Fine adjustments counter-clockwise
-            adjusted_angle_counterclockwise = final_angle - step
-            adjusted_image_counterclockwise = rotate_image(image, adjusted_angle_counterclockwise)
-            adjusted_text_counterclockwise, adjusted_confidence_counterclockwise = tesseract_ocr(adjusted_image_counterclockwise, language, tessdata_dir_config, psm)
-            logging.debug(f"Fine check at {adjusted_angle_counterclockwise} degrees: Confidence={adjusted_confidence_counterclockwise}")
-
-            # Determine the best fine-tuned angle
-            if adjusted_confidence_clockwise > best_confidence_found:
-                best_confidence_found = adjusted_confidence_clockwise
-                best_text = adjusted_text_clockwise
-                final_angle = adjusted_angle_clockwise
-                improved = True
-            elif adjusted_confidence_counterclockwise > best_confidence_found:
-                best_confidence_found = adjusted_confidence_counterclockwise
-                best_text = adjusted_text_counterclockwise
-                final_angle = adjusted_angle_counterclockwise
+            if adjusted_confidence > highest_confidence:
+                highest_confidence = adjusted_confidence
+                best_text = adjusted_text
+                final_angle = adjusted_angle
                 improved = True
             else:
                 improved = False
-            
+
             step += 1
 
-    logging.info(f"Orientation correction result: Confidence={best_confidence_found}, orientation={final_angle}")
-    return best_text, final_angle, best_confidence_found
+        # If no improvement was found, try the other direction
+        if not improved:
+            step = DEFAULT_SMALL_ROTATION_STEP
+            improved = True
+            while step <= DEFAULT_MAX_ROTATION_STEPS and improved:
+                adjusted_angle = final_angle - step
+                adjusted_image = rotate_image(image, adjusted_angle)
+                adjusted_text, adjusted_confidence = tesseract_ocr(adjusted_image, language, tessdata_dir_config, psm)
+                logging.debug(f"Fine check at {adjusted_angle} degrees: Confidence={adjusted_confidence}")
+
+                if adjusted_confidence > highest_confidence:
+                    highest_confidence = adjusted_confidence
+                    best_text = adjusted_text
+                    final_angle = adjusted_angle
+                    improved = True
+                else:
+                    improved = False
+
+                step += 1
+
+    logging.info(f"Orientation correction result: Confidence={highest_confidence}, orientation={final_angle}")
+    return best_text, final_angle, highest_confidence

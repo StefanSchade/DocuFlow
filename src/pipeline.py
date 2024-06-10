@@ -8,9 +8,6 @@ INPUT_DIRECTORY = '/workspace/data'
 LOG_FILE = '/workspace/data/pipeline.log'
 PATH_TO_TESSERACT = '/usr/share/tesseract-ocr/4.00/tessdata'
 
-# Setup logging
-logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
 def run_pipeline(args):
     logging.info("Starting pipeline execution")
     
@@ -29,7 +26,6 @@ def run_pipeline(args):
     logging.info("Pipeline execution completed successfully")
 
     # Step 3: Postprocessing (placeholder for future steps)
-    
 
 if __name__ == "__main__":
     import argparse
@@ -42,8 +38,14 @@ if __name__ == "__main__":
     parser.add_argument('--opening', action='store_true', help='Apply opening (erosion followed by dilation)')
     parser.add_argument('--canny', action='store_true', help='Apply Canny edge detection')
     parser.add_argument('--language', type=str, default='eng', help='Language for Tesseract OCR')
-    parser.add_argument('--check-orientation', type=int, choices=[0, 1], default=0, help='Check and correct orientation')
+    parser.add_argument('--check-orientation', type=str, choices=['NONE', 'BASIC', 'FINE'], default='NONE', help='Check and correct orientation')
     parser.add_argument('--psm', type=int, choices=list(range(14)), default=6, help='Tesseract Page Segmentation Mode (PSM)')
     parser.add_argument('--save-preprocessed', action='store_true', help='Save preprocessed images')
+    parser.add_argument('--log-level', type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='INFO', help='Set the logging level')
+    
     args = parser.parse_args()
+
+    # Setup logging
+    logging.basicConfig(filename=LOG_FILE, level=getattr(logging, args.log_level.upper()), format='%(asctime)s - %(levelname)s - %(message)s')
+
     run_pipeline(args)
