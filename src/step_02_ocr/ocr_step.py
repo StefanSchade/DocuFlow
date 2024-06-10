@@ -16,11 +16,10 @@ class OCRStep(PipelineStep):
         tessdata_dir_config = f'--tessdata-dir "{self.tessdata_dir}"'
         image_files = [f for f in os.listdir(input_data) if f.endswith(('.jpeg', '.jpg', '.png'))]
         output_file = os.path.join(input_data, 'ocr_result.txt')
-        preprocessed_dir = os.path.join(input_data, 'preprocessed')
 
         with open(output_file, 'w', encoding='utf-8') as file_out:
             for image_file in image_files:
-                img_path = os.path.join(preprocessed_dir, image_file)
+                img_path = os.path.join(input_data, image_file)
                 img = Image.open(img_path)
                 if self.check_orientation:
                     text, final_angle, confidence = check_orientations(img, self.language, tessdata_dir_config, self.psm)
@@ -29,4 +28,4 @@ class OCRStep(PipelineStep):
                 file_out.write(text + '\n')
                 # Save processed image if required
                 if self.save_preprocessed:
-                    img.save(os.path.join(input_data, 'preprocessed', f"processed_{image_file}"))
+                    img.save(os.path.join(input_data, f"processed_{image_file}"))
