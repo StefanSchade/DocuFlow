@@ -6,10 +6,7 @@ from step_02_ocr.ocr_step import OCRStep
 # Constants
 INPUT_DIRECTORY = '/workspace/data'
 LOG_FILE = '/workspace/data/pipeline.log'
-PATH_TO_TESSERACT= '/usr/share/tesseract-ocr/4.00/tessdata'
-
-# Add PATH_TO_TESSERACT to args
-args.path_to_tesseract = PATH_TO_TESSERACT
+PATH_TO_TESSERACT = '/usr/share/tesseract-ocr/4.00/tessdata'
 
 # Setup logging
 logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -17,17 +14,20 @@ logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s -
 def run_pipeline(args):
     logging.info("Starting pipeline execution")
     
+    # Add PATH_TO_TESSERACT to args
+    args.path_to_tesseract = PATH_TO_TESSERACT
+    
     # Step 1: Preprocessing
     step_01 = PreprocessStep(args)
     step_01.run(INPUT_DIRECTORY)
 
     # Step 2: OCR
-    step_02 = OCRStep(PATH_TO_TESSERACT, args)
+    step_02 = OCRStep(args)
     step_02.run(os.path.join(INPUT_DIRECTORY, 'preprocessed'))
 
     logging.info("Pipeline execution completed successfully")
 
-    # Step 3: ...
+    # Step 3: Postprocessing (placeholder for future steps)
     
 
 if __name__ == "__main__":
@@ -43,5 +43,6 @@ if __name__ == "__main__":
     parser.add_argument('--language', type=str, default='eng', help='Language for Tesseract OCR')
     parser.add_argument('--check-orientation', type=int, choices=[0, 1], default=0, help='Check and correct orientation')
     parser.add_argument('--psm', type=int, choices=list(range(14)), default=6, help='Tesseract Page Segmentation Mode (PSM)')
+    parser.add_argument('--save-preprocessed', action='store_true', help='Save preprocessed images')
     args = parser.parse_args()
     run_pipeline(args)

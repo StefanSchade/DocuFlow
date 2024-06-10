@@ -9,41 +9,45 @@
 06 # Constants
 07 INPUT_DIRECTORY = '/workspace/data'
 08 LOG_FILE = '/workspace/data/pipeline.log'
-09 
-10 # Setup logging
-11 logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-12 
-13 def run_pipeline(args):
-14     logging.info("Starting pipeline execution")
-15     
-16     # Step 1: Preprocessing
-17     step_01 = PreprocessStep(args)
-18     step_01.run(INPUT_DIRECTORY)
-19 
-20     # Step 2: OCR
-21     step_02 = OCRStep(args.language, '/usr/share/tesseract-ocr/4.00/tessdata', args.check_orientation, args.psm)
-22     step_02.run(os.path.join(INPUT_DIRECTORY, 'preprocessed'))
+09 PATH_TO_TESSERACT= '/usr/share/tesseract-ocr/4.00/tessdata'
+10 
+11 # Add PATH_TO_TESSERACT to args
+12 args.path_to_tesseract = PATH_TO_TESSERACT
+13 
+14 # Setup logging
+15 logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+16 
+17 def run_pipeline(args):
+18     logging.info("Starting pipeline execution")
+19     
+20     # Step 1: Preprocessing
+21     step_01 = PreprocessStep(args)
+22     step_01.run(INPUT_DIRECTORY)
 23 
-24     logging.info("Pipeline execution completed successfully")
-25 
-26     # Step 3: ...
-27     
-28 
-29 if __name__ == "__main__":
-30     import argparse
-31     parser = argparse.ArgumentParser(description='Run OCR pipeline')
-32     parser.add_argument('--grayscale', action='store_true', help='Convert image to grayscale')
-33     parser.add_argument('--remove-noise', action='store_true', help='Apply noise removal')
-34     parser.add_argument('--threshold', type=int, default=0, help='Threshold for binarization')
-35     parser.add_argument('--dilate', action='store_true', help='Apply dilation')
-36     parser.add_argument('--erode', action='store_true', help='Apply erosion')
-37     parser.add_argument('--opening', action='store_true', help='Apply opening (erosion followed by dilation)')
-38     parser.add_argument('--canny', action='store_true', help='Apply Canny edge detection')
-39     parser.add_argument('--language', type=str, default='eng', help='Language for Tesseract OCR')
-40     parser.add_argument('--check-orientation', type=int, choices=[0, 1], default=0, help='Check and correct orientation')
-41     parser.add_argument('--psm', type=int, choices=list(range(14)), default=6, help='Tesseract Page Segmentation Mode (PSM)')
-42     args = parser.parse_args()
-43     run_pipeline(args)
+24     # Step 2: OCR
+25     step_02 = OCRStep(PATH_TO_TESSERACT, args)
+26     step_02.run(os.path.join(INPUT_DIRECTORY, 'preprocessed'))
+27 
+28     logging.info("Pipeline execution completed successfully")
+29 
+30     # Step 3: ...
+31     
+32 
+33 if __name__ == "__main__":
+34     import argparse
+35     parser = argparse.ArgumentParser(description='Run OCR pipeline')
+36     parser.add_argument('--grayscale', action='store_true', help='Convert image to grayscale')
+37     parser.add_argument('--remove-noise', action='store_true', help='Apply noise removal')
+38     parser.add_argument('--threshold', type=int, default=0, help='Threshold for binarization')
+39     parser.add_argument('--dilate', action='store_true', help='Apply dilation')
+40     parser.add_argument('--erode', action='store_true', help='Apply erosion')
+41     parser.add_argument('--opening', action='store_true', help='Apply opening (erosion followed by dilation)')
+42     parser.add_argument('--canny', action='store_true', help='Apply Canny edge detection')
+43     parser.add_argument('--language', type=str, default='eng', help='Language for Tesseract OCR')
+44     parser.add_argument('--check-orientation', type=int, choices=[0, 1], default=0, help='Check and correct orientation')
+45     parser.add_argument('--psm', type=int, choices=list(range(14)), default=6, help='Tesseract Page Segmentation Mode (PSM)')
+46     args = parser.parse_args()
+47     run_pipeline(args)
 
 // File: pipeline_step.py Depth: 0
 
@@ -108,11 +112,11 @@
 07 from step_02_ocr.utils_tesseract import tesseract_ocr
 08 
 09 class OCRStep(PipelineStep):
-10     def __init__(self, language, tessdata_dir, check_orientation, psm):
-11         self.language = language
-12         self.tessdata_dir = tessdata_dir
-13         self.check_orientation = check_orientation
-14         self.psm = psm
+10     def __init__(self, tessdata_dir, args):
+11         self.language = args.language
+12         self.tessdata_dir = args.tessdata_dir
+13         self.check_orientation = args.check_orientation
+14         self.psm = args.psm
 15 
 16     def run(self, input_data):
 17         tessdata_dir_config = f'--tessdata-dir "{self.tessdata_dir}"'
@@ -197,6 +201,9 @@
 
 
 // File: step_03_postprocess\__init__.py Depth: 1
+
+
+// File: __init__ copy.py Depth: 0
 
 
 // File: __init__.py Depth: 0

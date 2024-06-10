@@ -1,7 +1,4 @@
-import cv2
 import pytesseract
-import numpy as np
-from PIL import Image
 
 def tesseract_ocr(image, language, tessdata_dir_config, psm):
     config = f'--psm {psm} -l {language} {tessdata_dir_config}'
@@ -9,7 +6,7 @@ def tesseract_ocr(image, language, tessdata_dir_config, psm):
 
     lines = {}
     for i, word in enumerate(data['text']):
-        if int(data['conf'][i]) > 45:
+        if int(data['conf'][i]) > 45:  # Only consider confident recognitions
             line_num = data['line_num'][i]
             if line_num in lines:
                 lines[line_num].append(word)
@@ -19,4 +16,3 @@ def tesseract_ocr(image, language, tessdata_dir_config, psm):
     text = '\n'.join([' '.join(lines[line]) for line in sorted(lines.keys())])
     average_confidence = sum(data['conf']) / len(data['conf']) if len(data['conf']) > 0 else 0
     return text, average_confidence
-
