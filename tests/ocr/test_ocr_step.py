@@ -1,5 +1,4 @@
-# tests/ocr/test_ocr_step.py
-
+import os
 import pytest
 from PIL import Image
 import numpy as np

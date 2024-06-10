@@ -5,4 +5,3 @@ pillow
 pytesseract
 prompt_toolkit
 opencv-python-headless
-pytest

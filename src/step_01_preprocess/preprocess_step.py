@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import os
-from src.pipeline_step import PipelineStep
+from pipeline_step import PipelineStep
 
 class PreprocessStep(PipelineStep):
     def __init__(self, args):
@@ -25,14 +25,6 @@ class PreprocessStep(PipelineStep):
             image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
         if self.args.canny:
             image = cv2.Canny(image, 100, 200)
-        if self.args.deskew:
-            coords = np.column_stack(np.where(image > 0))
-            angle = cv2.minAreaRect(coords)[-1]
-            angle = -(90 + angle) if angle < -45 else -angle
-            (h, w) = image.shape[:2]
-            center = (w // 2, h // 2)
-            M = cv2.getRotationMatrix2D(center, angle, 1.0)
-            image = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
         return image
 
     def run(self, input_data):

@@ -2,15 +2,16 @@
 
 import os
 from PIL import Image
-from src.pipeline_step import PipelineStep
-from src.ocr.utils import tesseract_ocr, check_orientations
+from pipeline_step import PipelineStep
+from step_02_ocr.utils_optimization import check_orientations
+from step_02_ocr.utils_tesseract import tesseract_ocr
 
 class OCRStep(PipelineStep):
-    def __init__(self, language, tessdata_dir, check_orientation, psm):
-        self.language = language
-        self.tessdata_dir = tessdata_dir
-        self.check_orientation = check_orientation
-        self.psm = psm
+    def __init__(self, tessdata_dir, args):
+        self.language = args.language
+        self.tessdata_dir = args.tessdata_dir
+        self.check_orientation = args.check_orientation
+        self.psm = args.psm
 
     def run(self, input_data):
         tessdata_dir_config = f'--tessdata-dir "{self.tessdata_dir}"'

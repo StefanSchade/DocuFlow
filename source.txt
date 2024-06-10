@@ -1,0 +1,203 @@
+
+// File: pipeline.py Depth: 0
+
+01 import os
+02 import logging
+03 from step_01_preprocess.preprocess_step import PreprocessStep
+04 from step_02_ocr.ocr_step import OCRStep
+05 
+06 # Constants
+07 INPUT_DIRECTORY = '/workspace/data'
+08 LOG_FILE = '/workspace/data/pipeline.log'
+09 
+10 # Setup logging
+11 logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+12 
+13 def run_pipeline(args):
+14     logging.info("Starting pipeline execution")
+15     
+16     # Step 1: Preprocessing
+17     step_01 = PreprocessStep(args)
+18     step_01.run(INPUT_DIRECTORY)
+19 
+20     # Step 2: OCR
+21     step_02 = OCRStep(args.language, '/usr/share/tesseract-ocr/4.00/tessdata', args.check_orientation, args.psm)
+22     step_02.run(os.path.join(INPUT_DIRECTORY, 'preprocessed'))
+23 
+24     logging.info("Pipeline execution completed successfully")
+25 
+26     # Step 3: ...
+27     
+28 
+29 if __name__ == "__main__":
+30     import argparse
+31     parser = argparse.ArgumentParser(description='Run OCR pipeline')
+32     parser.add_argument('--grayscale', action='store_true', help='Convert image to grayscale')
+33     parser.add_argument('--remove-noise', action='store_true', help='Apply noise removal')
+34     parser.add_argument('--threshold', type=int, default=0, help='Threshold for binarization')
+35     parser.add_argument('--dilate', action='store_true', help='Apply dilation')
+36     parser.add_argument('--erode', action='store_true', help='Apply erosion')
+37     parser.add_argument('--opening', action='store_true', help='Apply opening (erosion followed by dilation)')
+38     parser.add_argument('--canny', action='store_true', help='Apply Canny edge detection')
+39     parser.add_argument('--language', type=str, default='eng', help='Language for Tesseract OCR')
+40     parser.add_argument('--check-orientation', type=int, choices=[0, 1], default=0, help='Check and correct orientation')
+41     parser.add_argument('--psm', type=int, choices=list(range(14)), default=6, help='Tesseract Page Segmentation Mode (PSM)')
+42     args = parser.parse_args()
+43     run_pipeline(args)
+
+// File: pipeline_step.py Depth: 0
+
+1 from abc import ABC, abstractmethod
+2 
+3 class PipelineStep(ABC):
+4     @abstractmethod
+5     def run(self, input_data):
+6         pass
+
+// File: step_01_preprocess\preprocess_step.py Depth: 1
+
+01 import cv2
+02 import numpy as np
+03 import os
+04 from pipeline_step import PipelineStep
+05 
+06 class PreprocessStep(PipelineStep):
+07     def __init__(self, args):
+08         self.args = args
+09 
+10     def preprocess_image(self, image):
+11         if self.args.grayscale or self.args.threshold > 0:
+12             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+13         if self.args.remove_noise:
+14             image = cv2.medianBlur(image, 5)
+15         if self.args.threshold > 0:
+16             _, image = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+17         if self.args.dilate:
+18             kernel = np.ones((5, 5), np.uint8)
+19             image = cv2.dilate(image, kernel, iterations=1)
+20         if self.args.erode:
+21             kernel = np.ones((5, 5), np.uint8)
+22             image = cv2.erode(image, kernel, iterations=1)
+23         if self.args.opening:
+24             kernel = np.ones((5, 5), np.uint8)
+25             image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
+26         if self.args.canny:
+27             image = cv2.Canny(image, 100, 200)
+28         return image
+29 
+30     def run(self, input_data):
+31         image_files = [f for f in os.listdir(input_data) if f.endswith(('.jpeg', '.jpg', '.png'))]
+32         os.makedirs(os.path.join(input_data, 'preprocessed'), exist_ok=True)
+33         for image_file in image_files:
+34             img_path = os.path.join(input_data, image_file)
+35             img = cv2.imread(img_path)
+36             processed_img = self.preprocess_image(img)
+37             cv2.imwrite(os.path.join(input_data, 'preprocessed', image_file), processed_img)
+
+// File: step_01_preprocess\__init__.py Depth: 1
+
+
+// File: step_02_ocr\ocr_step.py Depth: 1
+
+01 # src/ocr/ocr_step.py
+02 
+03 import os
+04 from PIL import Image
+05 from pipeline_step import PipelineStep
+06 from step_02_ocr.utils_optimization import check_orientations
+07 from step_02_ocr.utils_tesseract import tesseract_ocr
+08 
+09 class OCRStep(PipelineStep):
+10     def __init__(self, language, tessdata_dir, check_orientation, psm):
+11         self.language = language
+12         self.tessdata_dir = tessdata_dir
+13         self.check_orientation = check_orientation
+14         self.psm = psm
+15 
+16     def run(self, input_data):
+17         tessdata_dir_config = f'--tessdata-dir "{self.tessdata_dir}"'
+18         image_files = [f for f in os.listdir(input_data) if f.endswith(('.jpeg', '.jpg', '.png'))]
+19         output_file = os.path.join(input_data, 'ocr_result.txt')
+20 
+21         with open(output_file, 'w', encoding='utf-8') as file_out:
+22             for image_file in image_files:
+23                 img_path = os.path.join(input_data, image_file)
+24                 img = Image.open(img_path)
+25                 if self.check_orientation:
+26                     text, final_angle, confidence = check_orientations(img, self.language, tessdata_dir_config, self.psm)
+27                 else:
+28                     text, confidence = tesseract_ocr(img, self.language, tessdata_dir_config, self.psm)
+29                 file_out.write(text + '\n')
+
+// File: step_02_ocr\utils_optimization.py Depth: 1
+
+01 import cv2
+02 import pytesseract
+03 import numpy as np
+04 from PIL import Image
+05 
+06 def rotate_image(image, angle):
+07     image = np.array(image)  # Convert PIL Image to NumPy array
+08     (h, w) = image.shape[:2]
+09     center = (w // 2, h // 2)
+10     M = cv2.getRotationMatrix2D(center, angle, 1.0)
+11     rotated = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+12     return Image.fromarray(rotated)  # Convert back to PIL Image if necessary
+13 
+14 def check_orientations(image, language, tessdata_dir_config, psm):
+15     orientations = [0, 90, 180, 270]
+16     best_text = ''
+17     highest_confidence = -1
+18     final_angle = 0
+19 
+20     for angle in orientations:
+21         rotated_image = rotate_image(image, angle)
+22         text, confidence = tesseract_ocr(rotated_image, language, tessdata_dir_config, psm)
+23         if confidence > highest_confidence:
+24             highest_confidence = confidence
+25             best_text = text
+26             final_angle = angle
+27         if confidence >= 60:
+28             break
+29 
+30     return best_text, final_angle, highest_confidence
+
+// File: step_02_ocr\utils_tesseract.py Depth: 1
+
+01 import cv2
+02 import pytesseract
+03 import numpy as np
+04 from PIL import Image
+05 
+06 def tesseract_ocr(image, language, tessdata_dir_config, psm):
+07     config = f'--psm {psm} -l {language} {tessdata_dir_config}'
+08     data = pytesseract.image_to_data(image, config=config, output_type=pytesseract.Output.DICT)
+09 
+10     lines = {}
+11     for i, word in enumerate(data['text']):
+12         if int(data['conf'][i]) > 45:
+13             line_num = data['line_num'][i]
+14             if line_num in lines:
+15                 lines[line_num].append(word)
+16             else:
+17                 lines[line_num] = [word]
+18 
+19     text = '\n'.join([' '.join(lines[line]) for line in sorted(lines.keys())])
+20     average_confidence = sum(data['conf']) / len(data['conf']) if len(data['conf']) > 0 else 0
+21     return text, average_confidence
+22 
+
+// File: step_02_ocr\__init__.py Depth: 1
+
+
+// File: step_03_postprocess\spellcheck_step.py Depth: 1
+
+
+// File: step_03_postprocess\toc_generation_step Depth: 1
+
+
+// File: step_03_postprocess\__init__.py Depth: 1
+
+
+// File: __init__.py Depth: 0
+

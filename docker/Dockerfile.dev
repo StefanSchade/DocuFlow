@@ -25,6 +25,8 @@ RUN apt-get update && apt-get install -y \
     enchant-2 \
     asciidoctor \
     bash \
+    jq \
+    parallel \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
@@ -42,10 +44,11 @@ RUN cat /workspace/tessdata.txt | tr -d '\r' | xargs -n 1 wget --no-check-certif
 
 # Copy the requirements file
 COPY requirements.txt /workspace
+COPY requirements-dev.txt /workspace
 
 # Create and activate a virtual environment and install dependencies
 RUN python3 -m venv /workspace/venv && \
-    /bin/bash -c "source /workspace/venv/bin/activate && pip install --no-cache-dir -r /workspace/requirements.txt && pip list"
+    /bin/bash -c "source /workspace/venv/bin/activate && pip install --no-cache-dir -r /workspace/requirements.txt && pip install --no-cache-dir -r /workspace/requirements-dev.txt && pip list"
 
 # Set environment variables for the virtual environment
 ENV PATH="/workspace/venv/bin:$PATH"

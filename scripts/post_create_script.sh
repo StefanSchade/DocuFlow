@@ -20,7 +20,8 @@ chmod +x /workspace/scripts/*.sh
 # Execute additional setup scripts
 source /workspace/scripts/setup_ssh_git.sh 
 source /workspace/scripts/setup_docker_proxy.sh 
-source /workspace/scripts/install_python_dependencies.sh
+# redundant, as already in Dockerfile.dev
+# source /workspace/scripts/install_python_dependencies.sh
 
 # Check for ZScaler certificate and add to default CA store if it exists
 CERT_PATH="/workspace/zscaler.crt"
@@ -41,3 +42,7 @@ if [ -f "$CERT_PATH" ]; then
 else
     echo "ZScaler certificate not found. Skipping CA store update."
 fi
+
+echo "The following Python packages are installed:"
+pip list
+
