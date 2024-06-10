@@ -10,12 +10,14 @@ DEFAULT_MAX_ROTATION_STEPS = 10  # steps
 HIGH_CONFIDENCE_THRESHOLD = 60  # Set an appropriate threshold for high confidence
 
 def rotate_image(image, angle):
-    image = np.array(image)  # Convert PIL Image to NumPy array
-    (h, w) = image.shape[:2]
-    center = (w // 2, h // 2)
-    M = cv2.getRotationMatrix2D(center, angle, 1.0)
-    rotated = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
-    return Image.fromarray(rotated)  # Convert back to PIL Image if necessary
+    """Rotate the image by a specific angle without cropping."""
+    width, height = image.size
+    diagonal = int(np.sqrt(width**2 + height**2))
+    new_image = Image.new("RGB", (diagonal, diagonal), (255, 255, 255))
+    new_image.paste(image, ((diagonal - width) // 2, (diagonal - height) // 2))
+    rotated_image = new_image.rotate(angle, expand=True)
+    return rotated_image
+
 
 def check_orientations(image, language, tessdata_dir_config, psm, check_orientation):
     if check_orientation == 'NONE':
