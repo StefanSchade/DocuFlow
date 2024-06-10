@@ -35,8 +35,9 @@ def test_preprocess_step_integration(tmpdir):
     assert len(processed_files) > 0
 
     # Read and print results (for demonstration purposes, not typical for automated tests)
-    for processed_file in processed_files:
-        print(processed_file)
+    if os.getenv("DEBUG_PRINTS", "false").lower() == "true":
+        for processed_file in processed_files:
+            print(processed_file)
 
 def create_test_image(file_path, text):
     """Creates a simple image with text for testing purposes."""
