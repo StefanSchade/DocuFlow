@@ -22,24 +22,32 @@ class OCRStep(PipelineStep):
         image_files = [f for f in os.listdir(preprocessed_dir) if f.endswith(('.jpeg', '.jpg', '.png'))]
         output_file = os.path.join(ocr_result_dir, 'ocr_result.json')
 
-        with open(output_file, 'w', encoding='utf-8') as file_out:
-            for index, image_file in enumerate(image_files, start=1):
-                img_path = os.path.join(preprocessed_dir, image_file)
-                logging.info(f"Starting analysis of file: {image_file}")
-                img = Image.open(img_path)
-                text, final_angle, confidence = check_orientations(img, self.language, tessdata_dir_config, self.psm, self.check_orientation)
-                
-                json_output = {
-                    "page_number": index,
-                    "source_file": image_file,
-                    "final_angle": final_angle,
-                    "confidence": confidence,
-                    "text": text
-                }
+        # Delete the output file if it exists
+        try:
+            os.remove(output_file)
+            logging.info(f"Deleted existing file: {output_file}")
+        except FileNotFoundError:
+            logging.info(f"No existing file to delete: {output_file}")
+
+        for index, image_file in enumerate(image_files, start=1):
+            img_path = os.path.join(preprocessed_dir, image_file)
+            logging.info(f"Starting analysis of file: {image_file}")
+            img = Image.open(img_path)
+            text, final_angle, confidence = check_orientations(img, self.language, tessdata_dir_config, self.psm, self.check_orientation)
+            text_lines = text.split('\n')
+
+            json_output = {
+                "page_number": index,
+                "source_file": image_file,
+                "final_angle": final_angle,
+                "confidence": confidence,
+                "text_lines": text_lines
+            }
+            with open(output_file, 'a', encoding='utf-8') as file_out:
                 json.dump(json_output, file_out)
                 file_out.write('\n')
-                logging.debug(f"Processed {image_file} with final angle: {final_angle}")
+            logging.debug(f"Processed {image_file} with final angle: {final_angle}")
 
-                # Save processed image if required
-                if self.save_preprocessed:
-                    img.save(os.path.join(ocr_result_dir, f"processed_{image_file}"))
+            # Save processed image if required
+            if self.save_preprocessed:
+                img.save(os.path.join(ocr_result_dir, f"processed_{image_file}"))
