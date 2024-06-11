@@ -31,5 +31,5 @@ def tesseract_ocr(image, language, tessdata_dir_config, psm):
     else:
         average_confidence = sum(confidences) / len(confidences)
 
-    logging.debug(f"Final text: {text}, Average confidence: {average_confidence}")
+    # logging.debug(f"Final text: {text}, Average confidence: {average_confidence}")
     return text, average_confidence, len(data['text'])

@@ -9,45 +9,48 @@
 06 # Constants
 07 INPUT_DIRECTORY = '/workspace/data'
 08 LOG_FILE = '/workspace/data/pipeline.log'
-09 PATH_TO_TESSERACT= '/usr/share/tesseract-ocr/4.00/tessdata'
+09 PATH_TO_TESSERACT = '/usr/share/tesseract-ocr/4.00/tessdata'
 10 
-11 # Add PATH_TO_TESSERACT to args
-12 args.path_to_tesseract = PATH_TO_TESSERACT
-13 
-14 # Setup logging
-15 logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-16 
-17 def run_pipeline(args):
-18     logging.info("Starting pipeline execution")
-19     
-20     # Step 1: Preprocessing
-21     step_01 = PreprocessStep(args)
-22     step_01.run(INPUT_DIRECTORY)
-23 
-24     # Step 2: OCR
-25     step_02 = OCRStep(PATH_TO_TESSERACT, args)
-26     step_02.run(os.path.join(INPUT_DIRECTORY, 'preprocessed'))
-27 
-28     logging.info("Pipeline execution completed successfully")
-29 
-30     # Step 3: ...
-31     
-32 
-33 if __name__ == "__main__":
-34     import argparse
-35     parser = argparse.ArgumentParser(description='Run OCR pipeline')
-36     parser.add_argument('--grayscale', action='store_true', help='Convert image to grayscale')
-37     parser.add_argument('--remove-noise', action='store_true', help='Apply noise removal')
-38     parser.add_argument('--threshold', type=int, default=0, help='Threshold for binarization')
-39     parser.add_argument('--dilate', action='store_true', help='Apply dilation')
-40     parser.add_argument('--erode', action='store_true', help='Apply erosion')
-41     parser.add_argument('--opening', action='store_true', help='Apply opening (erosion followed by dilation)')
-42     parser.add_argument('--canny', action='store_true', help='Apply Canny edge detection')
-43     parser.add_argument('--language', type=str, default='eng', help='Language for Tesseract OCR')
-44     parser.add_argument('--check-orientation', type=int, choices=[0, 1], default=0, help='Check and correct orientation')
-45     parser.add_argument('--psm', type=int, choices=list(range(14)), default=6, help='Tesseract Page Segmentation Mode (PSM)')
-46     args = parser.parse_args()
-47     run_pipeline(args)
+11 def run_pipeline(args):
+12     logging.info("Starting pipeline execution")
+13     
+14     # Add PATH_TO_TESSERACT to args
+15     args.path_to_tesseract = PATH_TO_TESSERACT
+16     
+17     # Step 1: Preprocessing
+18     step_01 = PreprocessStep(args)
+19     step_01.run(INPUT_DIRECTORY)
+20 
+21     # Step 2: OCR
+22     step_02 = OCRStep(args)
+23     step_02.run(INPUT_DIRECTORY)
+24 
+25     logging.info("Pipeline execution completed successfully")
+26 
+27     # Step 3: Postprocessing (placeholder for future steps)
+28 
+29 if __name__ == "__main__":
+30     import argparse
+31     parser = argparse.ArgumentParser(description='Run OCR pipeline')
+32     parser.add_argument('--grayscale', action='store_true', help='Convert image to grayscale')
+33     parser.add_argument('--remove-noise', action='store_true', help='Apply noise removal')
+34     parser.add_argument('--threshold', type=int, default=0, help='Threshold for binarization')
+35     parser.add_argument('--dilate', action='store_true', help='Apply dilation')
+36     parser.add_argument('--erode', action='store_true', help='Apply erosion')
+37     parser.add_argument('--opening', action='store_true', help='Apply opening (erosion followed by dilation)')
+38     parser.add_argument('--canny', action='store_true', help='Apply Canny edge detection')
+39     parser.add_argument('--language', type=str, default='eng', help='Language for Tesseract OCR')
+40     parser.add_argument('--check-orientation', type=str, choices=['NONE', 'BASIC', 'FINE'], default='NONE', help='Check and correct orientation')
+41     parser.add_argument('--psm', type=int, choices=list(range(14)), default=6, help='Tesseract Page Segmentation Mode (PSM)')
+42     parser.add_argument('--save-preprocessed', action='store_true', help='Save preprocessed images')
+43     parser.add_argument('--log-level', type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='INFO', help='Set the logging level')
+44     
+45     args = parser.parse_args()
+46 
+47     # Setup logging
+48     logging.basicConfig(filename=LOG_FILE, level=getattr(logging, args.log_level.upper()), format='%(asctime)s - %(levelname)s - %(message)s')
+49 
+50     run_pipeline(args)
 
 // File: pipeline_step.py Depth: 0
 
@@ -103,93 +106,209 @@
 
 // File: step_02_ocr\ocr_step.py Depth: 1
 
-01 # src/ocr/ocr_step.py
-02 
-03 import os
-04 from PIL import Image
-05 from pipeline_step import PipelineStep
-06 from step_02_ocr.utils_optimization import check_orientations
-07 from step_02_ocr.utils_tesseract import tesseract_ocr
+01 import os
+02 from PIL import Image
+03 from pipeline_step import PipelineStep
+04 from step_02_ocr.utils_optimization import check_orientations
+05 from step_02_ocr.utils_tesseract import tesseract_ocr
+06 import json
+07 import logging
 08 
 09 class OCRStep(PipelineStep):
-10     def __init__(self, tessdata_dir, args):
+10     def __init__(self, args):
 11         self.language = args.language
-12         self.tessdata_dir = args.tessdata_dir
+12         self.tessdata_dir = args.path_to_tesseract
 13         self.check_orientation = args.check_orientation
 14         self.psm = args.psm
-15 
-16     def run(self, input_data):
-17         tessdata_dir_config = f'--tessdata-dir "{self.tessdata_dir}"'
-18         image_files = [f for f in os.listdir(input_data) if f.endswith(('.jpeg', '.jpg', '.png'))]
-19         output_file = os.path.join(input_data, 'ocr_result.txt')
-20 
-21         with open(output_file, 'w', encoding='utf-8') as file_out:
-22             for image_file in image_files:
-23                 img_path = os.path.join(input_data, image_file)
-24                 img = Image.open(img_path)
-25                 if self.check_orientation:
-26                     text, final_angle, confidence = check_orientations(img, self.language, tessdata_dir_config, self.psm)
-27                 else:
-28                     text, confidence = tesseract_ocr(img, self.language, tessdata_dir_config, self.psm)
-29                 file_out.write(text + '\n')
+15         self.save_preprocessed = args.save_preprocessed
+16         self.log_level = args.log_level.upper()
+17 
+18     def run(self, main_directory):
+19         preprocessed_dir = os.path.join(main_directory, 'preprocessed')
+20         ocr_result_dir = os.path.join(main_directory, 'ocr_result')
+21         if self.log_level == 'DEBUG':
+22             ocr_debug_dir = os.path.join(main_directory, 'ocr_debug')
+23             os.makedirs(ocr_debug_dir, exist_ok=True)
+24         
+25         os.makedirs(ocr_result_dir, exist_ok=True)
+26         tessdata_dir_config = f'--tessdata-dir "{self.tessdata_dir}"'
+27         image_files = [f for f in os.listdir(preprocessed_dir) if f.endswith(('.jpeg', '.jpg', '.png'))]
+28         output_file = os.path.join(ocr_result_dir, 'ocr_result.json')
+29 
+30         # Delete the output file if it exists
+31         try:
+32             os.remove(output_file)
+33             logging.info(f"Deleted existing file: {output_file}")
+34         except FileNotFoundError:
+35             logging.info(f"No existing file to delete: {output_file}")
+36 
+37         for index, image_file in enumerate(image_files, start=1):
+38             img_path = os.path.join(preprocessed_dir, image_file)
+39             logging.info(f"Starting analysis of file: {image_file}")
+40             img = Image.open(img_path)
+41             text, final_angle, confidence = check_orientations(img, self.language, tessdata_dir_config, self.psm, self.check_orientation, ocr_debug_dir )
+42             text_lines = text.split('\n')
+43 
+44             json_output = {
+45                 "page_number": index,
+46                 "source_file": image_file,
+47                 "final_angle": final_angle,
+48                 "confidence": confidence,
+49                 "text_lines": text_lines
+50             }
+51             with open(output_file, 'a', encoding='utf-8') as file_out:
+52                 json.dump(json_output, file_out)
+53                 file_out.write('\n')
+54             logging.debug(f"Processed {image_file} with final angle: {final_angle}")
+55 
+56             # Save processed image if required
+57             if self.save_preprocessed:
+58                 img.save(os.path.join(ocr_result_dir, f"processed_{image_file}"))
 
 // File: step_02_ocr\utils_optimization.py Depth: 1
 
-01 import cv2
-02 import pytesseract
-03 import numpy as np
-04 from PIL import Image
-05 
-06 def rotate_image(image, angle):
-07     image = np.array(image)  # Convert PIL Image to NumPy array
-08     (h, w) = image.shape[:2]
-09     center = (w // 2, h // 2)
-10     M = cv2.getRotationMatrix2D(center, angle, 1.0)
-11     rotated = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
-12     return Image.fromarray(rotated)  # Convert back to PIL Image if necessary
-13 
-14 def check_orientations(image, language, tessdata_dir_config, psm):
-15     orientations = [0, 90, 180, 270]
-16     best_text = ''
-17     highest_confidence = -1
-18     final_angle = 0
-19 
-20     for angle in orientations:
-21         rotated_image = rotate_image(image, angle)
-22         text, confidence = tesseract_ocr(rotated_image, language, tessdata_dir_config, psm)
-23         if confidence > highest_confidence:
-24             highest_confidence = confidence
-25             best_text = text
-26             final_angle = angle
-27         if confidence >= 60:
-28             break
-29 
-30     return best_text, final_angle, highest_confidence
+001 import os
+002 import cv2
+003 import numpy as np
+004 from PIL import Image
+005 from step_02_ocr.utils_tesseract import tesseract_ocr
+006 import logging
+007 
+008 # Constants for fine orientation checks
+009 DEFAULT_SMALL_ROTATION_STEP = 1  # degrees
+010 DEFAULT_MAX_ROTATION_STEPS = 20  # steps
+011 HIGH_CONFIDENCE_THRESHOLD = 60  # Set an appropriate threshold for high confidence
+012 
+013 def rotate_image(image, angle, ocr_debug_dir):
+014     """Rotate the image by a specific angle without cropping."""
+015     width, height = image.size
+016     diagonal = int(np.sqrt(width**2 + height**2))
+017     new_image = Image.new("RGB", (diagonal, diagonal), (255, 255, 255))
+018     new_image.paste(image, ((diagonal - width) // 2, (diagonal - height) // 2))
+019     rotated_image = new_image.rotate(angle, expand=True)
+020     if ocr_debug_dir is not None:
+021         rotated_image.save(os.path.join(ocr_debug_dir, f"angle_{angle}.jpg"))
+022     return rotated_image
+023 
+024 def check_orientations(input_image, language, tessdata_dir_config, psm, check_orientation, ocr_debug_dir):
+025     if check_orientation == 'NONE':
+026         text, confidence, _ = tesseract_ocr(input_image, language, tessdata_dir_config, psm)
+027         return text, 0, confidence
+028 
+029     orientations = [0, 90, 180, 270, 45, 135, 315]
+030     best_text = ''
+031     highest_confidence = -1
+032     final_angle = 0
+033     baseline_length = 0
+034 
+035     logging.debug(f"Basic orientation check with psm={psm}, language={language}")
+036 
+037     # Basic orientation check
+038     for angle in orientations:
+039         rotated_image = rotate_image(input_image, angle, ocr_debug_dir)
+040         text, confidence, text_length = tesseract_ocr(rotated_image, language, tessdata_dir_config, psm)
+041         logging.debug(f"..... angle={angle} degrees, confidence={confidence}, text length={len(text)}")
+042 
+043         if confidence > highest_confidence:
+044             highest_confidence = confidence
+045             best_text = text
+046             final_angle = angle
+047             baseline_length = text_length
+048 
+049         # Early stopping if confidence is high enough
+050         if confidence >= HIGH_CONFIDENCE_THRESHOLD:
+051             logging.debug(f"High confidence {confidence} at {angle} degrees, stopping coarse check early.")
+052             break
+053 
+054     logging.debug(f"Basic orientation correction result: Confidence={highest_confidence}, orientation={final_angle}")
+055 
+056     if check_orientation == 'FINE':
+057         logging.debug("Starting fine orientation check")
+058         step = DEFAULT_SMALL_ROTATION_STEP
+059 
+060         # Fine adjustments in one direction
+061         improved = True
+062         while step <= DEFAULT_MAX_ROTATION_STEPS and improved:
+063             adjusted_angle = final_angle + step
+064             adjusted_image = rotate_image(input_image, adjusted_angle, ocr_debug_dir)
+065             adjusted_text, adjusted_confidence, adjusted_length = tesseract_ocr(adjusted_image, language, tessdata_dir_config, psm)
+066             # Penalize the confidence if the length of the text deviates significantly from the baseline
+067             length_penalty = abs(baseline_length - adjusted_length) / baseline_length
+068             adjusted_confidence -= length_penalty * adjusted_confidence
+069             logging.debug(f"Fine check at {adjusted_angle} degrees: Confidence={adjusted_confidence}, Text={adjusted_text}")
+070 
+071             if adjusted_confidence > highest_confidence:
+072                 highest_confidence = adjusted_confidence
+073                 best_text = adjusted_text
+074                 final_angle = adjusted_angle
+075                 improved = True
+076             else:
+077                 improved = False
+078 
+079             step += 1
+080 
+081         # If no improvement was found, try the other direction
+082         if not improved:
+083             step = DEFAULT_SMALL_ROTATION_STEP
+084             improved = True
+085             while step <= DEFAULT_MAX_ROTATION_STEPS and improved:
+086                 adjusted_angle = final_angle - step
+087                 adjusted_image = rotate_image(input_image, adjusted_angle, ocr_debug_dir)
+088                 adjusted_text, adjusted_confidence, adjusted_length = tesseract_ocr(adjusted_image, language, tessdata_dir_config, psm)
+089                 length_penalty = abs(baseline_length - adjusted_length) / baseline_length
+090                 adjusted_confidence -= length_penalty * adjusted_confidence
+091                 logging.debug(f"Fine check at {adjusted_angle} degrees: Confidence={adjusted_confidence}")
+092 
+093                 if adjusted_confidence > highest_confidence:
+094                     highest_confidence = adjusted_confidence
+095                     best_text = adjusted_text
+096                     final_angle = adjusted_angle
+097                     improved = True
+098                 else:
+099                     improved = False
+100 
+101                 step += 1
+102 
+103     logging.info(f"Orientation correction result: Confidence={highest_confidence}, orientation={final_angle}")
+104     return best_text, final_angle, highest_confidence
 
 // File: step_02_ocr\utils_tesseract.py Depth: 1
 
-01 import cv2
-02 import pytesseract
-03 import numpy as np
-04 from PIL import Image
-05 
-06 def tesseract_ocr(image, language, tessdata_dir_config, psm):
-07     config = f'--psm {psm} -l {language} {tessdata_dir_config}'
-08     data = pytesseract.image_to_data(image, config=config, output_type=pytesseract.Output.DICT)
-09 
-10     lines = {}
-11     for i, word in enumerate(data['text']):
-12         if int(data['conf'][i]) > 45:
-13             line_num = data['line_num'][i]
-14             if line_num in lines:
-15                 lines[line_num].append(word)
-16             else:
-17                 lines[line_num] = [word]
-18 
-19     text = '\n'.join([' '.join(lines[line]) for line in sorted(lines.keys())])
-20     average_confidence = sum(data['conf']) / len(data['conf']) if len(data['conf']) > 0 else 0
-21     return text, average_confidence
-22 
+01 import pytesseract
+02 import logging
+03 
+04 # Constants
+05 MIN_WORD_LENGTH_FOR_CONFIDENCE = 3
+06 MIN_WORD_COUNT_FOR_CONFIDENCE = 3
+07 MIN_CONFIDENCE_FOR_WORD = 60
+08 
+09 def tesseract_ocr(image, language, tessdata_dir_config, psm):
+10     config = f'--psm {psm} -l {language} {tessdata_dir_config}'
+11     data = pytesseract.image_to_data(image, config=config, output_type=pytesseract.Output.DICT)
+12 
+13     lines = {}
+14     confidences = []
+15 
+16     for i, word in enumerate(data['text']):
+17         conf = int(data['conf'][i])
+18         if conf > MIN_CONFIDENCE_FOR_WORD:  # Only consider confident recognitions
+19             line_num = data['line_num'][i]
+20             if line_num in lines:
+21                 lines[line_num].append(word)
+22             else:
+23                 lines[line_num] = [word]
+24             if len(word) >= MIN_WORD_LENGTH_FOR_CONFIDENCE:
+25                 confidences.append(conf)
+26 
+27     text = '\n'.join([' '.join(lines[line]) for line in sorted(lines.keys())])
+28     
+29     if len(confidences) < MIN_WORD_COUNT_FOR_CONFIDENCE:
+30         average_confidence = 0
+31     else:
+32         average_confidence = sum(confidences) / len(confidences)
+33 
+34     # logging.debug(f"Final text: {text}, Average confidence: {average_confidence}")
+35     return text, average_confidence, len(data['text'])
 
 // File: step_02_ocr\__init__.py Depth: 1
 

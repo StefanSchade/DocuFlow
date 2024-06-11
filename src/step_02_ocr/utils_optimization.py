@@ -21,9 +21,9 @@ def rotate_image(image, angle, ocr_debug_dir):
         rotated_image.save(os.path.join(ocr_debug_dir, f"angle_{angle}.jpg"))
     return rotated_image
 
-def check_orientations(image, language, tessdata_dir_config, psm, check_orientation, ocr_debug_dir):
+def check_orientations(input_image, language, tessdata_dir_config, psm, check_orientation, ocr_debug_dir):
     if check_orientation == 'NONE':
-        text, confidence, _ = tesseract_ocr(image, language, tessdata_dir_config, psm)
+        text, confidence, _ = tesseract_ocr(input_image, language, tessdata_dir_config, psm)
         return text, 0, confidence
 
     orientations = [0, 90, 180, 270, 45, 135, 315]
@@ -32,13 +32,13 @@ def check_orientations(image, language, tessdata_dir_config, psm, check_orientat
     final_angle = 0
     baseline_length = 0
 
-    logging.debug("Starting coarse orientation check")
+    logging.debug(f"Basic orientation check with psm={psm}, language={language}")
 
-    # Coarse orientation check
+    # Basic orientation check
     for angle in orientations:
-        rotated_image = rotate_image(image, angle, ocr_debug_dir)
+        rotated_image = rotate_image(input_image, angle, ocr_debug_dir)
         text, confidence, text_length = tesseract_ocr(rotated_image, language, tessdata_dir_config, psm)
-        logging.debug(f"Basic check at {angle} degrees: Confidence={confidence}, Text: {text}")
+        logging.debug(f"..... angle={angle} degrees, confidence={confidence}, text length={len(text)}")
 
         if confidence > highest_confidence:
             highest_confidence = confidence
@@ -61,7 +61,7 @@ def check_orientations(image, language, tessdata_dir_config, psm, check_orientat
         improved = True
         while step <= DEFAULT_MAX_ROTATION_STEPS and improved:
             adjusted_angle = final_angle + step
-            adjusted_image = rotate_image(image, adjusted_angle, ocr_debug_dir)
+            adjusted_image = rotate_image(input_image, adjusted_angle, ocr_debug_dir)
             adjusted_text, adjusted_confidence, adjusted_length = tesseract_ocr(adjusted_image, language, tessdata_dir_config, psm)
             # Penalize the confidence if the length of the text deviates significantly from the baseline
             length_penalty = abs(baseline_length - adjusted_length) / baseline_length
@@ -84,7 +84,7 @@ def check_orientations(image, language, tessdata_dir_config, psm, check_orientat
             improved = True
             while step <= DEFAULT_MAX_ROTATION_STEPS and improved:
                 adjusted_angle = final_angle - step
-                adjusted_image = rotate_image(image, adjusted_angle, ocr_debug_dir)
+                adjusted_image = rotate_image(input_image, adjusted_angle, ocr_debug_dir)
                 adjusted_text, adjusted_confidence, adjusted_length = tesseract_ocr(adjusted_image, language, tessdata_dir_config, psm)
                 length_penalty = abs(baseline_length - adjusted_length) / baseline_length
                 adjusted_confidence -= length_penalty * adjusted_confidence

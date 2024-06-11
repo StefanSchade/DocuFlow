@@ -46,3 +46,9 @@ fi
 echo "The following Python packages are installed:"
 pip list
 
+# setting env variables
+
+echo 'export TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata' >> ~/.bashrc
+echo 'export TESSDATA_PREFIX=/usr/local/Cellar/tesseract/4.00/share/tessdata' >> ~/.zshrc
+
+
