@@ -1,0 +1,19 @@
+In the appended file, you find a software development project I am working on.
+
+I develop under Windows, to get access to a unix environment, I use DevContainers under VSCode. The main technology is python.
+
+I intend to establish a pipeline that automates the transformation of analogue texts via ocr digitization. The starting point is a batch of images and the steps should include various preprocessing steps improving the image quality, carrying out the ocr process, possibly including algorithmic optimization as varying the input to acchive the optimal output, a sanitization of the output by applying spell checking and reformating. Eventually the output should be transfered into a structured document (e.g. asciidoc) perhaps images should be automatically inserted at the appropriate places and cropped.
+
+The input data are either screen shots obtained by a separate tool or photographs from old books, genealogic documents, letters and the like.
+
+Obviously it is challenging to capture the whole transformation in an automated process, so users should have the possibly to interfer - for instance by reviewing a particular step and restarting from there with the manually improved intermediate result. (for instance there might be a step idetifying section headings and arranging them in a hierachical order to structure the document - It would at this point make a lot of sense to allow the user to correct the result and to continue from there with the disection of the document. Another example would be to create a list of changes applied during spell-checking that could be reviewed by a human to prevent cases where the source material is made worse by the process).
+
+The user would start with supplying an input folder that contains the images to be used as source material. then the consequtive process steps should operate on that folder each puting their own output into a subfolder perhaps and taking their input from either the original images or one of the subfolders containing intermediate results?
+
+The whole pipeline has to be quite flexible in that it should be easy to insert new process steps or rearange the sequence of the existing steps as there probably is a lot of experimentation involved. Each step should be of limited size, right now the step represented by the ocr_batch becomes rather unwieldy and I feel the need to disect it into multiple steps. 
+
+I am not yet completely familiar with python - but I think we need some kind of interface to describe the abstraction of a process step within the pipe. ocr_batch should become two steps (1 and 2 at the moment) with 1 being dedicated to preprocess the images and 2 being dedicated to perform the actual ocr operation (which also includes optimization like optimising the image orientation by maximising the confidence of the ocr opration).
+
+other steps like the sanitization by spell checking, the identification of chapter and section headings form a toc etc. would follow.
+
+Please suggest the next steps including implementation.

@@ -20,38 +20,42 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-venv \
     tesseract-ocr \
+    libtesseract-dev\
     libenchant-2-2 \
     libglib2.0-dev \
     enchant-2 \
     asciidoctor \
     bash \
+    jq \
+    parallel \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory for the project
 WORKDIR /workspace
 
-# Copy the requirements file
-COPY requirements.txt /workspace
+# Copy the scripts
+COPY scripts /workspace/scripts
 
 # Copy the tessdata.txt file
 COPY tessdata.txt /workspace
 
-# Copy the source code
-COPY src /workspace/src
-
-# Copy the scripts
-COPY scripts /workspace/scripts
-
 # Download Tesseract language data, removing any carriage return characters
 RUN cat /workspace/tessdata.txt | tr -d '\r' | xargs -n 1 wget --no-check-certificate -P /usr/share/tesseract-ocr/4.00/tessdata/
 
+# Copy the requirements file
+COPY requirements.txt /workspace
+COPY requirements-dev.txt /workspace
+
 # Create and activate a virtual environment and install dependencies
 RUN python3 -m venv /workspace/venv && \
-    /bin/bash -c "source /workspace/venv/bin/activate && pip install --no-cache-dir -r /workspace/requirements.txt && pip list"
+    /bin/bash -c "source /workspace/venv/bin/activate && pip install --no-cache-dir -r /workspace/requirements.txt && pip install --no-cache-dir -r /workspace/requirements-dev.txt && pip list"
 
 # Set environment variables for the virtual environment
 ENV PATH="/workspace/venv/bin:$PATH"
+
+# Copy the source code
+COPY src /workspace/src
 
 # Run bash by default
 CMD ["bash"]

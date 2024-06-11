@@ -458,9 +458,13 @@ This section explains the steps we took to set up the development container for 
 
 
 
+notes
 
+export TESSDATA_PREFIX=/usr/local/Cellar/tesseract/<version>/share/
 
+tesseract /path/to/your/image.jpg stdout -l eng --psm 3
 
+tesseract /path/to/saved_image.jpg stdout -l eng --psm 3
 
 
 
