@@ -5,9 +5,9 @@ import os
 import json
 
 # Constants
-MIN_WORD_LENGTH_FOR_CONFIDENCE = 3
-MIN_WORD_COUNT_FOR_CONFIDENCE = 3
-MIN_CONFIDENCE_FOR_WORD = 60
+MIN_WORD_LENGTH_FOR_CONFIDENCE = 4
+MIN_WORD_COUNT_FOR_CONFIDENCE = 4
+MIN_CONFIDENCE_FOR_WORD = 70
 
 def tesseract_ocr(image, language, tessdata_dir_config, psm, ocr_debug_dir, angle):
     config = f'--psm {psm} -l {language} {tessdata_dir_config}'
