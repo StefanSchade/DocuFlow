@@ -9,7 +9,7 @@ MIN_WORD_LENGTH_FOR_CONFIDENCE = 3
 MIN_WORD_COUNT_FOR_CONFIDENCE = 3
 MIN_CONFIDENCE_FOR_WORD = 60
 
-def tesseract_ocr(image, language, tessdata_dir_config, psm, ocr_debug_dir):
+def tesseract_ocr(image, language, tessdata_dir_config, psm, ocr_debug_dir, angle):
     config = f'--psm {psm} -l {language} {tessdata_dir_config}'
     data = pytesseract.image_to_data(image, config=config, output_type=pytesseract.Output.DICT)
 
@@ -35,10 +35,9 @@ def tesseract_ocr(image, language, tessdata_dir_config, psm, ocr_debug_dir):
         average_confidence = sum(confidences) / len(confidences)
 
     if ocr_debug_dir is not None:
-        debug_file_path = os.path.join(ocr_debug_dir, "ocr_debug_data.json")
+        debug_file_path = os.path.join(ocr_debug_dir, f"ocr_debug_data_angle_{angle}.json")
         with open(debug_file_path, 'a', encoding='utf-8') as debug_file:
             json.dump(data, debug_file, ensure_ascii=False, indent=4)
             debug_file.write('\n')
 
-    logging.debug(f"Final text: {text}, Average confidence: {average_confidence}")
     return text, average_confidence, len(data['text'])
