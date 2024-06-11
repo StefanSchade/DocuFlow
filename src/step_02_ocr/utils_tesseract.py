@@ -15,7 +15,7 @@ def tesseract_ocr(image, language, tessdata_dir_config, psm):
 
     for i, word in enumerate(data['text']):
         conf = int(data['conf'][i])
-        if conf > MIN_CONFIDENCE_FOR_WORD :  # Only consider confident recognitions
+        if conf > MIN_CONFIDENCE_FOR_WORD:  # Only consider confident recognitions
             line_num = data['line_num'][i]
             if line_num in lines:
                 lines[line_num].append(word)
@@ -32,4 +32,4 @@ def tesseract_ocr(image, language, tessdata_dir_config, psm):
         average_confidence = sum(confidences) / len(confidences)
 
     logging.debug(f"Final text: {text}, Average confidence: {average_confidence}")
-    return text, average_confidence
+    return text, average_confidence, len(data['text'])
