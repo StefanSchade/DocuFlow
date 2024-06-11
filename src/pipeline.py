@@ -1,3 +1,4 @@
+# File: pipeline.py
 import os
 import logging
 from step_01_preprocess.preprocess_step import PreprocessStep
@@ -24,8 +25,6 @@ def run_pipeline(args):
 
     logging.info("Pipeline execution completed successfully")
 
-    # Step 3: Postprocessing (placeholder for future steps)
-
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Run OCR pipeline')
@@ -46,5 +45,7 @@ if __name__ == "__main__":
 
     # Setup logging
     logging.basicConfig(filename=LOG_FILE, level=getattr(logging, args.log_level.upper()), format='%(asctime)s - %(levelname)s - %(message)s')
+
+    logging.debug(f"Running Pipeline args={args}")    
 
     run_pipeline(args)
