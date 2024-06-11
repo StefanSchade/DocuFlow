@@ -13,10 +13,15 @@ class OCRStep(PipelineStep):
         self.check_orientation = args.check_orientation
         self.psm = args.psm
         self.save_preprocessed = args.save_preprocessed
+        self.log_level = args.log_level.upper()
 
     def run(self, main_directory):
         preprocessed_dir = os.path.join(main_directory, 'preprocessed')
         ocr_result_dir = os.path.join(main_directory, 'ocr_result')
+        if self.log_level == 'DEBUG':
+            ocr_debug_dir = os.path.join(main_directory, 'ocr_debug')
+            os.makedirs(ocr_debug_dir, exist_ok=True)
+        
         os.makedirs(ocr_result_dir, exist_ok=True)
         tessdata_dir_config = f'--tessdata-dir "{self.tessdata_dir}"'
         image_files = [f for f in os.listdir(preprocessed_dir) if f.endswith(('.jpeg', '.jpg', '.png'))]
@@ -33,7 +38,7 @@ class OCRStep(PipelineStep):
             img_path = os.path.join(preprocessed_dir, image_file)
             logging.info(f"Starting analysis of file: {image_file}")
             img = Image.open(img_path)
-            text, final_angle, confidence = check_orientations(img, self.language, tessdata_dir_config, self.psm, self.check_orientation)
+            text, final_angle, confidence = check_orientations(img, self.language, tessdata_dir_config, self.psm, self.check_orientation, ocr_debug_dir )
             text_lines = text.split('\n')
 
             json_output = {
