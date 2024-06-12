@@ -12,7 +12,7 @@ ENV http_proxy=${http_proxy}
 ENV https_proxy=${https_proxy}
 ENV no_proxy=${no_proxy}
 
-# Install tools and Docker
+# Install tools, Docker, and dependencies
 RUN apt-get update && \
     apt-get install -y \
     apt-transport-https \
@@ -22,7 +22,7 @@ RUN apt-get update && \
     vim \
     gnupg2 \
     tesseract-ocr \
-    libtesseract-dev\
+    libtesseract-dev \
     libenchant-2-2 \
     libglib2.0-dev \
     software-properties-common \
@@ -36,8 +36,14 @@ RUN apt-get update && \
     jq \
     git \
     parallel \
-    ca-certificates && \
-    apt-get clean && \
+    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - \
+    && add-apt-repository \
+       "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+       $(lsb_release -cs) \
+       stable" \
+    && apt-get update && apt-get install -y \
+       docker-ce docker-ce-cli containerd.io \
+    && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Set the working directory for the project
@@ -59,10 +65,6 @@ RUN set -e; \
         wget --no-check-certificate -P /usr/share/tesseract-ocr/4.00/tessdata/ "$url"; \
     done
 
-    # alternatively:
-    # Download Tesseract language data, removing any carriage return characters
-    # RUN cat /workspace/tessdata.txt | tr -d '\r' | xargs -n 1 wget --no-check-certificate -P /usr/share/tesseract-ocr/4.00/tessdata/
-
 # Copy the requirements file
 COPY requirements.txt /workspace
 COPY requirements-dev.txt /workspace
@@ -80,5 +82,5 @@ ENV PATH="/workspace/venv/bin:$PATH"
 # Copy the source code
 COPY src /workspace/src
 
-# Run bash by default
-CMD ["bash"]
+# Start Docker daemon
+CMD ["dockerd"]

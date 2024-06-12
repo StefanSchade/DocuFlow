@@ -32,24 +32,3 @@ cat /root/.ssh/known_hosts
 
 # Test the SSH connection to GitHub (optional, can be removed if not needed)
 ssh -T git@github.com || true  # Add || true to avoid script failure
-
-# Docker setup
-echo "Setting up Docker repository and GPG key..."
-
-# Add Docker’s official GPG key
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-
-# Add Docker’s official APT repository
-add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-   $(lsb_release -cs) \
-   stable"
-
-# Update the package index
-apt-get update
-
-# Install Docker
-apt-get install -y docker-ce docker-ce-cli containerd.io
-
-# Print Docker version
-docker --version
