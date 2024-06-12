@@ -1,38 +1,45 @@
 # Use an official Python runtime as a parent image
 FROM python:3.9-slim
 
-# Install required tools
+# Set environment variables to non-interactive
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     wget \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a non-root user and group
+# Create a group and user for the application
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
-# Set the working directory
+# Create necessary directories for the appuser
+RUN mkdir -p /home/appuser/.local && chown -R appuser:appgroup /home/appuser
+
+# Set environment variables for pip to use the local user directory
+ENV PATH=/home/appuser/.local/bin:$PATH \
+    PYTHONUSERBASE=/home/appuser/.local
+
+# Set the working directory for the application
 WORKDIR /app
 
-# Copy the source code and change ownership to the non-root user
+# Copy the source code
 COPY ./src /app/src
 COPY requirements.txt /app
 COPY tessdata.txt /app
 
-# Change ownership of the application directory
+# Change ownership of the application files to appuser
 RUN chown -R appuser:appgroup /app
 
 # Switch to the non-root user
 USER appuser
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
+# Install Python dependencies
+RUN pip install --user --no-cache-dir -r /app/requirements.txt
 
-# Download Tesseract language data, removing any carriage return characters
-RUN cat /app/tessdata.txt | tr -d '\r' | xargs -n 1 wget --no-check-certificate -P /usr/share/tesseract-ocr/4.00/tessdata/
+# Declare the mount point
+VOLUME /workspace/data
 
-# Set environment variables for the virtual environment
-ENV PATH="/app/venv/bin:$PATH"
-
-# Set the entry point to the pipeline script
+# Set the entry point for the container
 ENTRYPOINT ["python", "/app/src/pipeline.py"]

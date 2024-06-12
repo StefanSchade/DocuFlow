@@ -9,6 +9,15 @@ INPUT_DIRECTORY = '/workspace/data'
 LOG_FILE = '/workspace/data/pipeline.log'
 PATH_TO_TESSERACT = '/usr/share/tesseract-ocr/4.00/tessdata'
 
+def list_data_directory():
+    data_dir = "/workspace/data"
+    print(f"Listing contents of {data_dir}:")
+    for root, dirs, files in os.walk(data_dir):
+        for name in files:
+            print(os.path.join(root, name))
+        for name in dirs:
+            print(os.path.join(root, name))          
+
 def run_pipeline(args):
     logging.info("Starting pipeline execution")
     
@@ -42,6 +51,10 @@ if __name__ == "__main__":
     parser.add_argument('--log-level', type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='INFO', help='Set the logging level')
     
     args = parser.parse_args()
+
+    print("Pipeline script started")
+    print(f"Received arguments: {args}")
+    list_data_directory()
 
     # Setup logging
     logging.basicConfig(filename=LOG_FILE, level=getattr(logging, args.log_level.upper()), format='%(asctime)s - %(levelname)s - %(message)s')

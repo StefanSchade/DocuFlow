@@ -35,6 +35,8 @@ RUN apt-get update && \
     bash \
     jq \
     git \
+    kmod \
+    fuse-overlayfs \
     parallel \
     && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - \
     && add-apt-repository \

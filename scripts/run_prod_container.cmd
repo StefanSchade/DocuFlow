@@ -9,14 +9,22 @@ if "%1"=="" (
 
 REM Get the absolute path of the data directory
 set DATA_DIR=%~1
+echo Data directory: %DATA_DIR%
 
 REM Shift the first argument (data directory) and pass the rest to the script
+set SCRIPT_ARGS=
+:loop
 shift
-set SCRIPT_ARGS=%*
+if "%~1"=="" goto endloop
+set SCRIPT_ARGS=%SCRIPT_ARGS% %1
+goto loop
+:endloop
+echo Additional arguments: %SCRIPT_ARGS%
 
 REM Change to the project root directory
-cd ..
+cd %~dp0..
 
 REM Start the production container with additional script arguments
-docker run -it --rm -v %DATA_DIR%:/app/data -w /app prod-environment %SCRIPT_ARGS%
+docker run -it --rm -v "%DATA_DIR%:/workspace/data" prod-environment %SCRIPT_ARGS%
+
 pause
