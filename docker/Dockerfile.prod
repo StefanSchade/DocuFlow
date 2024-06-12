@@ -32,6 +32,9 @@ COPY tessdata.txt /app
 # Change ownership of the application files to appuser
 RUN chown -R appuser:appgroup /app
 
+# Create and set permissions for the workspace/data directory
+RUN mkdir -p /workspace/data && chown -R appuser:appgroup /workspace/data
+
 # Switch to the non-root user
 USER appuser
 
