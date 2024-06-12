@@ -18,6 +18,8 @@ class OCRStep(PipelineStep):
     def run(self, main_directory):
         preprocessed_dir = os.path.join(main_directory, 'preprocessed')
         ocr_result_dir = os.path.join(main_directory, 'ocr_result')
+        ocr_debug_dir = None
+        
         if self.log_level == 'DEBUG':
             ocr_debug_dir = os.path.join(main_directory, 'ocr_debug')
             os.makedirs(ocr_debug_dir, exist_ok=True)
@@ -34,6 +36,8 @@ class OCRStep(PipelineStep):
         except FileNotFoundError:
             logging.info(f"No existing file to delete: {output_file}")
 
+        ocr_results = []
+
         for index, image_file in enumerate(image_files, start=1):
             img_path = os.path.join(preprocessed_dir, image_file)
             logging.info(f"Starting analysis of file: {image_file}")
@@ -48,11 +52,14 @@ class OCRStep(PipelineStep):
                 "confidence": confidence,
                 "text_lines": text_lines
             }
-            with open(output_file, 'a', encoding='utf-8') as file_out:
-                json.dump(json_output, file_out)
-                file_out.write('\n')
+            ocr_results.append(json_output)
             logging.debug(f"Processed {image_file} with final angle: {final_angle}")
 
             # Save processed image if required
             if self.save_preprocessed:
                 img.save(os.path.join(ocr_result_dir, f"processed_{image_file}"))
+
+        # Write all results to the output file as a single JSON array
+        with open(output_file, 'w', encoding='utf-8') as file_out:
+            json.dump(ocr_results, file_out, ensure_ascii=False, indent=4)
+        logging.info(f"Saved all OCR results to {output_file}")
