@@ -8,29 +8,31 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+# Create a non-root user and group
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
+
 # Set the working directory
 WORKDIR /app
 
-# Copy the source code
+# Copy the source code and change ownership to the non-root user
 COPY ./src /app/src
-
-# Copy the requirements file
 COPY requirements.txt /app
+COPY tessdata.txt /app
+
+# Change ownership of the application directory
+RUN chown -R appuser:appgroup /app
+
+# Switch to the non-root user
+USER appuser
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
-# Copy the tessdata list
-COPY tessdata.txt /app
-
 # Download Tesseract language data, removing any carriage return characters
 RUN cat /app/tessdata.txt | tr -d '\r' | xargs -n 1 wget --no-check-certificate -P /usr/share/tesseract-ocr/4.00/tessdata/
-
-# Configure Git to use CA certificates
-RUN git config --global http.sslCAInfo /etc/ssl/certs/ca-certificates.crt
 
 # Set environment variables for the virtual environment
 ENV PATH="/app/venv/bin:$PATH"
 
 # Set the entry point to the pipeline script
-ENTRYPOINT ["python", "/workspace/src/pipeline.py"]
+ENTRYPOINT ["python", "/app/src/pipeline.py"]
