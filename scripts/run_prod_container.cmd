@@ -12,13 +12,19 @@ set DATA_DIR=%~1
 echo Data directory: %DATA_DIR%
 
 REM Shift the first argument (data directory) and pass the rest to the script
-set SCRIPT_ARGS=
-:loop
 shift
-if "%~1"=="" goto endloop
-set SCRIPT_ARGS=%SCRIPT_ARGS% %1
-goto loop
+
+REM Initialize SCRIPT_ARGS variable
+set SCRIPT_ARGS=
+
+REM Loop through the remaining arguments and append them to SCRIPT_ARGS
+:loop
+if "%1"=="" goto endloop
+    set SCRIPT_ARGS=%SCRIPT_ARGS% %1
+    shift
+    goto loop
 :endloop
+
 echo Additional arguments: %SCRIPT_ARGS%
 
 REM Change to the project root directory

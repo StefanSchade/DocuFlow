@@ -11,15 +11,12 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a group and user for the application
-RUN groupadd -r appgroup && useradd -r -g appgroup appuser
-
-# Create necessary directories for the appuser
-RUN mkdir -p /home/appuser/.local && chown -R appuser:appgroup /home/appuser
+# Create necessary directories for the application
+RUN mkdir -p /workspace/data
 
 # Set environment variables for pip to use the local user directory
-ENV PATH=/home/appuser/.local/bin:$PATH \
-    PYTHONUSERBASE=/home/appuser/.local
+ENV PATH=/root/.local/bin:$PATH \
+    PYTHONUSERBASE=/root/.local
 
 # Set the working directory for the application
 WORKDIR /app
@@ -29,17 +26,14 @@ COPY ./src /app/src
 COPY requirements.txt /app
 COPY tessdata.txt /app
 
-# Change ownership of the application files to appuser
-RUN chown -R appuser:appgroup /app
-
-# Create and set permissions for the workspace/data directory
-RUN mkdir -p /workspace/data && chown -R appuser:appgroup /workspace/data
-
-# Switch to the non-root user
-USER appuser
-
 # Install Python dependencies
-RUN pip install --user --no-cache-dir -r /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# Download Tesseract language data, removing any carriage return characters
+RUN cat /app/tessdata.txt | tr -d '\r' | xargs -n 1 wget --no-check-certificate -P /usr/share/tesseract-ocr/4.00/tessdata/
+
+# Set environment variables for the virtual environment
+ENV PATH="/app/venv/bin:$PATH"
 
 # Declare the mount point
 VOLUME /workspace/data
