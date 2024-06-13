@@ -1,6 +1,7 @@
 # src/steps/sanitization_step.py
 import os
 import enchant
+import logging
 from pipeline_step import PipelineStep
 
 class SanitizationStep(PipelineStep):
@@ -15,6 +16,14 @@ class SanitizationStep(PipelineStep):
         except enchant.DictNotFoundError:
             raise ValueError(f"No dictionary found for language: {language}")
         return dictionary
+
+    def generate_suggestions(self, text):
+        suggestions = []
+        words = text.split()
+        for word in words:
+            if not self.dictionary.check(word):
+                suggestions.append((word, self.dictionary.suggest(word)))
+        return suggestions
 
     def run(self, input_data):
         input_file = f"{input_data}/ocr_result/ocr_result.json"
