@@ -22,6 +22,14 @@ RUN apt-get update && \
     vim \
     gnupg2 \
     tesseract-ocr \
+    enchant \
+    aspell \
+    aspell-en \
+    aspell-de \
+    aspell-es \
+    aspell-fr \
+    aspell-it \
+    aspell-la \
     libtesseract-dev \
     libenchant-2-2 \
     libglib2.0-dev \
