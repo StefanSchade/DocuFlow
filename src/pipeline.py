@@ -9,6 +9,13 @@ INPUT_DIRECTORY = '/workspace/data'
 LOG_FILE = '/workspace/data/pipeline.log'
 PATH_TO_TESSERACT = '/usr/share/tesseract-ocr/4.00/tessdata'
 
+# List of steps
+STEPS = [
+    ('PreprocessStep', PreprocessStep),
+    ('OCRStep', OCRStep),
+#    ('SanitizationStep', SanitizationStep)
+]
+
 def list_data_directory():
     data_dir = "/workspace/data"
     print(f"Listing contents of {data_dir}:")
@@ -21,22 +28,37 @@ def list_data_directory():
 def run_pipeline(args):
     logging.info("Starting pipeline execution")
     
-    # Add PATH_TO_TESSERACT to args
-    args.path_to_tesseract = PATH_TO_TESSERACT
-    
-    # Step 1: Preprocessing
-    step_01 = PreprocessStep(args)
-    step_01.run(INPUT_DIRECTORY)
+    start_index = 0
+    end_index = len(STEPS)
 
-    # Step 2: OCR
-    step_02 = OCRStep(args)
-    step_02.run(INPUT_DIRECTORY)
+    if args.from_step:
+        start_index = next((i for i, (name, _) in enumerate(STEPS) if name == args.from_step), 0)
+
+    if args.to_step:
+        end_index = next((i for i, (name, _) in enumerate(STEPS) if name == args.to_step), len(STEPS)) + 1
+
+    # Ensure the indices are within the valid range
+    start_index = max(start_index, 0)
+    end_index = min(end_index, len(STEPS))
+
+    # Ensure the indices are within the valid range
+    start_index = max(start_index, 0)
+    end_index = min(end_index, len(STEPS))
+
+    # Execute the steps in the specified range
+    for name, step_class in STEPS[start_index:end_index]:
+        logging.info(f"Running {name}")
+        step_instance = step_class(args)
+        step_instance.run(INPUT_DIRECTORY)
+  
 
     logging.info("Pipeline execution completed successfully")
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Run OCR pipeline')
+    parser.add_argument('--from_step', type=str, help='Step to start from')
+    parser.add_argument('--to_step', type=str, help='Step to end at')
     parser.add_argument('--grayscale', action='store_true', help='Convert image to grayscale')
     parser.add_argument('--remove-noise', action='store_true', help='Apply noise removal')
     parser.add_argument('--threshold', type=int, default=0, help='Threshold for binarization')
@@ -55,6 +77,9 @@ if __name__ == "__main__":
     print("Pipeline script started")
     print(f"Received arguments: {args}")
     list_data_directory()
+
+    # Add PATH_TO_TESSERACT to args
+    args.path_to_tesseract = PATH_TO_TESSERACT
 
     # Setup logging
     logging.basicConfig(filename=LOG_FILE, level=getattr(logging, args.log_level.upper()), format='%(asctime)s - %(levelname)s - %(message)s')
