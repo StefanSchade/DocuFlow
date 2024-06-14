@@ -3,7 +3,8 @@ import os
 import logging
 from step_01_preprocess.preprocess_step import PreprocessStep
 from step_02_ocr.ocr_step import OCRStep
-from step_03_sanitize.sanitization_step import SanitizationStep
+from step_03_hyphenation.hyphenation_step import HyphenationStep
+from step_04_sanitize.sanitization_step import SanitizationStep
 
 # Mapping Tesseract language codes to Enchant language codes
 LANGUAGE_MAP = {
@@ -43,6 +44,7 @@ PATH_TO_TESSERACT = '/usr/share/tesseract-ocr/4.00/tessdata'
 STEPS = [
     ('PreprocessStep', PreprocessStep),
     ('OCRStep', OCRStep),
+    ('HyphenationStep', HyphenationStep),
     ('SanitizationStep', SanitizationStep)
 ]
 
