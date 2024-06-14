@@ -2,7 +2,7 @@
 REM Script to run the production Docker container
 
 REM Check if data directory argument is provided
-if "%1"=="" (
+if "%~1"=="" (
     echo Usage: run_prod_container.cmd [data_directory_path] [script_arguments...]
     exit /b 1
 )

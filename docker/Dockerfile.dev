@@ -22,6 +22,10 @@ RUN apt-get update && \
     vim \
     gnupg2 \
     tesseract-ocr \
+    enchant-2 \
+    aspell \
+    aspell-en \
+    aspell-de \
     libtesseract-dev \
     libenchant-2-2 \
     libglib2.0-dev \
@@ -30,7 +34,6 @@ RUN apt-get update && \
     python3 \
     python3-pip \
     python3-venv \
-    enchant-2 \
     asciidoctor \
     bash \
     jq \
@@ -56,6 +59,9 @@ COPY scripts /workspace/scripts
 
 # Copy the source code
 COPY src /workspace/src
+
+# Copy the spelling whitelists
+COPY resources /workspace/resources
 
 # Copy the tessdata.txt file
 COPY tessdata.txt /workspace

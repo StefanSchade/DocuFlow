@@ -7,8 +7,8 @@ from step_02_ocr.utils_tesseract import tesseract_ocr
 import logging
 
 # Constants for fine orientation checks
-DEFAULT_SMALL_ROTATION_STEP = 1  # degrees
-DEFAULT_MAX_ROTATION_STEPS = 20  # steps
+DEFAULT_SMALL_ROTATION_STEP = 2  # degrees
+DEFAULT_MAX_ROTATION_STEPS = 10  # steps
 HIGH_CONFIDENCE_THRESHOLD = 95  # Set an appropriate threshold for high confidence
 
 def rotate_image(image, angle, ocr_debug_dir):
