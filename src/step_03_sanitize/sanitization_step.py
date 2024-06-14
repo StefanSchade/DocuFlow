@@ -11,7 +11,7 @@ class SanitizationStep(PipelineStep):
     def __init__(self, args):
         self.args = args
         self.dictionary = self.load_dictionary(args.language_enchanted)
-        self.whitelist = self.load_whitelist(args.language)
+        self.whitelist = self.load_whitelists(args.language, args.whitelist_filter)
 
     def load_dictionary(self, language):
         try:
@@ -21,27 +21,45 @@ class SanitizationStep(PipelineStep):
             raise ValueError(f"No dictionary found for language: {language}")
         return dictionary
 
-    def load_whitelist(self, language):
+    def load_whitelists(self, language, filter_keywords):
         whitelist = set()
-        project_whitelist_path = f"/resources/spelling-whitelist-{language}.txt"
-        input_whitelist_path = f"{self.args.input_dir}/spelling-whitelist-{language}.txt"
+        project_whitelist_path = f"/workspace/resources"
+        input_whitelist_path = f"{self.args.input_dir}"
 
+        # Helper function to process whitelist files
+        def process_whitelist_file(path):
+            with open(path, "r") as f:
+                for line in f:
+                    line = line.split('#', 1)[0].strip()  # Remove comments and strip whitespace
+                    if line:
+                        whitelist.add(line)
+
+        # Process project-specific whitelist files
         if os.path.exists(project_whitelist_path):
-            with open(project_whitelist_path, "r") as f:
-                project_whitelist = f.read().splitlines()
-                whitelist.update(project_whitelist)
-                logging.info(f"Loaded project-specific whitelist from {project_whitelist_path}")
+            for filename in os.listdir(project_whitelist_path):
+                if filename.startswith(f"spelling-whitelist-{language}") and self.filter_file(filename, filter_keywords):
+                    process_whitelist_file(os.path.join(project_whitelist_path, filename))
+                    logging.info(f"Loaded project-specific whitelist from {filename}")
 
+        # Process input directory whitelist files
         if os.path.exists(input_whitelist_path):
-            with open(input_whitelist_path, "r") as f:
-                input_whitelist = f.read().splitlines()
-                whitelist.update(input_whitelist)
-                logging.info(f"Loaded input directory whitelist from {input_whitelist_path}")
+            for filename in os.listdir(input_whitelist_path):
+                if filename.startswith(f"spelling-whitelist-{language}"):
+                    process_whitelist_file(os.path.join(input_whitelist_path, filename))
+                    logging.info(f"Loaded input directory whitelist from {filename}")
 
         if not whitelist:
             logging.warning(f"No whitelists found for language: {language}")
 
         return whitelist
+
+    def filter_file(self, filename, filter_keywords):
+        if not filter_keywords:
+            return True
+        for keyword in filter_keywords.split(','):
+            if keyword.strip() in filename:
+                return True
+        return False
 
     def run(self, input_data):
         input_file = f"{input_data}/ocr_result/ocr_result.json"
@@ -64,14 +82,14 @@ class SanitizationStep(PipelineStep):
             text_lines = page.get("text_lines", [])
             for line_index, line in enumerate(text_lines):
                 logging.debug(f"Preparing suggestions for page {page_index} line {line_index}")            
-                line_suggestions = self.generate_suggestions(line)
+                line_suggestions = self.generate_suggestions(line, text_lines, line_index)
                 suggestions.extend([(page_index, line_index, word, sugg) for word, sugg in line_suggestions])
 
         if self.args.log_level == 'DEBUG':
             debug_file = f"{output_dir}/sanitized_debug.txt"
             with open(debug_file,"w") as dbgf:
                 dbgf.write(f"suggestions: {suggestions}")
-                               
+
         with open(suggestions_file, "w") as f:
             for idx, (page_index, line_index, original, proposed) in enumerate(suggestions):
                 if not proposed:
@@ -107,9 +125,7 @@ class SanitizationStep(PipelineStep):
             json.dump(ocr_output, f, indent=4)
         return output_dir
 
-
-
-    def generate_suggestions(self, text):
+    def generate_suggestions(self, text, text_lines, line_index):
         suggestions = []
         words = text.split()
         for word in words:
@@ -121,8 +137,22 @@ class SanitizationStep(PipelineStep):
                 continue
             if not self.dictionary.check(word):
                 suggestions.append((word, self.dictionary.suggest(word)))
+
+        # Handle hyphenated words at the end of the line
+        if words and words[-1].endswith('-'):
+            next_line = self.get_next_line(text_lines, line_index)
+            if next_line:
+                next_word = next_line.split()[0]
+                combined_word = words[-1][:-1] + next_word
+                if not self.dictionary.check(combined_word):
+                    suggestions.append((words[-1], self.dictionary.suggest(combined_word)))
+
         return suggestions
 
+    def get_next_line(self, text_lines, line_index):
+        if line_index + 1 < len(text_lines):
+            return text_lines[line_index + 1]
+        return None
 
     def get_context(self, line, word):
         words = line.split()

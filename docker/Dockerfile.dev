@@ -60,6 +60,9 @@ COPY scripts /workspace/scripts
 # Copy the source code
 COPY src /workspace/src
 
+# Copy the spelling whitelists
+COPY resources /workspace/resources
+
 # Copy the tessdata.txt file
 COPY tessdata.txt /workspace
 

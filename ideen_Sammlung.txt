@@ -1,0 +1,11 @@
+XVII römische Ziffern von Rechtschreibkorrektur ausnehmen
+
+Bindestriche Früh- und Vorgeschichte
+
+Streit-
+
+getrennte worte
+
+
+
+ python pipeline.py --log-level 'DEBUG' --grayscale --remove-noise --language deu --check-orientation FINE --psm 3 --save-preprocessed --from_step 'SanitizationStep'

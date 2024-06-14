@@ -90,6 +90,7 @@ if __name__ == "__main__":
     parser.add_argument('--from_step', type=str, help='Step to start from')
     parser.add_argument('--to_step', type=str, help='Step to end at')
     parser.add_argument('--interactive-mode', action='store_true', help='Wait for input at certain places')
+    parser.add_argument('--whitelist-filter', type=str, help='Comma-separated list of keywords to filter whitelist files')
     parser.add_argument('--grayscale', action='store_true', help='Convert image to grayscale')
     parser.add_argument('--remove-noise', action='store_true', help='Apply noise removal')
     parser.add_argument('--threshold', type=int, default=0, help='Threshold for binarization')
