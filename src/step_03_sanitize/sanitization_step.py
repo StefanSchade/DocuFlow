@@ -3,12 +3,14 @@ import os
 import enchant
 import logging
 import json
+import re
 from pipeline_step import PipelineStep
 
 class SanitizationStep(PipelineStep):
     def __init__(self, args):
         self.args = args
         self.dictionary = self.load_dictionary(args.language_enchanted)
+        self.whitelist = self.load_whitelist(args.language)
 
     def load_dictionary(self, language):
         try:
@@ -18,10 +20,38 @@ class SanitizationStep(PipelineStep):
             raise ValueError(f"No dictionary found for language: {language}")
         return dictionary
 
+    def load_whitelist(self, language):
+        whitelist = set()
+        project_whitelist_path = f"/resources/spelling-whitelist-{language}.txt"
+        input_whitelist_path = f"{self.args.input_dir}/spelling-whitelist-{language}.txt"
+
+        if os.path.exists(project_whitelist_path):
+            with open(project_whitelist_path, "r") as f:
+                project_whitelist = f.read().splitlines()
+                whitelist.update(project_whitelist)
+                logging.info(f"Loaded project-specific whitelist from {project_whitelist_path}")
+
+        if os.path.exists(input_whitelist_path):
+            with open(input_whitelist_path, "r") as f:
+                input_whitelist = f.read().splitlines()
+                whitelist.update(input_whitelist)
+                logging.info(f"Loaded input directory whitelist from {input_whitelist_path}")
+
+        if not whitelist:
+            logging.warning(f"No whitelists found for language: {language}")
+
+        return whitelist
+
     def generate_suggestions(self, text):
         suggestions = []
         words = text.split()
         for word in words:
+            if not re.match(r'^[a-zA-ZäöüÄÖÜß]+$', word):  # Filter out non-letter symbols
+                continue
+            if len(word) == 1:  # Filter out single-character words
+                continue
+            if word in self.whitelist:  # Skip whitelisted words
+                continue
             if not self.dictionary.check(word):
                 suggestions.append((word, self.dictionary.suggest(word)))
         return suggestions
@@ -43,14 +73,20 @@ class SanitizationStep(PipelineStep):
         suggestions = []
         for page in ocr_output:
             text_lines = page.get("text_lines", [])
-            for line in text_lines:
+            for line_index, line in enumerate(text_lines):
                 line_suggestions = self.generate_suggestions(line)
-                suggestions.extend(line_suggestions)
+                suggestions.extend([(line_index, word, sugg) for word, sugg in line_suggestions])
 
         with open(suggestions_file, "w") as f:
-            for idx, (original, proposed) in enumerate(suggestions):
+            for idx, (line_index, original, proposed) in enumerate(suggestions):
+                if not proposed:
+                    continue  # Skip if there are no suggestions
+                context = self.get_context(text_lines[line_index], original)
                 f.write(f"-------------------------------\n")
                 f.write(f"Proposed Change {idx+1}:\n\n")
+                f.write(f"Source File: {page['source_file']}\n")
+                f.write(f"Line Number: {line_index}\n")
+                f.write(f"Context: {context}\n\n")
                 f.write(f"now:      {original}\n")
                 f.write(f"then:      {proposed[0] if proposed else original}\n\n")
                 f.write(f"{original}  --->   {proposed[0] if proposed else original}\n")

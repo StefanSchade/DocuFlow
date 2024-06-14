@@ -57,7 +57,7 @@ def list_data_directory():
 
 def run_pipeline(args):
     logging.info("Starting pipeline execution")
-    
+        
     start_index = 0
     end_index = len(STEPS)
 
@@ -111,6 +111,9 @@ if __name__ == "__main__":
 
     # Add PATH_TO_TESSERACT to args
     args.path_to_tesseract = PATH_TO_TESSERACT
+    
+    # Add input directory to args
+    args.input_dir = INPUT_DIRECTORY
 
     # Translate the language code for Enchanted
     args.language_enchanted = LANGUAGE_MAP.get(args.language, 'en_US')  # default to English consistent with our language default
