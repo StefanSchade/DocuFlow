@@ -24,6 +24,7 @@ class HyphenationStep(PipelineStep):
         input_file = f"{input_data}/ocr_result/ocr_result.json"
         output_dir = f"{input_data}/hyphenation"
         suggestions_file = f"{output_dir}/hyphenation_suggestions.txt"
+        whitelist_candidates_file = f"{output_dir}/hyphenation_whitelist_candidates.txt"
         output_file = f"{output_dir}/hyphenation_output.json"
 
         logging.info(f"Input file: {input_file} suggestion file: {suggestions_file}, output file: {output_file}")
@@ -56,6 +57,11 @@ class HyphenationStep(PipelineStep):
                 f.write(f"{original}  --->   {proposed}\n")
                 f.write(f"--------------------------------------------\n\n")
 
+        original_words = set(original for _, _, original, _ in suggestions)
+        with open(whitelist_candidates_file, "w") as wf:
+            for word in original_words:
+                wf.write(word + "\n")
+
         if self.args.interactive_mode:
             input("Review the suggestions and press Enter to apply changes...")
 
@@ -77,17 +83,18 @@ class HyphenationStep(PipelineStep):
         current_line = text_lines[line_index].split()
         if current_line and current_line[-1].endswith('-'):
             next_line = self.get_next_line(text_lines, line_index)
-            if next_line:
+            if next_line and next_line.strip():  # Check if next_line is not empty or only whitespace
                 next_word = next_line.split()[0]
-                if self.is_word_valid(next_word):
-                    combined_word_with_hyphen = current_line[-1][:-1] + '-' + next_word
-                    combined_word_no_hyphen = current_line[-1][:-1] + next_word
-                    if self.dictionary.check(current_line[-1][:-1]) and self.dictionary.check(next_word):
+                current_word_part = current_line[-1][:-1]
+                if current_word_part and self.is_word_valid(next_word):
+                    combined_word_with_hyphen = current_word_part + '-' + next_word
+                    combined_word_no_hyphen = current_word_part + next_word
+                    if self.dictionary.check(current_word_part) and self.dictionary.check(next_word):
                         suggestions.append((page_index, line_index, current_line[-1], combined_word_with_hyphen))
                     elif self.dictionary.check(combined_word_no_hyphen):
                         suggestions.append((page_index, line_index, current_line[-1], combined_word_no_hyphen))
                     else:
-                        sanitized_combined_word = current_line[-1][:-1] + next_word
+                        sanitized_combined_word = current_word_part + next_word
                         suggestions.append((page_index, line_index, current_line[-1], sanitized_combined_word))
         return suggestions
 
