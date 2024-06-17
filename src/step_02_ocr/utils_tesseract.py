@@ -7,7 +7,7 @@ import json
 # Constants
 MIN_WORD_LENGTH_FOR_CONFIDENCE = 4
 MIN_WORD_COUNT_FOR_CONFIDENCE = 4
-MIN_CONFIDENCE_FOR_WORD = 70
+MIN_CONFIDENCE_FOR_WORD = 60
 
 def tesseract_ocr(image, language, tessdata_dir_config, psm, ocr_debug_dir, angle):
     config = f'--psm {psm} -l {language} {tessdata_dir_config}'
@@ -40,4 +40,4 @@ def tesseract_ocr(image, language, tessdata_dir_config, psm, ocr_debug_dir, angl
             json.dump(data, debug_file, ensure_ascii=False, indent=4)
             debug_file.write('\n')
 
-    return text, average_confidence, len(data['text'])
+    return text, average_confidence

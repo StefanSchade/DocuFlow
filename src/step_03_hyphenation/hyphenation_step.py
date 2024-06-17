@@ -46,6 +46,8 @@ class HyphenationStep(PipelineStep):
             for idx, (page_index, line_index, original, proposed) in enumerate(suggestions):
                 if not proposed:
                     continue  # Skip if there are no suggestions
+                if self.is_legitimate_word(proposed[0]):  # Prevent overwhelming the user with trivial changes
+                    continue  # COMMENT: Omit this message to prevent overwhelming the user
                 context = self.get_context(ocr_output[page_index]["text_lines"], line_index, original)
                 f.write(f"Proposed Change {idx+1}:\n\n")
                 f.write(f"Source File: {ocr_output[page_index]['source_file']}\n")
@@ -81,21 +83,23 @@ class HyphenationStep(PipelineStep):
     def generate_suggestions(self, page_index, line_index, text_lines):
         suggestions = []
         current_line = text_lines[line_index].split()
-        if current_line and current_line[-1].endswith('-'):
+        if current_line and re.search(r'-\W*$', current_line[-1]):  # Check for hyphen followed by non-letter characters
             next_line = self.get_next_line(text_lines, line_index)
             if next_line and next_line.strip():  # Check if next_line is not empty or only whitespace
-                next_word = next_line.split()[0]
-                current_word_part = current_line[-1][:-1]
-                if current_word_part and self.is_word_valid(next_word):
-                    combined_word_with_hyphen = current_word_part + '-' + next_word
-                    combined_word_no_hyphen = current_word_part + next_word
-                    if self.dictionary.check(current_word_part) and self.dictionary.check(next_word):
-                        suggestions.append((page_index, line_index, current_line[-1], combined_word_with_hyphen))
-                    elif self.dictionary.check(combined_word_no_hyphen):
-                        suggestions.append((page_index, line_index, current_line[-1], combined_word_no_hyphen))
-                    else:
-                        sanitized_combined_word = current_word_part + next_word
-                        suggestions.append((page_index, line_index, current_line[-1], sanitized_combined_word))
+                next_words = next_line.split()
+                if next_words:
+                    next_word = next_words[0]
+                    current_word_part = current_line[-1][:-1]
+                    if current_word_part and self.is_word_valid(next_word):
+                        combined_word_with_hyphen = current_word_part + '-' + next_word
+                        combined_word_no_hyphen = current_word_part + next_word
+                        if self.dictionary.check(current_word_part) and self.dictionary.check(next_word):
+                            suggestions.append((page_index, line_index, current_line[-1], combined_word_with_hyphen))
+                        elif self.dictionary.check(combined_word_no_hyphen):
+                            suggestions.append((page_index, line_index, current_line[-1], combined_word_no_hyphen))
+                        else:
+                            sanitized_combined_word = current_word_part + next_word
+                            suggestions.append((page_index, line_index, current_line[-1], sanitized_combined_word))
         return suggestions
 
     def get_next_line(self, text_lines, line_index):
@@ -128,3 +132,6 @@ class HyphenationStep(PipelineStep):
         if word.isupper() or word.islower():  # Check if the word is all uppercase or all lowercase
             return True
         return False
+
+    def is_legitimate_word(self, word):
+        return self.dictionary.check(word)
