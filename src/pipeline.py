@@ -96,6 +96,8 @@ if __name__ == "__main__":
     parser.add_argument('--grayscale', action='store_true', help='Convert image to grayscale')
     parser.add_argument('--remove-noise', action='store_true', help='Apply noise removal')
     parser.add_argument('--threshold', action='store_true', help='Threshold binarization')
+    parser.add_argument('--wiener-filter', action='store_true', help='Threshold binarization')
+    parser.add_argument('--enhanced-contrast', action='store_true', help='Enhance contrast of image')
     parser.add_argument('--adaptive-threshold', action='store_true', help='adaptive thresholding flag')
     parser.add_argument('--block-size', type=int, default=3, help='Choose an uneven number - smaller is more local')
     parser.add_argument('--dilate', action='store_true', help='Apply dilation')
