@@ -9,3 +9,7 @@ getrennte worte
 
 
  python pipeline.py --log-level 'DEBUG' --grayscale --remove-noise --language deu --check-orientation FINE --psm 3 --save-preprocessed --from_step 'SanitizationStep'
+
+ python pipeline.py --log-level 'DEBUG' --grayscale --remove-noise --language deu --threshold  --check-orientation FINE --psm 3 --save-preprocessed --adaptive-threshold --block-size 31 --to_step 'PreprocessStep'D
+
+ 

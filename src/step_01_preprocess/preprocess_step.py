@@ -3,6 +3,25 @@ import numpy as np
 import os
 from pipeline_step import PipelineStep
 
+def wiener_filter(img, kernel, K):
+    # Fourier Transform of the image
+    img_fft = np.fft.fft2(img)
+    img_fft_shift = np.fft.fftshift(img_fft)
+
+    # Fourier Transform of the kernel
+    kernel_fft = np.fft.fft2(kernel, s=img.shape)
+    kernel_fft_shift = np.fft.fftshift(kernel_fft)
+
+    # Apply Wiener filter
+    wiener_filter = np.conj(kernel_fft_shift) / (np.abs(kernel_fft_shift)**2 + K)
+    result_fft_shift = img_fft_shift * wiener_filter
+
+    # Inverse Fourier Transform to get the result
+    result_fft = np.fft.ifftshift(result_fft_shift)
+    result = np.fft.ifft2(result_fft)
+    result = np.abs(result)
+    return result
+
 class PreprocessStep(PipelineStep):
     def __init__(self, args):
         self.args = args
@@ -12,8 +31,13 @@ class PreprocessStep(PipelineStep):
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         if self.args.remove_noise:
             image = cv2.medianBlur(image, 5)
-        if self.args.threshold > 0:
-            _, image = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        if self.args.adaptive_threshold:
+           image = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,self.args.block_size, 6)
+        if self.args.threshold:
+            _, image = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)  
+        if self.args.sharpen:
+            kernel = np.array([[0, -1, 0], [-1, 5,-1], [0, -1, 0]])
+            image = cv2.filter2D(image, -1, kernel)     
         if self.args.dilate:
             kernel = np.ones((5, 5), np.uint8)
             image = cv2.dilate(image, kernel, iterations=1)

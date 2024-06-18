@@ -95,9 +95,12 @@ if __name__ == "__main__":
     parser.add_argument('--whitelist-filter', type=str, help='Comma-separated list of keywords to filter whitelist files')
     parser.add_argument('--grayscale', action='store_true', help='Convert image to grayscale')
     parser.add_argument('--remove-noise', action='store_true', help='Apply noise removal')
-    parser.add_argument('--threshold', type=int, default=0, help='Threshold for binarization')
+    parser.add_argument('--threshold', action='store_true', help='Threshold binarization')
+    parser.add_argument('--adaptive-threshold', action='store_true', help='adaptive thresholding flag')
+    parser.add_argument('--block-size', type=int, default=3, help='Choose an uneven number - smaller is more local')
     parser.add_argument('--dilate', action='store_true', help='Apply dilation')
     parser.add_argument('--erode', action='store_true', help='Apply erosion')
+    parser.add_argument('--sharpen', action='store_true', help='sharpen imageO')
     parser.add_argument('--opening', action='store_true', help='Apply opening (erosion followed by dilation)')
     parser.add_argument('--canny', action='store_true', help='Apply Canny edge detection')
     parser.add_argument('--language', type=str, default='eng', help='Language for Tesseract OCR')
@@ -110,7 +113,6 @@ if __name__ == "__main__":
 
     print("Pipeline script started")
     print(f"Received arguments: {args}")
-    list_data_directory()
 
     # Add PATH_TO_TESSERACT to args
     args.path_to_tesseract = PATH_TO_TESSERACT

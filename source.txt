@@ -1,59 +1,1816 @@
 
-// File: pipeline.py Depth: 0
+// File: .dockerignore Depth: 0
 
-01 # File: pipeline.py
-02 import os
-03 import logging
-04 from step_01_preprocess.preprocess_step import PreprocessStep
-05 from step_02_ocr.ocr_step import OCRStep
+01 **/__pycache__
+02 **/.venv
+03 **/.classpath
+04 **/.dockerignore
+05 **/.env
+06 **/.git
+07 **/.gitignore
+08 **/.project
+09 **/.settings
+10 **/.toolstarget
+11 **/.vs
+12 **/.vscode
+13 **/*.*proj.user
+14 **/*.dbmdl
+15 **/*.jfm
+16 **/bin
+17 **/charts
+18 **/docker-compose*
+19 **/compose*
+20 **/Dockerfile*
+21 **/node_modules
+22 **/npm-debug.log
+23 **/obj
+24 **/secrets.dev.yaml
+25 **/values.dev.yaml
+26 LICENSE
+27 README.md
+
+// File: .gitattributes Depth: 0
+
+1 * text=auto
+
+// File: .github\dependabot.yml Depth: 1
+
+01 # To get started with Dependabot version updates, you'll need to specify which
+02 # package ecosystems to update and where the package manifests are located.
+03 # Please see the documentation for more information:
+04 # https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+05 # https://containers.dev/guide/dependabot
 06 
-07 # Constants
-08 INPUT_DIRECTORY = '/workspace/data'
-09 LOG_FILE = '/workspace/data/pipeline.log'
-10 PATH_TO_TESSERACT = '/usr/share/tesseract-ocr/4.00/tessdata'
-11 
-12 def run_pipeline(args):
-13     logging.info("Starting pipeline execution")
-14     
-15     # Add PATH_TO_TESSERACT to args
-16     args.path_to_tesseract = PATH_TO_TESSERACT
-17     
-18     # Step 1: Preprocessing
-19     step_01 = PreprocessStep(args)
-20     step_01.run(INPUT_DIRECTORY)
-21 
-22     # Step 2: OCR
-23     step_02 = OCRStep(args)
-24     step_02.run(INPUT_DIRECTORY)
-25 
-26     logging.info("Pipeline execution completed successfully")
-27 
-28 if __name__ == "__main__":
-29     import argparse
-30     parser = argparse.ArgumentParser(description='Run OCR pipeline')
-31     parser.add_argument('--grayscale', action='store_true', help='Convert image to grayscale')
-32     parser.add_argument('--remove-noise', action='store_true', help='Apply noise removal')
-33     parser.add_argument('--threshold', type=int, default=0, help='Threshold for binarization')
-34     parser.add_argument('--dilate', action='store_true', help='Apply dilation')
-35     parser.add_argument('--erode', action='store_true', help='Apply erosion')
-36     parser.add_argument('--opening', action='store_true', help='Apply opening (erosion followed by dilation)')
-37     parser.add_argument('--canny', action='store_true', help='Apply Canny edge detection')
-38     parser.add_argument('--language', type=str, default='eng', help='Language for Tesseract OCR')
-39     parser.add_argument('--check-orientation', type=str, choices=['NONE', 'BASIC', 'FINE'], default='NONE', help='Check and correct orientation')
-40     parser.add_argument('--psm', type=int, choices=list(range(14)), default=6, help='Tesseract Page Segmentation Mode (PSM)')
-41     parser.add_argument('--save-preprocessed', action='store_true', help='Save preprocessed images')
-42     parser.add_argument('--log-level', type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='INFO', help='Set the logging level')
-43     
-44     args = parser.parse_args()
-45 
-46     # Setup logging
-47     logging.basicConfig(filename=LOG_FILE, level=getattr(logging, args.log_level.upper()), format='%(asctime)s - %(levelname)s - %(message)s')
-48 
-49     logging.debug(f"Running Pipeline args={args}")    
-50 
-51     run_pipeline(args)
+07 version: 2
+08 updates:
+09  - package-ecosystem: "devcontainers"
+10    directory: "/"
+11    schedule:
+12      interval: weekly
 
-// File: pipeline_step.py Depth: 0
+// File: .gitignore Depth: 0
+
+01 .idea/
+02 .vscode/
+03 
+04 .devcontainer/devcontainer.json
+05 
+06 
+07 zscaler.crt
+08 repo.txt
+09 
+10 # test data
+11 /data
+12 
+13 # Byte-compiled / optimized / DLL files
+14 __pycache__/
+15 *.py[cod]
+16 *$py.class
+17 
+18 # C extensions
+19 *.so
+20 
+21 # Distribution / packaging
+22 .Python
+23 env/
+24 venv/
+25 ENV/
+26 env.bak/
+27 venv.bak/
+28 build/
+29 develop-eggs/
+30 dist/
+31 downloads/
+32 eggs/
+33 .eggs/
+34 lib/
+35 lib64/
+36 parts/
+37 sdist/
+38 var/
+39 wheels/
+40 share/python-wheels/
+41 *.egg-info/
+42 .installed.cfg
+43 *.egg
+44 MANIFEST
+45 
+46 # Installer logs
+47 pip-log.txt
+48 pip-delete-this-directory.txt
+49 
+50 # Unit test / coverage reports
+51 htmlcov/
+52 .tox/
+53 .nox/
+54 .coverage
+55 .coverage.*
+56 .cache
+57 nosetests.xml
+58 coverage.xml
+59 *.cover
+60 *.py,cover
+61 .hypothesis/
+62 
+63 # Translations
+64 *.mo
+65 *.pot
+66 
+67 # Django stuff:
+68 *.log
+69 local_settings.py
+70 db.sqlite3
+71 
+72 # Flask stuff:
+73 instance/
+74 .webassets-cache
+75 
+76 # Scrapy stuff:
+77 .scrapy
+78 
+79 # Sphinx documentation
+80 docs/_build/
+81 
+82 # PyBuilder
+83 target/
+84 
+85 # Jupyter Notebook
+86 .ipynb_checkpoints
+87 
+88 # IP
+
+// File: .vim\coc-settings.json Depth: 1
+
+1 {
+2   "python.linting.pylintEnabled": true,
+3   "python.linting.enabled": true
+4 }
+
+// File: .vscode\launch.json Depth: 1
+
+01 {
+02     "version": "0.2.0",
+03     "configurations": [
+04         {
+05             "name": "Python: Current File",
+06             "type": "python",
+07             "request": "launch",
+08             "program": "${file}",
+09             "console": "integratedTerminal",
+10             "justMyCode": false,
+11             "args": [
+12                 "--threshold", "0",
+13                 "--language", "deu",
+14                 "--psm", "6",
+15                 "--log-level", "DEBUG",
+16                 "--check-orientation", "NONE"
+17             ]
+18         }
+19     ]
+20 }
+
+// File: .vscode\settings.json Depth: 1
+
+1 {}
+
+// File: .vscode\tasks.json Depth: 1
+
+01 {
+02 	"version": "2.0.0",
+03 	"tasks": [
+04 		{
+05 			"type": "docker-build",
+06 			"label": "docker-build",
+07 			"platform": "python",
+08 			"dockerBuild": {
+09 				"tag": "workspace:latest",
+10 				"dockerfile": "${workspaceFolder}/Dockerfile",
+11 				"context": "${workspaceFolder}",
+12 				"pull": true
+13 			}
+14 		},
+15 		{
+16 			"type": "docker-run",
+17 			"label": "docker-run: debug",
+18 			"dependsOn": [
+19 				"docker-build"
+20 			],
+21 			"python": {
+22 				"file": "src/pipeline.py"
+23 			}
+24 		}
+25 	]
+26 }
+
+// File: docker\Dockerfile.dev Depth: 1
+
+01 # Use an official Ubuntu as a parent image
+02 FROM ubuntu:latest
+03 
+04 # Set environment variables to non-interactive
+05 ENV DEBIAN_FRONTEND=noninteractive
+06 
+07 # Set proxy environment variables
+08 ARG http_proxy
+09 ARG https_proxy
+10 ARG no_proxy
+11 ENV http_proxy=${http_proxy}
+12 ENV https_proxy=${https_proxy}
+13 ENV no_proxy=${no_proxy}
+14 
+15 # Install tools, Docker, and dependencies
+16 RUN apt-get update && \
+17     apt-get install -y \
+18     apt-transport-https \
+19     ca-certificates \
+20     curl \
+21     wget \
+22     vim \
+23     gnupg2 \
+24     tesseract-ocr \
+25     enchant-2 \
+26     aspell \
+27     aspell-en \
+28     aspell-de \
+29     libtesseract-dev \
+30     libenchant-2-2 \
+31     libglib2.0-dev \
+32     software-properties-common \
+33     build-essential \
+34     python3 \
+35     python3-pip \
+36     python3-venv \
+37     asciidoctor \
+38     bash \
+39     jq \
+40     git \
+41     kmod \
+42     fuse-overlayfs \
+43     parallel \
+44     && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - \
+45     && add-apt-repository \
+46        "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+47        $(lsb_release -cs) \
+48        stable" \
+49     && apt-get update && apt-get install -y \
+50        docker-ce docker-ce-cli containerd.io \
+51     && apt-get clean && \
+52     rm -rf /var/lib/apt/lists/*
+53 
+54 # Set the working directory for the project
+55 WORKDIR /workspace
+56 
+57 # Copy the scripts
+58 COPY scripts /workspace/scripts
+59 
+60 # Copy the source code
+61 COPY src /workspace/src
+62 
+63 # Copy the spelling whitelists
+64 COPY resources /workspace/resources
+65 
+66 # Copy the tessdata.txt file
+67 COPY tessdata.txt /workspace
+68 
+69 # Download Tesseract language data
+70 RUN set -e; \
+71     for url in $(cat /workspace/tessdata.txt | tr -d '\r'); do \
+72         echo "Downloading $url"; \
+73         wget --no-check-certificate -P /usr/share/tesseract-ocr/4.00/tessdata/ "$url"; \
+74     done
+75 
+76 # Copy the requirements file
+77 COPY requirements.txt /workspace
+78 COPY requirements-dev.txt /workspace
+79 
+80 # Create and activate a virtual environment and install dependencies
+81 RUN python3 -m venv /workspace/venv && \
+82     /bin/bash -c "source /workspace/venv/bin/activate && pip install --no-cache-dir -r /workspace/requirements.txt && pip install --no-cache-dir -r /workspace/requirements-dev.txt && pip list"
+83 
+84 # Expose any ports if necessary
+85 # EXPOSE 8000
+86 
+87 # Set environment variables for the virtual environment
+88 ENV PATH="/workspace/venv/bin:$PATH"
+89 
+90 # Copy the source code
+91 COPY src /workspace/src
+92 
+93 # Start Docker daemon
+94 CMD ["dockerd"]
+
+// File: docker\Dockerfile.prod Depth: 1
+
+01 # Use an official Python runtime as a parent image
+02 FROM python:3.9-slim
+03 
+04 # Set environment variables to non-interactive
+05 ENV DEBIAN_FRONTEND=noninteractive
+06 
+07 # Install dependencies
+08 RUN apt-get update && apt-get install -y \
+09     tesseract-ocr \
+10     wget \
+11     ca-certificates \
+12     && rm -rf /var/lib/apt/lists/*
+13 
+14 # Create necessary directories for the application
+15 RUN mkdir -p /workspace/data
+16 
+17 # Set environment variables for pip to use the local user directory
+18 ENV PATH=/root/.local/bin:$PATH \
+19     PYTHONUSERBASE=/root/.local
+20 
+21 # Set the working directory for the application
+22 WORKDIR /app
+23 
+24 # Copy the source code
+25 COPY ./src /app/src
+26 COPY requirements.txt /app
+27 COPY tessdata.txt /app
+28 
+29 # Install Python dependencies
+30 RUN pip install --no-cache-dir -r /app/requirements.txt
+31 
+32 # Download Tesseract language data, removing any carriage return characters
+33 RUN cat /app/tessdata.txt | tr -d '\r' | xargs -n 1 wget --no-check-certificate -P /usr/share/tesseract-ocr/4.00/tessdata/
+34 
+35 # Set environment variables for the virtual environment
+36 ENV PATH="/app/venv/bin:$PATH"
+37 
+38 # Declare the mount point
+39 VOLUME /workspace/data
+40 
+41 # Set the entry point for the container
+42 ENTRYPOINT ["python", "/app/src/pipeline.py"]
+
+// File: Dockerfile Depth: 0
+
+01 # For more information, please refer to https://aka.ms/vscode-docker-python
+02 FROM python:3-slim
+03 
+04 # Keeps Python from generating .pyc files in the container
+05 ENV PYTHONDONTWRITEBYTECODE=1
+06 
+07 # Turns off buffering for easier container logging
+08 ENV PYTHONUNBUFFERED=1
+09 
+10 # Install pip requirements
+11 COPY requirements.txt .
+12 RUN python -m pip install -r requirements.txt
+13 
+14 WORKDIR /app
+15 COPY . /app
+16 
+17 # Creates a non-root user with an explicit UID and adds permission to access the /app folder
+18 # For more info, please refer to https://aka.ms/vscode-docker-python-configure-containers
+19 RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
+20 USER appuser
+21 
+22 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
+23 CMD ["python", "src/pipeline.py"]
+
+// File: docs\certificate-setup.adoc Depth: 1
+
+001 === Verify Using OpenSSL 
+002 
+003 The key takeaway from the openssl s_client output is that the ZScaler certificate is being used and trusted correctly in the certificate chain when establishing a connection to GitHub. This indicates that the certificate has been successfully added to the CA store and is recognized by OpenSSL.
+004 
+005 
+006 
+007 Use OpenSSL to verify that the ZScaler certificate is recognized
+008 
+009 [source, bash]
+010 -----
+011 openssl s_client -CApath /usr/local/share/custom-ca-certificates -connect github.com:443
+012 -----
+013 
+014 the output is rather lengthy, so we walk through it in steps
+015 
+016 *Connected Succesfully*
+017 
+018 -----
+019 openssl s_client -CApath /usr/local/share/custom-ca-certificates -connect github.com:443
+020 -----
+021 
+022 This indicates that the client has successfully connected to the GitHub server.
+023 
+024 *Certificate Chain Verification*
+025 
+026 -----
+027 depth=3 C = US, ST = California, L = San Jose, O = Zscaler Inc., OU = Zscaler Inc., CN = Zscaler Root CA, emailAddress = support@zscaler.com
+028 verify return:1
+029 depth=2 C = US, ST = California, O = Zscaler Inc., OU = Zscaler Inc., CN = Zscaler Intermediate Root CA (zscloud.net), emailAddress = support@zscaler.com
+030 verify return:1
+031 depth=1 C = US, ST = California, O = Zscaler Inc., OU = Zscaler Inc., CN = "Zscaler Intermediate Root CA (zscloud.net) (t) "
+032 verify return:1
+033 depth=0 CN = github.com
+034 verify return:1
+035 -----
+036 
+037 This shows the chain of certificates leading up to the GitHub certificate, starting from the ZScaler Root CA. Each `verify return:1` indicates that the certificate at that depth is valid and trusted.
+038 
+039 *Certificate Chain*
+040 
+041 ----
+042 Certificate chain
+043  0 s:CN = github.com
+044    i:C = US, ST = California, O = Zscaler Inc., OU = Zscaler Inc., CN = "Zscaler Intermediate Root CA (zscloud.net) (t) "
+045    a:PKEY: rsaEncryption, 2048 (bit); sigalg: RSA-SHA256
+046    v:NotBefore: Jun  2 03:49:54 2024 GMT; NotAfter: Jun 16 03:49:54 2024 GMT
+047  1 s:C = US, ST = California, O = Zscaler Inc., OU = Zscaler Inc., CN = "Zscaler Intermediate Root CA (zscloud.net) (t) "
+048    i:C = US, ST = California, O = Zscaler Inc., OU = Zscaler Inc., CN = Zscaler Intermediate Root CA (zscloud.net), emailAddress = support@zscaler.com
+049    a:PKEY: rsaEncryption, 2048 (bit); sigalg: RSA-SHA256
+050    v:NotBefore: Jun  2 03:49:54 2024 GMT; NotAfter: Jun 16 03:49:54 2024 GMT
+051  2 s:C = US, ST = California, O = Zscaler Inc., OU = Zscaler Inc., CN = Zscaler Intermediate Root CA (zscloud.net), emailAddress = support@zscaler.com
+052    i:C = US, ST = California, L = San Jose, O = Zscaler Inc., OU = Zscaler Inc., CN = Zscaler Root CA, emailAddress = support@zscaler.com
+053    a:PKEY: rsaEncryption, 2048 (bit); sigalg: RSA-SHA256
+054    v:NotBefore: Jun  5 05:33:19 2020 GMT; NotAfter: Jun 23 05:33:19 2041 GMT
+055 ----
+056 
+057 *Server Certficate details*
+058 
+059 ----
+060 
+061 -----BEGIN CERTIFICATE-----
+062 MIID1jCCAr6gAwIBAgIQfn17/7ZsGjuULNLEDrdCpTANBgkqhkiG9w0BAQsFADCB
+063 ...
+064 -----END CERTIFICATE-----
+065 
+066 ----
+067 
+068 The actual server certificate in PEM format
+069 
+070 *SSL Handshake Details*
+071 
+072 ----
+073 SSL handshake has read 3856 bytes and written 737 bytes
+074 Verification: OK
+075 ----
+076 Indicates that the SSL handshake was successful and the server certificate was verified successfully.
+077 
+078 *Final Verification Result*
+079 
+080 ----
+081 Verify return code: 0 (ok)
+082 ----
+083 
+084 This confirms that the certificate verification was successful.
+085 
+086 *HTTP Response*
+087 
+088 ----
+089 HTTP/1.1 400 Bad request
+090 Content-length: 90
+091 Cache-Control: no-cache
+092 Connection: close
+093 Content-Type: text/html
+094 
+095 <html><body><h1>400 Bad request</h1>
+096 Your browser sent an invalid request.
+097 </body></html>
+098 ----
+099 
+100 The HTTP response from the server is a 400 Bad Request, which is unrelated to the SSL certificate verification.
+101 
+
+// File: docs\dev_guide.adoc Depth: 1
+
+001 = Developer Guide
+002 
+003 == Abstract
+004 
+005 == Setup for development in a Container (VSCode)
+006 
+007 *Sources:* We heavly rely on an official https://code.visualstudio.com/docs/devcontainers/containers[blog article] and a https://code.visualstudio.com/docs/devcontainers/tutorial[tutorial], but make mor narrow choices for wich we apply the concepts laid out there.
+008 
+009 *Assumptions:*
+010 
+011 * *VSCode* as IDE
+012 * *local* Docker agent (Windows or MacOS: Docker Desktop)footnote:[As detailed in the article use of a remote Docker host or even a Kubernetes Cluster would be other viable options]
+013 
+014 === Use of other IDEs
+015 
+016 The strategy we are about to follow is based on a standard (Dev Container), so this setup could likely be transfered to other IDEs as for instance IntelliJ. We focus on VSCode for the moment to keep things simple.
+017 
+018 For an IDE agnostic setup, we do not check in IDE config directly, however it will be checked in as part of the documentation to be used as a template.
+019 
+020 It is a good idea to avoid committing the actual configuration to Git because:
+021 
+022   * The configuration contains user specific data that need to be replaced when using the template.
+023 
+024   * The individual developer might have the need to further individualize the template:
+025 
+026     ** User specific path names/
+027 
+028     ** Additional extentions need to be configured.
+029 
+030 is also good practice because the individual configuration might vary (e.g. additional plugins, paths on the home system etc).
+031 
+032 === Why develop in a Container
+033 
+034 The setup makes the project less accessible for inexperienced developers as they need to deal with Docker, but it comes with strong advantages:
+035 
+036 * *Lack of features under Windows* +
+037 The Python library https://pyenchant.github.io/pyenchant/install.html#on-windows[Enchanted] offers limited support for German under Windows.
+038 
+039 * *local setup closer to CI/CD and production* +
+040 For an effective dev-cycle, it is best practice for your local dev setup to represent the target environment closely. While esp. Java (Write once run anywhere) abstracts away the OS, the implementation of compiled languages like RUST might differ between OS systems. Having access to Linux / Unix is therefore a good plattform outside the niche of desktop development.
+041 
+042 * *Dependency Management* +
+043 As we depend on a range of dependencies (Tesseract_ORC, Python, a multitude of python libs sometimes requiring further dependencies like dictionaries) the following problems we face are alleviated having them checked into the project:
+044 
+045 ** Setup and maintenance of dev or production systems.
+046 
+047 ** code becomes clustered with parameters, heuristics and conditions that deal with varying local dependencies (e.g. path names) 
+048 
+049 === Setup of the IDE
+050 
+051 ==== Install and Configure Plugin from the Marketplace
+052 
+053 Load the plugin "Dev Containers" published by Microsoft and put the following config into `/.devcontainer/devcontainer.json`.
+054 
+055 Key settings in `devcontainer.json`:
+056 
+057 - **dockerFile**: Points to the Dev-Dockerfile in the `docker` directory.
+058 - **workspaceFolder**: Sets the working directory inside the container.
+059 - **mounts**: Binds the local directories to the container directories.
+060 - **settings**: Configures the terminal shell to use bash.
+061 - **extensions**: Installs the necessary VS Code extensions inside the container.
+062 - **postCreateCommand**: runs some commands after creation to configure git and load necessary python packages.
+063 - **remoteUser**: Sets the user as `root` to ensure necessary permissions.
+064 
+065 [source, json]
+066 -----
+067 {
+068   "name": "Dev Container",
+069   "dockerFile": "../docker/Dockerfile.dev",
+070   "workspaceFolder": "/workspace",
+071   "context": "..",
+072   "mounts": [
+073     "source=${localWorkspaceFolder},target=/workspace,type=bind",
+074     "source=C:/Users/schades/.ssh,target=/root/.ssh,type=bind"
+075   ],
+076   "settings": {
+077     "terminal.integrated.shell.linux": "/bin/bash"
+078   },
+079   "extensions": [
+080     "ms-python.python",
+081     "ms-azuretools.vscode-docker",
+082     "GitHub.vscode-pull-request-github",
+083     "asciidoctor.asciidoctor-vscode",
+084     "mhutchie.git-graph"
+085   ],
+086   "postCreateCommand": "chmod +x /workspace/scripts/setup_ssh_git.sh && /workspace/scripts/setup_ssh_git.sh && git config --global user.name 'Stefan Schade' && git config --global user.email 'dr_stefan_schade@yahoo.com' && python3 -m venv /workspace/venv && /workspace/venv/bin/pip install --no-cache-dir -r /workspace/requirements.txt",
+087   "remoteUser": "root"
+088 }
+089 -----
+090 
+091 IMPORTANT: change `<YourUsername>`, `<your.email@example.com>`, and `<Your Name>`  into the to your Windows login, your email and the User that should appear on the Git commits!
+092 
+093 * The Post Create Command does the following
+094 
+095     ** Setup Git
+096 
+097     ** Install packages
+098 
+099 ==== Setup Dockerfile Dependencies
+100 
+101 The fact, that our project requires a complex setup on the target environment was one motivation, to move to a container. Conclusively the Dockerfiles depend on secondary files
+102 
+103 ===== Python requirements
+104 
+105 `requirements.txt` is a textfile that contains the python packages that need to be installed with 'pip'
+106 
+107 [source]
+108 -----
+109 pyenchant
+110 tqdm
+111 hunspell
+112 -----
+113 
+114 ===== Tesseract config
+115 
+116 `tessdata.txt` is a textfile that contains additiona training files optimised for the relevant languages
+117 
+118 [source]
+119 -----
+120 https://github.com/tesseract-ocr/tessdata/raw/main/eng.traineddata
+121 https://github.com/tesseract-ocr/tessdata/raw/main/spa.traineddata
+122 -----
+123 
+124 ==== Setup Dockerfile
+125 
+126 The `Dockerfile` represents the development environment. It is common practice to use a different Docker file to generate the production setup because the two environments have drastically different requirements: While development environments need various tools and libraries for editing, debugging, and testing code, production environments need a lean and optimized setup for performance and security.
+127 
+128 ===== Dockerfile for development (`Dockerfile.dev`)
+129 
+130 [source, dockerfile]
+131 ----
+132 # Use an official Ubuntu as a parent image
+133 FROM ubuntu:latest
+134 
+135 # Install required tools
+136 RUN apt-get update && apt-get install -y \
+137     build-essential \
+138     curl \
+139     wget \
+140     git \
+141     vim \
+142     python3 \
+143     python3-pip \
+144     python3-venv \
+145     tesseract-ocr \
+146     asciidoctor \
+147     bash \
+148     ca-certificates \
+149     && rm -rf /var/lib/apt/lists/*
+150 
+151 # Set the working directory for the project
+152 WORKDIR /workspace
+153 
+154 # Copy the requirements file
+155 COPY ../requirements.txt /workspace
+156 
+157 # Copy the tessdata.txt file
+158 COPY ../tessdata.txt /workspace
+159 
+160 # Copy the Zscaler certificate if it exists and update CA certificates
+161 RUN if [ -f ../zscaler.crt ]; then \
+162     cp ../zscaler.crt /usr/local/share/ca-certificates/zscaler.crt && \
+163     update-ca-certificates; \
+164     fi
+165 
+166 # Copy the source code
+167 COPY ../src /workspace/src
+168 
+169 # Download Tesseract language data, removing any carriage return characters
+170 RUN cat /workspace/tessdata.txt | tr -d '\r' | xargs -n 1 wget --no-check-certificate -P /usr/share/tesseract-ocr/4.00/tessdata/
+171 
+172 
+173 # Create and activate a virtual environment
+174 RUN python3 -m venv /workspace/venv
+175 
+176 # Install any Python dependencies in the virtual environment
+177 RUN /workspace/venv/bin/pip install --no-cache-dir -r /workspace/requirements.txt
+178 
+179 # Set environment variables for the virtual environment
+180 ENV PATH="/workspace/venv/bin:$PATH"
+181 
+182 # Run bash by default
+183 CMD ["bash"]
+184 ----
+185 
+186 ===== Dockerfile for production (`Dockerfile.prod`)
+187 
+188 [source, dockerfile]
+189 ----
+190 # Use an official Python runtime as a parent image
+191 FROM python:3.9-slim
+192 
+193 # Set the working directory
+194 WORKDIR /app
+195 
+196 # Copy the source code
+197 COPY ./src /app/src
+198 
+199 # Copy the requirements file
+200 COPY requirements.txt /app
+201 
+202 # Copy the tessdata list
+203 COPY tessdata.txt /app
+204 
+205 # Install any needed packages specified in requirements.txt
+206 RUN pip install --no-cache-dir -r /app/requirements.txt
+207 
+208 # Install Tesseract OCR and necessary language data
+209 RUN apt-get update && apt-get install -y tesseract-ocr wget \
+210     && cat /app/tessdata.txt | tr -d '\r' | xargs -n 1 wget -P /usr/share/tesseract-ocr/4.00/tessdata/ \
+211     && rm -rf /var/lib/apt/lists/*
+212 
+213 # Set environment variables for the virtual environment
+214 ENV PATH="/app/venv/bin:$PATH"
+215 
+216 # Set the entrypoint to ensure additional arguments are passed to the Python script
+217 ENTRYPOINT ["python", "/app/src/main_script.py"]
+218 ----
+219 
+220 ====== The base image is a lightweight version of Python
+221 
+222 [source]
+223 ----
+224 FROM python:3.9-slim
+225 ----
+226 
+227 ====== Install required tools
+228 
+229 `wget` is required to download language data
+230 
+231 ====== Installation of the Python dependencies
+232 
+233 [source]
+234 ----
+235 RUN pip install --no-cache-dir -r /app/requirements.txt
+236 ----
+237 
+238 ====== Installation of the Tessdata dependencies
+239 
+240 * Install `wget`
+241 
+242 [source]
+243 ----
+244 RUN apt-get update && apt-get install -y tesseract-ocr \
+245     && apt-get install -y wget \
+246 ----
+247 
+248 * Download Language Data Files
+249 
+250 These lines download the English (eng.traineddata) and Spanish (spa.traineddata) language data files from the Tesseract GitHub repository and place them in the appropriate directory (`/usr/share/tesseract-ocr/4.00/tessdata/`)
+251 
+252 [source]
+253 ----
+254 && wget -P /usr/share/tesseract-ocr/4.00/tessdata/ https://github.com/tesseract-ocr/tessdata/raw/main/eng.traineddata \
+255 && wget -P /usr/share/tesseract-ocr/4.00/tessdata/ https://github.com/tesseract-ocr/tessdata/raw/main/spa.traineddata \
+256 ...
+257 ----
+258 
+259 * Streamline the download
+260 
+261 Use `xargs` to read each URL from `tessdata.txt` and download the corresponding file(s). This makes it easy to manage and update the list of languages without modifying the Dockerfile directly.
+262 
+263 [source]
+264 ----
+265 xargs -n 1 wget -P /usr/share/tesseract-ocr/4.00/tessdata/ < /app/tessdata.txt \
+266 ----
+267 
+268 * This removes the package lists to reduce the image size.
+269 
+270 [source]
+271 ----
+272 rm -rf /var/lib/apt/lists/*
+273 ----
+274 
+275 ====== Handle Carriage Return Characters when downloading languages
+276 
+277 The `cat` command is used to read `tessdata.txt`, and `tr -d '\r'` is used to remove any carriage return characters before passing the URLs to `xargs` and `wget`.
+278 
+279 ====== Set entrypoint
+280 
+281 The `ENTRYPOINT` directive ensures that any additional arguments passed to the Docker container are forwarded to the Python script.
+282 
+283 ==== Setup ssh for Github
+284 
+285 We assume the following
+286 
+287 * The `.ssh` directory contains the private / public key pair to be used for communication with gitfootnote:[if not `ssh-keygen -t rsa -b 4096 -C "<your email>"` will generate it, you have to configure it in your github settings] *The name must end on rsa*
+288 
+289 * The `.ssh` directory contains a config file that associates this key with github
+290 
+291 [source]
+292 ----
+293 # GitHub configuration
+294 Host github.com
+295   HostName github.com
+296   User <my_email>
+297   IdentityFile ~/.ssh/<my_key_ending_on_rsa>
+298 ----
+299 
+300 ==== Start the Container
+301 
+302 Make sure that the Docker Daemon is running (e.g. by starting Docker Desktop)
+303 
+304 In the Dialog `Ctrl+Shift+P` Choose the option "Dev Container: Open Folder in Container" or (in case you retry after a configuration change) "Dev Container: Rebuild Container"
+305 
+306 You can view the setup steps in the terminal which gives you an indication for the problems if anything fails.
+307 
+308 If everything is running, you can test the SSH connection to GitHub:
+309 [source, shell]
+310 ----
+311 ssh -T git@github.com
+312 ----
+313 
+314 ==== Managing the connection between the IDE and the development container
+315 
+316 The connection between the  IDE and the development container is managed by an https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers[extention]
+317 
+318 * Start Docker Daemon (usually by starting Docker Desktop)
+319 * Make sure the service is running:`docker info` (optional)
+320 * Make sure there is no container lingering from the last session:`docker ps -a` (optional)
+321 * Stop and remove a lingering container: `docker stop <container_id>` and `docker rm <container_id>`
+322 * Open VS Code will start in local mode
+323 * Switch to Container mode: `Str + Shift + P` and type "Dev Containers: Open Folder in Container"
+324 * Switch back to Local mode `Str + Shift + P` and type "Dev Containers: Open Folder Locally"
+325 * Perform a container restart, e.g. after a config change `Str + Shift + P` and type "Dev Containers: Reopen Folder Locally"
+326 * Trouble-Shooting: If you get tangled. Stop VS Code and make sure there is no process running (Code), stop all containers and start afresh.
+327 
+328 ==== Adding Extentions to VSCode
+329 
+330 If you install a new extension in VS Code while using a Dev Container, it will not automatically persist across container restarts or rebuilds unless specified in the devcontainer.json configuration. To ensure that the extension is always available in your Dev Container, you need to add it to the extensions list in your devcontainer.json. This can be done directly from the Marketplace view via the context menu.
+331 
+332 You might also have to restart VS Code to complete the process.
+333 
+334 ==== Setup Dev Container for Zscaler environment
+335 
+336 To ensure that your development environment functions correctly behind a Zscaler proxy, follow these steps to configure your development container:
+337 
+338 1. **Proxy and Certificate Configuration**:
+339    We need to configure the proxy settings and install the Zscaler certificate to allow secure HTTPS access and dependency installation. This setup is automated using a script that is executed within the container.
+340 
+341 2. **Scripts for Configuration**:
+342    Two main scripts are used:
+343    
+344    - `setup_docker_proxy.sh`: Configures proxy settings and installs the Zscaler certificate.
+345    - `install_python_dependencies.sh`: Installs Python dependencies listed in `requirements.txt`.
+346 
+347 3. **Adding the Scripts**:
+348    Place the scripts in the `/workspace/scripts` directory of your project.
+349 
+350    `setup_docker_proxy.sh`:
+351 
+352 [source, bash]
+353 -----
+354    #!/bin/bash
+355 
+356    # Ensure we are in the correct working directory
+357    cd /workspace
+358 
+359    # Example proxy settings (replace with actual proxy information)
+360    HTTP_PROXY="http://your.proxy.address:8080"
+361    HTTPS_PROXY="http://your.proxy.address:8080"
+362    NO_PROXY="localhost,127.0.0.1"
+363 
+364    # Export proxy settings for the Docker build process
+365    export http_proxy=$HTTP_PROXY
+366    export https_proxy=$HTTPS_PROXY
+367    export no_proxy=$NO_PROXY
+368 
+369    # Path to the Zscaler certificate in the workspace directory
+370    CERT_PATH="/workspace/zscaler.crt"
+371 
+372    # Copy the Zscaler certificate to the appropriate directory
+373    cp $CERT_PATH /usr/local/share/ca-certificates/zscaler.crt
+374 
+375    # Update CA certificates
+376    update-ca-certificates
+377 
+378    # Verify the certificate installation
+379    ls -l /etc/ssl/certs/ca-certificates.crt
+380 
+381    # Configure Git to use the updated CA certificates
+382    git config --global http.sslCAInfo /etc/ssl/certs/ca-certificates.crt
+383 
+384    # Verify Git configuration
+385    git config --global --get http.sslCAInfo
+386 
+387    echo "Proxy and certificate setup completed successfully."
+388 -----
+389 
+390 install_python_dependencies.sh:
+391 
+392 [source, bash]
+393 -----
+394 #!/bin/bash
+395 
+396 # Ensure we are in the correct working directory
+397 cd /workspace
+398 
+399 # Activate the virtual environment
+400 source /workspace/venv/bin/activate
+401 
+402 # Install Python dependencies from requirements.txt
+403 pip install --no-cache-dir -r /workspace/requirements.txt
+404 
+405 # List installed packages to verify installation
+406 pip list
+407 =====
+408 
+409 Configure the Dev Container:
+410 Update the .devcontainer/devcontainer.json file to include the post-create commands that execute these scripts automatically after the container is created.
+411 
+412 Example .devcontainer/devcontainer.json:
+413 
+414 json
+415 -----
+416 
+417 Configure the Dev Container:
+418 Update the .devcontainer/devcontainer.json file to include the post-create commands that execute these scripts automatically after the container is created.
+419 
+420 Example .devcontainer/devcontainer.json:
+421 
+422 [source, json]
+423 -----
+424 {
+425   "name": "Dev Container",
+426   "dockerFile": "../docker/Dockerfile.dev",
+427   "workspaceFolder": "/workspace",
+428   "context": "..",
+429   "mounts": [
+430     "source=${localWorkspaceFolder},target=/workspace,type=bind",
+431     "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind"
+432   ],
+433   "settings": {
+434     "terminal.integrated.shell.linux": "/bin/bash"
+435   },
+436   "extensions": [
+437     "ms-python.python",
+438     "ms-azuretools.vscode-docker",
+439     "GitHub.vscode-pull-request-github",
+440     "asciidoctor.asciidoctor-vscode",
+441     "mhutchie.git-graph",
+442     "njqdev.vscode-python-typehint",
+443     "VisualStudioExptTeam.vscodeintellicode"
+444   ],
+445   "postCreateCommand": "ls -la /workspace/scripts && chmod +x /workspace/scripts/setup_ssh_git.sh && bash /workspace/scripts/setup_ssh_git.sh && git config --global user.name 'Stefan Schade' && git config --global user.email 'dr_stefan_schade@yahoo.com' && /workspace/scripts/setup_docker_proxy.sh && /workspace/scripts/install_python_dependencies.sh",
+446   "remoteUser": "root"
+447 }
+448 -----
+449 
+450 Rebuild the Container:
+451 Use the VS Code command palette (Ctrl+Shift+P) to select Remote-Containers: Rebuild Container to apply all the changes and ensure everything is set up correctly.
+452 
+453 By following these steps, your development environment will be configured to work seamlessly with the Zscaler proxy, ensuring secure access to necessary resources and successful dependency installations.
+454 
+455 This section explains the steps we took to set up the development container for a Zscaler environment, ensuring the explanation is clear and fits smoothly into your AsciiDoc document.
+456 
+457 
+458 
+459 
+460 
+461 notes
+462 
+463 export TESSDATA_PREFIX=/usr/local/Cellar/tesseract/<version>/share/
+464 
+465 tesseract /path/to/your/image.jpg stdout -l eng --psm 3
+466 
+467 tesseract /path/to/saved_image.jpg stdout -l eng --psm 3
+468 
+469 
+470 
+471 
+472 
+473 
+474 
+475 
+476 
+477 
+478 
+479 
+480 
+481 
+482 
+483 
+484 
+485 
+486 
+487 
+488 
+
+// File: docs\mounting_data.adoc Depth: 1
+
+001 = Containerized Development with Dev Containers
+002 :author: ChatGPT
+003 :date: 2024-06-04
+004 
+005 == Introduction
+006 
+007 This document provides an overview of how to pass data to your application while developing in a containerized environment using dev containers. It outlines strategies for using volume mounts and configuring your development environment to closely mimic production setups.
+008 
+009 == Strategies for Passing Data
+010 
+011 === Using Volume Mounts
+012 
+013 Volume mounts allow you to specify directories on the host machine that will be accessible within the container. This is ideal for development environments as it provides seamless data sharing between the host and the container.
+014 
+015 Example `devcontainer.json` configuration:
+016 
+017 [source,json]
+018 ----
+019 {
+020   "name": "My Dev Container",
+021   "image": "my-app-image",
+022   "mounts": [
+023     "source=/path/on/host,target=/path/in/container,type=bind"
+024   ],
+025   "runArgs": [
+026     "--volume", "/path/on/host:/path/in/container"
+027   ]
+028 }
+029 ----
+030 
+031 Example `docker-compose.yml` configuration:
+032 
+033 [source,yaml]
+034 ----
+035 version: '3'
+036 services:
+037   app:
+038     image: my-app-image
+039     volumes:
+040       - /path/on/host:/path/in/container
+041 ----
+042 
+043 Running the container with a volume mount:
+044 
+045 [source,bash]
+046 ----
+047 docker run -v /path/on/host:/path/in/container my-app-image
+048 ----
+049 
+050 === Copying Data to Container
+051 
+052 If you prefer to copy data to the container instead of mounting it, you can use Docker commands or the `postCreateCommand` in `devcontainer.json`.
+053 
+054 Using Docker command:
+055 
+056 [source,bash]
+057 ----
+058 docker cp /path/on/host container_id:/path/in/container
+059 ----
+060 
+061 Using `postCreateCommand`:
+062 
+063 [source,json]
+064 ----
+065 {
+066   "name": "My Dev Container",
+067   "image": "my-app-image",
+068   "postCreateCommand": "cp -r /path/on/host /path/in/container"
+069 }
+070 ----
+071 
+072 === Using a Fixed Folder Approach
+073 
+074 For consistent development, you can set up a specific directory on your host machine and mount it into your container.
+075 
+076 Example setup with `devcontainer.json`:
+077 
+078 [source,json]
+079 ----
+080 {
+081   "name": "OCR Dev Container",
+082   "image": "ocr-app-image",
+083   "mounts": [
+084     "source=/Users/yourusername/data/dev-container-input,target=/app/data,type=bind"
+085   ],
+086   "runArgs": [
+087     "--volume", "/Users/yourusername/data/dev-container-input:/app/data"
+088   ]
+089 }
+090 ----
+091 
+092 Example setup with `docker-compose.yml`:
+093 
+094 [source,yaml]
+095 ----
+096 version: '3'
+097 services:
+098   ocr-app:
+099     image: ocr-app-image
+100     volumes:
+101       - /Users/yourusername/data/dev-container-input:/app/data
+102 ----
+103 
+104 Running the container directly with Docker:
+105 
+106 [source,bash]
+107 ----
+108 docker run -v /Users/yourusername/data/dev-container-input:/app/data ocr-app-image
+109 ----
+110 
+111 == Practical Example
+112 
+113 1. **Create the Directory:**
+114    
+115 [source,bash]
+116 ----
+117 mkdir /path/to/repo_data
+118 ----
+119 
+120 2. **Configure `devcontainer.json`:**
+121 
+122 [source,json]
+123 ----
+124 {
+125   "name": "My Dev Container",
+126   "image": "my-app-image",
+127   "mounts": [
+128     "source=/path/to/repo_data,target=/app/data,type=bind"
+129   ],
+130   "runArgs": [
+131     "--volume", "/path/to/repo_data:/app/data"
+132   ]
+133 }
+134 ----
+135 
+136 3. **Modify Your Application to Use the Mount Point:**
+137 
+138 Example in Python:
+139 
+140 [source,python]
+141 ----
+142 import os
+143 
+144 data_directory = "/app/data"
+145 for filename in os.listdir(data_directory):
+146     if filename.endswith(".jpg"):
+147         file_path = os.path.join(data_directory, filename)
+148         # Process the file
+149 ----
+150 
+151 == Example Directory Structure
+152 
+153 ------
+154 /path/to/
+155 ├── project_folder/
+156 │ ├── devcontainer.json
+157 │ ├── app.py
+158 │ └── other_project_files
+159 └── repo_data/
+160 ├── image1.jpg
+161 ├── image2.jpg
+162 └── more_images
+163 ------
+164 
+165 
+166 == Summary
+167 
+168 By using volume mounts, you can ensure that your development environment closely mimics your production setup. This approach allows you to:
+169 
+170 - Access host machine data directly from within the container.
+171 - Simplify the process of passing data to your application during development.
+172 - Ensure consistency between development and production environments.
+173 
+174 This strategy will help you efficiently develop and test your OCR processing application, ensuring that it works correctly when deployed in production.
+
+// File: docs\tmp.txt Depth: 1
+
+1     im ersten Lebensär Ial  icht vor Mitte des eal  scheinbar normal,bss4  keln oder in der E  na, das in der Regl mk  lr Faktor angesche n  w den möglichen in  len, m«ää=>ä‘    ä?änz%äü    e _a_„ä_„__%  chen Knl    1 Was ist Autismus? 13    \\\\Rl    Intelligenzformen, doch neigen Frauen im Allgemeinen mehr zur Empathie, während  Männern eher das Systematisieren liegt. Er sieht im Autismus eine übertriebene Ausfor-  mung des männlichen Profils — ein extremes Bedürfnis nach regelgestützten Systemen,  verbunden mit der Unfähigkeit, die Gefühle und Intentionen anderer Menschen intui-  tiv zu erfassen. Das Buch mit dem Titel The Essential Difference (Der wesentliche Unter-  schied) wirft einige interessante Fragen für die weitere Diskussion auf und bietet einen  neuen Bezugsrahmen für den Autismus bei Jungen und Mädchen. Wenn Baron-Cohen  Recht hat, muss der gegenwärtige Ansatz, der im Autismus eine Erkrankung sieht, die  der Heilung bedarf, revidiert werden. Autismus könnte danach ein mentaler Denkstil  sein, an den man sich gewöhnen und den man sogar als mögliche Gabe empfinden  kann. Zwar stützen viele der Charakteristika, die gemeinhin mit Autismus verbunden  werden, Baron-Cohens Hypothese, aber das Modell ist doch zu simplizistisch. Autisten  sind nicht nur extreme Systematisierer. Sie systematisieren auf eine unübliche, nicht  ganz logische Weise. Sie ziehen gewöhnlich Teile dem Ganzen vor und verarbeiten In-  formationen Stück für Stück statt in einem Gestaltprozess, in dem Informationen durch  allgemeine Kategorien gefiltert werden. Baron-Cohen gesteht ein, dass das Modell viel-  leicht nicht alle Nuancen des Autismus abdeckt, gleichwohl bietet es eine mögliche Er-  klärung für die repetitiven Verhaltensmuster und die eingeschränkten Interessen von  Menschen, die dem Autismus-Spektrum angehören. Nach den gegenwärtigen Theorien  ist das repetitive Verhalten von Personen mit Autismus meist ziellos, während Baron-  Cohen meint, diese Verhaltensweisen gäben den betreffenden Personen die Möglichkeit,  nach voraussagbaren Regeln oder Mustern in der erworbenen Information zu suchen.   Die meisten Forscher glauben, dass Autismus mehrere Ursachen hat. Diese verschie-  denen Ursachen könnten möglicherweise alle die gleichen Hirnsysteme in Mitleiden-  schaft ziehen oder die Entwicklung der kommunikativen und sozialen Funktionen be-  hindern. Die kommunikativen und sozialen Funktionen sind die Wurzel der Probleme  und Abweichungen, die Autismus kennzeichnen, und bilden die Grundlage der heuti-  gen diagnostischen Verfahren, die sich um die Triade der Beeinträchtigungen drehen.   Beträchtliches Interesse gilt auch einer Reihe von möglichen physiologischen Ano-  malien, die den Magen-Darm-Trakt, den Stoffwechsel und das Immunsystem betref-  fen, Laut Jackson (2002, S. 15):    ... wird allgemein anerkannt, dass Menschen, die dem Autismus-Spektrum angehö-  ren, in den Bereichen Sprache, Kommunikation, soziale Interaktion und Imagination  Probleme haben und häufig zu obsessiv-repetitivem oder rituellem Verhalten neigen.  Viele Menschen in dem Spektrum leiden auch an schwächenden Magen- und    Darmbeschwerden.    Kasein- und glutenfreie Diäten haben sich als hilfreich erwiesen. Es gibt darüber so-  wohl Berichte in der Literatur als auch von Eltern, die empfohlene Diäten ausprobiert  haben. Doch bis heute existieren keine ausreichend kontrollierten Untersuchungen in  Fachzeitschriften, die die Ergebnisse bei Einzelfällen bestätigen. Weitere Forschung un-  ter wissenschaftlich kontrollierten Bedingungen ist daher erforderlich.   Es herrscht zwar keine Übereinstimmung über die definitive Ursache von Autismus,  doch wissen wir, dass Autismus nicht durch Eltern oder durch die häusliche Lebensum-  welt verursacht wird, wie manche Forscher vor einigen Jahrzehnten behauptet haben.
+2 
+3 Syst   'Einems' ' Hu%%  Wies) Reih„0n N  ST  . TOtgpin d  ’tt |I] f \  éer dieN "£_D;G   .,Zl”“°m \  lenen 81eandﬂ 4  Sind, wüh'" m'\  ? DICW'  im ersten Lebensär Ial  icht vor Mitte des eal  scheinbar normal,bss4  keln oder in der Enw  na, das in der Regl mk  lr Faktor angesche n    w den möglichen 9  ören An  len, 8‘h WP    “°“"% d  Im AA  Gcn Knl  Ursacht ‚  wie VOP  E$die 5tö;;äg$;  über M  e 00  003 d°f„$z“ß  e IO® f ""'v  a die 8  al M    }  ]    1 Was ist Autismus? 13    Intelligenzformen, doch neigen Frauen im Allgemeinen mehr zur Empathie, während  Männern eher das Systematisieren liegt. Er sieht im Autismus eine übertriebene Ausfor-  mung des männlichen Profils — ein extremes Bedürfnis nach regelgestützten Systemen,  verbunden mit der Unfähigkeit, die Gefühle und Intentionen anderer Menschen intui-  tiv zu erfassen. Das Buch mit dem Titel The Essential Difference (Der wesentliche Unter-  schied) wirft einige interessante Fragen für die weitere Diskussion auf und bietet einen  neuen Bezugsrahmen für den Autismus bei Jungen und Mädchen. Wenn Baron-Cohen  Recht hat, muss der gegenwärtige Ansatz, der im Autismus eine Erkrankung sieht, die  der Heilung bedarf, revidiert werden. Autismus könnte danach ein mentaler Denkstil  sein, an den man sich gewöhnen und den man sogar als mögliche Gabe empfinden  kann. Zwar stützen viele der Charakteristika, die gemeinhin mit Autismus verbunden  werden, Baron-Cohens Hypothese, aber das Modell ist doch zu simplizistisch. Autisten  sind nicht nur extreme Systematisierer. Sie systematisieren auf eine unübliche, nicht  ganz logische Weise. Sie ziehen gewöhnlich Teile dem Ganzen vor und verarbeiten In-  formationen Stück für Stück statt in einem Gestaltprozess, in dem Informationen durch  allgemeine Kategorien gefiltert werden. Baron-Cohen gesteht ein, dass das Modell viel-  leicht nicht alle Nuancen des Autismus abdeckt, gleichwohl bietet es eine mögliche Er-  klärung für die repetitiven Verhaltensmuster und die eingeschränkten Interessen von  Menschen, die dem Autismus-Spektrum angehören. Nach den gegenwärtigen Theorien  ist das repetitive Verhalten von Personen mit Autismus meist ziellos, während Baron-  Cohen meint, diese Verhaltensweisen gäben den betreffenden Personen die Möglichkeit,  nach voraussagbaren Regeln oder Mustern in der erworbenen Information zu suchen.   Die meisten Forscher glauben, dass Autismus mehrere Ursachen hat. Diese verschie-  denen Ursachen könnten möglicherweise alle die gleichen Hirnsysteme in Mitleiden-  schaft ziehen oder die Entwicklung der kommunikativen und sozialen Funktionen be-  hindern. Die kommunikativen und sozialen Funktionen sind die Wurzel der Probleme  und Abweichungen, die Autismus kennzeichnen, und bilden die Grundlage der heuti-  gen diagnostischen Verfahren, die sich um die Triade der Beeinträchtigungen drehen.   Beträchtliches Interesse gilt auch einer Reihe von möglichen physiologischen Ano-  malien, die den Magen-Darm-Trakt, den Stoffwechsel und das Immunsystem betref-  fen, Laut Jackson (2002, S. 15):    ... wird allgemein anerkannt, dass Menschen, die dem Autismus-Spektrum angehö-  ren, in den Bereichen Sprache, Kommunikation, soziale Interaktion und Imagination  Probleme haben und häufig zu obsessiv-repetitivem oder rituellem Verhalten neigen.  Viele Menschen in dem Spektrum leiden auch an schwächenden Magen- und  Darmbeschwerden.    Kasein- und glutenfreie Diäten haben sich als hilfreich erwiesen. Es gibt darüber so-  wohl Berichte in der Literatur als auch von Eltern, die empfohlene Diäten ausprobiert  haben. Doch bis heute existieren keine ausreichend kontrollierten Untersuchungen in  Fachzeitschriften, die die Ergebnisse bei Einzelfällen bestätigen. Weitere Forschung un-  ter wissenschaftlich kontrollierten Bedingungen ist daher erforderlich.   Es herrscht zwar keine Übereinstimmung über die definitive Ursache von Autismus,  doch wissen wir, dass Autismus nicht durch Eltern oder durch die häusliche Lebensum-  welt verursacht wird, wie manche Forscher vor einigen Jahrzehnten behauptet haben.
+
+// File: docs\vscode_cheat_debug.txt Depth: 1
+
+01 Continue (F5): Continues execution until the next breakpoint.
+02 Step Over (F10): Executes the next line of code but doesn’t step into any functions. It’s useful when you want to execute a function call but don’t want to debug inside the function.
+03 Step Into (F11): Steps into the function call. If the next line is a function call, it will take you inside the function.
+04 Step Out (Shift+F11): Steps out of the current function and returns to the caller function. It’s useful when you are done debugging inside a function and want to return to the higher level.
+05 Restart (Ctrl+Shift+F5): Restarts the debugging session.
+06 Stop (Shift+F5): Stops the debugging session.
+07 Using the Debugging Controls
+08 Continue (F5): Use this to resume the execution of your code until it hits the next breakpoint.
+09 Step Over (F10): If you’re at a line that calls a function, use Step Over to execute the function without diving into it.
+10 Step Into (F11): If you want to dive into the details of a function call, use Step Into.
+11 Step Out (Shift+F11): If you’ve stepped into a function and now want to return to the calling function, use Step Out.
+12 Restart (Ctrl+Shift+F5): If you need to restart your debugging session.
+13 Stop (Shift+F5): To stop the debugging session.
+
+// File: ideen_Sammlung.txt Depth: 0
+
+01 XVII römische Ziffern von Rechtschreibkorrektur ausnehmen
+02 
+03 Bindestriche Früh- und Vorgeschichte
+04 
+05 Streit-
+06 
+07 getrennte worte
+08 
+09 
+10 
+11  python pipeline.py --log-level 'DEBUG' --grayscale --remove-noise --language deu --check-orientation FINE --psm 3 --save-preprocessed --from_step 'SanitizationStep'
+
+// File: promt.txt Depth: 0
+
+01 In the appended file, you find a software development project I am working on.
+02 
+03 I develop under Windows, to get access to a unix environment, I use DevContainers under VSCode. The main technology is python.
+04 
+05 I intend to establish a pipeline that automates the transformation of analogue texts via ocr digitization. The starting point is a batch of images and the steps should include various preprocessing steps improving the image quality, carrying out the ocr process, possibly including algorithmic optimization as varying the input to acchive the optimal output, a sanitization of the output by applying spell checking and reformating. Eventually the output should be transfered into a structured document (e.g. asciidoc) perhaps images should be automatically inserted at the appropriate places and cropped.
+06 
+07 The input data are either screen shots obtained by a separate tool or photographs from old books, genealogic documents, letters and the like.
+08 
+09 Obviously it is challenging to capture the whole transformation in an automated process, so users should have the possibly to interfer - for instance by reviewing a particular step and restarting from there with the manually improved intermediate result. (for instance there might be a step idetifying section headings and arranging them in a hierachical order to structure the document - It would at this point make a lot of sense to allow the user to correct the result and to continue from there with the disection of the document. Another example would be to create a list of changes applied during spell-checking that could be reviewed by a human to prevent cases where the source material is made worse by the process).
+10 
+11 The user would start with supplying an input folder that contains the images to be used as source material. then the consequtive process steps should operate on that folder each puting their own output into a subfolder perhaps and taking their input from either the original images or one of the subfolders containing intermediate results?
+12 
+13 The whole pipeline has to be quite flexible in that it should be easy to insert new process steps or rearange the sequence of the existing steps as there probably is a lot of experimentation involved. Each step should be of limited size, right now the step represented by the ocr_batch becomes rather unwieldy and I feel the need to disect it into multiple steps. 
+14 
+15 I am not yet completely familiar with python - but I think we need some kind of interface to describe the abstraction of a process step within the pipe. ocr_batch should become two steps (1 and 2 at the moment) with 1 being dedicated to preprocess the images and 2 being dedicated to perform the actual ocr operation (which also includes optimization like optimising the image orientation by maximising the confidence of the ocr opration).
+16 
+17 other steps like the sanitization by spell checking, the identification of chapter and section headings form a toc etc. would follow.
+18 
+19 Please suggest the next steps including implementation.
+
+// File: pytest.ini Depth: 0
+
+1 [pytest]
+2 markers =
+3     unit: mark a test as a unit test.
+4     integration: mark a test as an integration test.
+5 filterwarnings =
+6     ignore::DeprecationWarning:pytesseract.pytesseract
+
+// File: requirements-dev.txt Depth: 0
+
+1 debugpy
+2 pytest
+
+// File: requirements.txt Depth: 0
+
+1 pyenchant
+2 tqdm
+3 fuzzywuzzy
+4 pillow
+5 pytesseract
+6 prompt_toolkit
+7 opencv-python-headless
+
+// File: scripts\analyse_ocr_debug.sh Depth: 1
+
+01 #!/bin/bash
+02 
+03 # Check if the filename argument is provided
+04 if [ -z "$1" ]; then
+05   echo "Usage: $0 <filename>"
+06   exit 1
+07 fi
+08 
+09 # Set the file name from the first argument
+10 FILENAME=$1
+11 
+12 # Define the path to the JSON file
+13 JSON_FILE="/workspace/data/ocr_debug/$FILENAME"
+14 
+15 # Extract and join the text elements
+16 jq -r '.text | join(" ")' "$JSON_FILE"
+17 
+18 # Extract and join the confidence elements
+19 jq -r '[.conf[] | tostring] | join("  ")' "$JSON_FILE"
+20 
+21 # Extract and combine text elements with their corresponding confidence
+22 jq -r '[
+23     .text as $texts | 
+24     .conf as $confs | 
+25     range(0; ($texts | length)) | 
+26     "(" + $texts[.] + " | " + ($confs[.] | tostring) + ")" 
+27 ] | join(" ")' "$JSON_FILE"
+
+// File: scripts\build_prod_container_dind.sh Depth: 1
+
+01 #!/bin/bash
+02 
+03 # Ensure Docker daemon is running
+04 dockerd &
+05 
+06 # Wait for Docker daemon to start
+07 while(! docker info > /dev/null 2>&1); do
+08     echo "Waiting for Docker to start..."
+09     sleep 1
+10 done
+11 
+12 # Check if Dockerfile path is provided
+13 if [ -z "$1" ]; then
+14     echo "Usage: $0 /path/to/Dockerfile.prod"
+15     exit 1
+16 fi
+17 
+18 DOCKERFILE_PATH=$1
+19 
+20 # Get the directory of the provided Dockerfile
+21 DOCKERFILE_DIR=$(dirname "$DOCKERFILE_PATH")
+22 
+23 # Build the Docker image
+24 docker build -f "$DOCKERFILE_PATH" "$DOCKERFILE_DIR" -t prod-environment .
+25 
+26 if [ $? -ne 0 ]; then
+27     echo "Docker build failed"
+28     exit 1
+29 fi
+30 
+31 echo "Docker build completed successfully"
+
+// File: scripts\dev_container_build.cmd Depth: 1
+
+1 @echo off
+2 REM Script to build the development Docker image
+3 cd ..
+4 docker build -t dev-environment .
+5 pause
+
+// File: scripts\dev_container_start..cmd Depth: 1
+
+01 @echo off
+02 REM Script to start the Docker container for development
+03 
+04 REM Check if data directory argument is provided
+05 if "%1"=="" (
+06     echo Usage: dev_start_container.cmd [data_directory_path]
+07     exit /b 1
+08 )
+09 
+10 REM Get the absolute path of the data directory
+11 set DATA_DIR=%~1
+12 
+13 REM Change to the project root directory
+14 cd ..
+15 
+16 REM Start the development container
+17 docker run -it --rm -v %DATA_DIR%:/workspace/data -v %cd%/src:/workspace/src -w /workspace dev-environment
+18 pause
+
+// File: scripts\extract_text_from_result.sh Depth: 1
+
+1 jq -r '
+2   .[] as $page |
+3   $page.text_lines[] |
+4   if . == ($page.text_lines | last) then
+5     . + "\n\n\n" + $page.source_file + "\n\n\n"
+6   else
+7     .
+8   end
+9 ' /workspace/data/ocr_result/ocr_result.json 
+
+// File: scripts\fix_permissions.sh Depth: 1
+
+01 #!/bin/bash
+02 
+03 # Ensure Docker daemon is running
+04 dockerd &
+05 
+06 # Wait for Docker daemon to start
+07 while(! docker info > /dev/null 2>&1); do
+08     echo "Waiting for Docker to start..."
+09     sleep 1
+10 done
+11 
+12 # Ensure the appuser owns the data directory and its contents
+13 chown -R appuser:appgroup /workspace/data
+14 
+15 # Run the pipeline script with the provided arguments
+16 exec python /app/src/pipeline.py "$@"
+
+// File: scripts\generate_pdfs.sh Depth: 1
+
+1 #!/bin/bash
+2 
+3 # Navigate to the docs directory
+4 cd /workspace/docs
+5 
+6 # Generate PDFs from all Asciidoc files
+7 for file in *.adoc; do
+8   asciidoctor-pdf "$file" -o "/workspace/target/${file%.adoc}.pdf"
+9 done
+
+// File: scripts\install_python_dependencies.sh Depth: 1
+
+01 #!/bin/bash
+02 
+03 # Ensure we are in the correct working directory
+04 cd /workspace
+05 
+06 # Activate the virtual environment
+07 source /workspace/venv/bin/activate
+08 
+09 # Install Python dependencies from requirements.txt
+10 pip install --no-cache-dir -r /workspace/requirements.txt
+11 pip install --no-cache-dir -r /workspace/requirements-dev.txt
+12 
+13 # List installed packages to verify installation
+14 pip list
+
+// File: scripts\post_create_script.sh Depth: 1
+
+01 #!/bin/bash
+02 
+03 # Some output for troubleshooting
+04 ls -la /workspace/scripts
+05 
+06 # Retrieve the Git user and email from command-line arguments
+07 GIT_USER="$1"
+08 GIT_EMAIL="$2"
+09 
+10 # Configure Git with the provided user name and email
+11 git config --global user.name "$GIT_USER"
+12 git config --global user.email "$GIT_EMAIL"
+13 
+14 # Display the current Git configuration
+15 git config --list
+16 
+17 # Make sure scripts are executable
+18 chmod +x /workspace/scripts/*.sh
+19 
+20 # Execute additional setup scripts
+21 source /workspace/scripts/setup_ssh_git.sh 
+22 source /workspace/scripts/setup_docker_proxy.sh 
+23 # redundant, as already in Dockerfile.dev
+24 # source /workspace/scripts/install_python_dependencies.sh
+25 
+26 # Check for ZScaler certificate and add to default CA store if it exists
+27 CERT_PATH="/workspace/zscaler.crt"
+28 
+29 if [ -f "$CERT_PATH" ]; then
+30     echo "ZScaler certificate found. Adding to default CA store."
+31 
+32     # Copy the ZScaler certificate to the system CA directory
+33     cp $CERT_PATH /usr/local/share/ca-certificates/zscaler.crt
+34 
+35     # Ensure the certificate has correct permissions
+36     chmod 644 /usr/local/share/ca-certificates/zscaler.crt
+37 
+38     # Update the CA certificates
+39     update-ca-certificates --fresh
+40 
+41     echo "ZScaler certificate added to default CA store."
+42 else
+43     echo "ZScaler certificate not found. Skipping CA store update."
+44 fi
+45 
+46 echo "The following Python packages are installed:"
+47 pip list
+48 
+49 # setting env variables
+50 
+51 echo 'export TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata' >> ~/.bashrc
+52 echo 'export TESSDATA_PREFIX=/usr/local/Cellar/tesseract/4.00/share/tessdata' >> ~/.zshrc
+53 
+54 
+
+// File: scripts\prod_container_build.cmd Depth: 1
+
+01 @echo off
+02 REM Build the production Docker container
+03 
+04 REM Check if Dockerfile path is provided
+05 IF "%~1"=="" (
+06     echo Usage: prod_container_build.cmd path\to\Dockerfile.prod
+07     exit /B 1
+08 )
+09 
+10 SET DOCKERFILE_PATH=%~1
+11 
+12 REM Get the directory of the provided Dockerfile
+13 SET DOCKERFILE_DIR=%~dp1
+14 
+15 REM Convert the Dockerfile path and directory to Unix-style paths for Docker
+16 FOR /f "tokens=*" %%i IN ('wsl wslpath "%DOCKERFILE_PATH%"') DO SET DOCKERFILE_PATH_UNIX=%%i
+17 FOR /f "tokens=*" %%i IN ('wsl wslpath "%DOCKERFILE_DIR%"') DO SET DOCKERFILE_DIR_UNIX=%%i
+18 
+19 REM Build the Docker image
+20 docker build -f %DOCKERFILE_PATH_UNIX% %DOCKERFILE_DIR_UNIX% -t prod-environment .
+21 
+22 IF %ERRORLEVEL% NEQ 0 (
+23     echo Docker build failed
+24     exit /B 1
+25 )
+26 
+27 echo Docker build completed successfully
+
+// File: scripts\prod_container_build.sh Depth: 1
+
+01 #!/bin/bash
+02 
+03 # Ensure Docker is available
+04 if ! command -v docker &> /dev/null
+05 then
+06     echo "Docker could not be found. Please ensure Docker Desktop is running."
+07     exit 1
+08 fi
+09 
+10 # Navigate to the project directory
+11 cd /mnt/c/Users/your-username/Documents/REPOS/docuflow
+12 
+13 # Build the Docker image
+14 docker build -f ./docker/Dockerfile.prod -t prod-environment .
+15 
+16 # Check if the build was successful
+17 if [ $? -ne 0 ]; then
+18     echo "Docker build failed"
+19     exit 1
+20 fi
+21 
+22 echo "Docker build completed successfully"
+
+// File: scripts\requirements.sh Depth: 1
+
+01 # Update requirements.txt
+02 echo -e "pyenchant\ntqdm\nfuzzywuzzy\npillow\npytesseract\nprompt_toolkit" > requirements.txt
+03 
+04 # Rebuild Docker image
+05 #docker build -f docker/Dockerfile.dev -t dev-environment .
+06 
+07 # Start Docker container
+08 #docker run -it --rm -v $(pwd):/workspace -w /workspace dev-environment
+09 
+10 # Inside Docker container, check installed packages
+11 python -m pip list | grep -E 'pyenchant|tqdm|fuzzywuzzy|pillow|pytesseract|prompt_toolkit'
+12 
+13 # Start Python interactive session to check imports
+14 python -c "import PIL; import pytesseract; import enchant; import tqdm; import fuzzywuzzy; import prompt_toolkit; print('All imports are successful')"
+
+// File: scripts\run_container.sh Depth: 1
+
+01 #!/bin/bash
+02 
+03 # Check if data directory and additional arguments are provided
+04 if [ $# -lt 1 ]; then
+05     echo "Usage: $0 /path/to/data [additional arguments for pipeline.py]"
+06     exit 1
+07 fi
+08 
+09 DATA_DIR=$1
+10 shift
+11 
+12 # Debug information
+13 echo "Data directory: $DATA_DIR"
+14 echo "Additional arguments: $@"
+15 
+16 # Run the Docker container with the provided data directory and additional arguments
+17 docker run --rm -v "$DATA_DIR":/workspace/data prod-environment "$@"
+18 
+19 # Check if the docker command was successful
+20 if [ $? -ne 0 ]; then
+21     echo "Docker command failed"
+22     exit 1
+23 fi
+
+// File: scripts\run_prod_container.cmd Depth: 1
+
+01 @echo off
+02 REM Script to run the production Docker container
+03 
+04 REM Check if data directory argument is provided
+05 if "%~1"=="" (
+06     echo Usage: run_prod_container.cmd [data_directory_path] [script_arguments...]
+07     exit /b 1
+08 )
+09 
+10 REM Get the absolute path of the data directory
+11 set DATA_DIR=%~1
+12 echo Data directory: %DATA_DIR%
+13 
+14 REM Shift the first argument (data directory) and pass the rest to the script
+15 shift
+16 
+17 REM Initialize SCRIPT_ARGS variable
+18 set SCRIPT_ARGS=
+19 
+20 REM Loop through the remaining arguments and append them to SCRIPT_ARGS
+21 :loop
+22 if "%1"=="" goto endloop
+23     set SCRIPT_ARGS=%SCRIPT_ARGS% %1
+24     shift
+25     goto loop
+26 :endloop
+27 
+28 echo Additional arguments: %SCRIPT_ARGS%
+29 
+30 REM Change to the project root directory
+31 cd %~dp0..
+32 
+33 REM Start the production container with additional script arguments
+34 docker run -it --rm -v "%DATA_DIR%:/workspace/data" prod-environment %SCRIPT_ARGS%
+35 
+36 pause
+
+// File: scripts\run_tests.sh Depth: 1
+
+01 #!/bin/bash
+02 
+03 # Check if a test type parameter is provided
+04 if [ -z "$1" ]; then
+05     echo "Usage: $0 [unit|integration]"
+06     exit 1
+07 fi
+08 
+09 # Set the PYTHONPATH to the src directory
+10 export PYTHONPATH=/workspace/src
+11 export DEBUG_PRINTS=true
+12 
+13 # Run pytest with the specified marker
+14 if [ "$1" == "unit" ]; then
+15     pytest -m unit -s
+16 elif [ "$1" == "integration" ]; then
+17     pytest -m integration -s
+18 else
+19     echo "Invalid parameter: $1"
+20     echo "Usage: $0 [unit|integration]"
+21     exit 1
+22 fi
+
+// File: scripts\setup_docker_proxy.sh Depth: 1
+
+01 #!/bin/bash
+02 
+03 # Ensure we are in the correct working directory
+04 cd /workspace
+05 
+06 # Example proxy settings (replace with actual proxy information)
+07 HTTP_PROXY="http://your.proxy.address:8080"
+08 HTTPS_PROXY="http://your.proxy.address:8080"
+09 NO_PROXY="localhost,127.0.0.1"
+10 
+11 # Export proxy settings for the Docker build process
+12 export http_proxy=$HTTP_PROXY
+13 export https_proxy=$HTTPS_PROXY
+14 export no_proxy=$NO_PROXY
+15 
+16 # Verify proxy settings
+17 echo "Proxy settings applied: http_proxy=$http_proxy, https_proxy=$https_proxy, no_proxy=$no_proxy"
+18 
+19 # Check for the custom CA certificates path in OpenSSL configuration
+20 if ! grep -q "CApath = /usr/local/share/custom-ca-certificates" /etc/ssl/openssl.cnf; then
+21     echo "Custom CApath not found in OpenSSL configuration. Adding it."
+22     echo "CApath = /usr/local/share/custom-ca-certificates" >> /etc/ssl/openssl.cnf
+23 else
+24     echo "Custom CApath already present in OpenSSL configuration."
+25 fi
+26 
+27 # Verify the certificate installation
+28 openssl s_client -CApath /usr/local/share/custom-ca-certificates -connect github.com:443
+29 
+30 # Configure Git to use the updated CA certificates
+31 git config --global http.sslCAInfo /etc/ssl/certs/ca-certificates.crt
+32 
+33 # Verify Git configuration
+34 git config --global --get http.sslCAInfo
+35 
+36 echo "Proxy and certificate setup completed successfully."
+
+// File: scripts\setup_ssh_git.sh Depth: 1
+
+01 #!/bin/bash
+02 
+03 # Start the SSH agent
+04 eval "$(ssh-agent -s)"
+05 
+06 # Fix permissions of the private key files
+07 chmod 600 /root/.ssh/*_rsa
+08 
+09 # Fix permissions of the .ssh/config file if it exists
+10 if [ -f /root/.ssh/config ]; then
+11     chmod 600 /root/.ssh/config
+12 fi
+13 
+14 # Add all SSH keys to the agent
+15 for key in /root/.ssh/*_rsa; do
+16     ssh-add $key
+17 done
+18 
+19 # Remove the offending key for GitHub from known_hosts
+20 ssh-keygen -f "/root/.ssh/known_hosts" -R "github.com"
+21 
+22 # Add GitHub's new RSA key to known_hosts
+23 ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
+24 
+25 # List all identities added to the SSH agent
+26 echo "SSH Identities:"
+27 ssh-add -l
+28 
+29 # Print the contents of the known_hosts file for debugging
+30 echo "Known Hosts:"
+31 cat /root/.ssh/known_hosts
+32 
+33 # Test the SSH connection to GitHub (optional, can be removed if not needed)
+34 ssh -T git@github.com || true  # Add || true to avoid script failure
+
+// File: scripts\set_environment_variables.cmd Depth: 1
+
+1 setx HOME "C:\Users\your_windows_name"
+2 setx GIT_USER "Your Name"
+3 setx GIT_EMAIL "your.email@example.com"
+
+// File: src\pipeline.py Depth: 1
+
+001 # File: pipeline.py
+002 import os
+003 import logging
+004 from step_01_preprocess.preprocess_step import PreprocessStep
+005 from step_02_ocr.ocr_step import OCRStep
+006 from step_03_hyphenation.hyphenation_step import HyphenationStep
+007 from step_04_sanitize.sanitization_step import SanitizationStep
+008 
+009 # Mapping Tesseract language codes to Enchant language codes
+010 LANGUAGE_MAP = {
+011     'eng': 'en_US',  # English
+012     'deu': 'de_DE',  # German
+013     'spa': 'es_ES',  # Spanish
+014     'fra': 'fr_FR',  # French
+015     'ita': 'it_IT',  # Italian
+016     'por': 'pt_PT',  # Portuguese
+017     'nld': 'nl_NL',  # Dutch
+018     'swe': 'sv_SE',  # Swedish
+019     'dan': 'da_DK',  # Danish
+020     'fin': 'fi_FI',  # Finnish
+021     'nor': 'no_NO',  # Norwegian
+022     'pol': 'pl_PL',  # Polish
+023     'ces': 'cs_CZ',  # Czech
+024     'slk': 'sk_SK',  # Slovak
+025     'hun': 'hu_HU',  # Hungarian
+026     'ron': 'ro_RO',  # Romanian
+027     'bul': 'bg_BG',  # Bulgarian
+028     'hrv': 'hr_HR',  # Croatian
+029     'srp': 'sr_RS',  # Serbian
+030     'slv': 'sl_SI',  # Slovenian
+031     'gre': 'el_GR',  # Greek
+032     'lit': 'lt_LT',  # Lithuanian
+033     'lav': 'lv_LV',  # Latvian
+034     'est': 'et_EE',  # Estonian
+035     'lat': 'la'     # Latin
+036 }
+037 
+038 # Constants
+039 INPUT_DIRECTORY = '/workspace/data'
+040 LOG_FILE = '/workspace/data/pipeline.log'
+041 PATH_TO_TESSERACT = '/usr/share/tesseract-ocr/4.00/tessdata'
+042 
+043 # List of steps
+044 STEPS = [
+045     ('PreprocessStep', PreprocessStep),
+046     ('OCRStep', OCRStep),
+047     ('HyphenationStep', HyphenationStep),
+048     ('SanitizationStep', SanitizationStep)
+049 ]
+050 
+051 def list_data_directory():
+052     data_dir = "/workspace/data"
+053     print(f"Listing contents of {data_dir}:")
+054     for root, dirs, files in os.walk(data_dir):
+055         for name in files:
+056             print(os.path.join(root, name))
+057         for name in dirs:
+058             print(os.path.join(root, name))          
+059 
+060 def run_pipeline(args):
+061     logging.info("Starting pipeline execution")
+062         
+063     start_index = 0
+064     end_index = len(STEPS)
+065 
+066     if args.from_step:
+067         start_index = next((i for i, (name, _) in enumerate(STEPS) if name == args.from_step), 0)
+068 
+069     if args.to_step:
+070         end_index = next((i for i, (name, _) in enumerate(STEPS) if name == args.to_step), len(STEPS)) + 1
+071 
+072     # Ensure the indices are within the valid range
+073     start_index = max(start_index, 0)
+074     end_index = min(end_index, len(STEPS))
+075 
+076     # Ensure the indices are within the valid range
+077     start_index = max(start_index, 0)
+078     end_index = min(end_index, len(STEPS))
+079 
+080     # Execute the steps in the specified range
+081     for name, step_class in STEPS[start_index:end_index]:
+082         logging.info(f"Running {name}")
+083         step_instance = step_class(args)
+084         step_instance.run(INPUT_DIRECTORY)
+085   
+086 
+087     logging.info("Pipeline execution completed successfully")
+088 
+089 if __name__ == "__main__":
+090     import argparse
+091     parser = argparse.ArgumentParser(description='Run OCR pipeline')
+092     parser.add_argument('--from_step', type=str, help='Step to start from')
+093     parser.add_argument('--to_step', type=str, help='Step to end at')
+094     parser.add_argument('--interactive-mode', action='store_true', help='Wait for input at certain places')
+095     parser.add_argument('--whitelist-filter', type=str, help='Comma-separated list of keywords to filter whitelist files')
+096     parser.add_argument('--grayscale', action='store_true', help='Convert image to grayscale')
+097     parser.add_argument('--remove-noise', action='store_true', help='Apply noise removal')
+098     parser.add_argument('--threshold', type=int, default=0, help='Threshold for binarization')
+099     parser.add_argument('--dilate', action='store_true', help='Apply dilation')
+100     parser.add_argument('--erode', action='store_true', help='Apply erosion')
+101     parser.add_argument('--opening', action='store_true', help='Apply opening (erosion followed by dilation)')
+102     parser.add_argument('--canny', action='store_true', help='Apply Canny edge detection')
+103     parser.add_argument('--language', type=str, default='eng', help='Language for Tesseract OCR')
+104     parser.add_argument('--check-orientation', type=str, choices=['NONE', 'BASIC', 'FINE'], default='NONE', help='Check and correct orientation')
+105     parser.add_argument('--psm', type=int, choices=list(range(14)), default=6, help='Tesseract Page Segmentation Mode (PSM)')
+106     parser.add_argument('--save-preprocessed', action='store_true', help='Save preprocessed images')
+107     parser.add_argument('--log-level', type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='INFO', help='Set the logging level')
+108     
+109     args = parser.parse_args()
+110 
+111     print("Pipeline script started")
+112     print(f"Received arguments: {args}")
+113     list_data_directory()
+114 
+115     # Add PATH_TO_TESSERACT to args
+116     args.path_to_tesseract = PATH_TO_TESSERACT
+117     
+118     # Add input directory to args
+119     args.input_dir = INPUT_DIRECTORY
+120 
+121     # Translate the language code for Enchanted
+122     args.language_enchanted = LANGUAGE_MAP.get(args.language, 'en_US')  # default to English consistent with our language default
+123 
+124     # Setup logging
+125     logging.basicConfig(filename=LOG_FILE, level=getattr(logging, args.log_level.upper()), format='%(asctime)s - %(levelname)s - %(message)s')
+126 
+127     logging.debug(f"Running Pipeline args={args}")    
+128 
+129     run_pipeline(args)
+
+// File: src\pipeline_step.py Depth: 1
 
 1 from abc import ABC, abstractmethod
 2 
@@ -62,7 +1819,7 @@
 5     def run(self, input_data):
 6         pass
 
-// File: step_01_preprocess\preprocess_step.py Depth: 1
+// File: src\step_01_preprocess\preprocess_step.py Depth: 2
 
 01 import cv2
 02 import numpy as np
@@ -102,10 +1859,10 @@
 36             processed_img = self.preprocess_image(img)
 37             cv2.imwrite(os.path.join(input_data, 'preprocessed', image_file), processed_img)
 
-// File: step_01_preprocess\__init__.py Depth: 1
+// File: src\step_01_preprocess\__init__.py Depth: 2
 
 
-// File: step_02_ocr\ocr_step.py Depth: 1
+// File: src\step_02_ocr\ocr_step.py Depth: 2
 
 01 import os
 02 from PIL import Image
@@ -127,104 +1884,111 @@
 18     def run(self, main_directory):
 19         preprocessed_dir = os.path.join(main_directory, 'preprocessed')
 20         ocr_result_dir = os.path.join(main_directory, 'ocr_result')
-21         if self.log_level == 'DEBUG':
-22             ocr_debug_dir = os.path.join(main_directory, 'ocr_debug')
-23             os.makedirs(ocr_debug_dir, exist_ok=True)
-24         
-25         os.makedirs(ocr_result_dir, exist_ok=True)
-26         tessdata_dir_config = f'--tessdata-dir "{self.tessdata_dir}"'
-27         image_files = [f for f in os.listdir(preprocessed_dir) if f.endswith(('.jpeg', '.jpg', '.png'))]
-28         output_file = os.path.join(ocr_result_dir, 'ocr_result.json')
-29 
-30         # Delete the output file if it exists
-31         try:
-32             os.remove(output_file)
-33             logging.info(f"Deleted existing file: {output_file}")
-34         except FileNotFoundError:
-35             logging.info(f"No existing file to delete: {output_file}")
-36 
-37         for index, image_file in enumerate(image_files, start=1):
-38             img_path = os.path.join(preprocessed_dir, image_file)
-39             logging.info(f"Starting analysis of file: {image_file}")
-40             img = Image.open(img_path)
-41             text, final_angle, confidence = check_orientations(img, self.language, tessdata_dir_config, self.psm, self.check_orientation, ocr_debug_dir )
-42             text_lines = text.split('\n')
-43 
-44             json_output = {
-45                 "page_number": index,
-46                 "source_file": image_file,
-47                 "final_angle": final_angle,
-48                 "confidence": confidence,
-49                 "text_lines": text_lines
-50             }
-51             with open(output_file, 'a', encoding='utf-8') as file_out:
-52                 json.dump(json_output, file_out)
-53                 file_out.write('\n')
-54             logging.debug(f"Processed {image_file} with final angle: {final_angle}")
-55 
-56             # Save processed image if required
-57             if self.save_preprocessed:
-58                 img.save(os.path.join(ocr_result_dir, f"processed_{image_file}"))
+21         ocr_debug_dir = None
+22         
+23         if self.log_level == 'DEBUG':
+24             ocr_debug_dir = os.path.join(main_directory, 'ocr_debug')
+25             os.makedirs(ocr_debug_dir, exist_ok=True)
+26         
+27         os.makedirs(ocr_result_dir, exist_ok=True)
+28         tessdata_dir_config = f'--tessdata-dir "{self.tessdata_dir}"'
+29         image_files = [f for f in os.listdir(preprocessed_dir) if f.endswith(('.jpeg', '.jpg', '.png'))]
+30         output_file = os.path.join(ocr_result_dir, 'ocr_result.json')
+31 
+32         # Delete the output file if it exists
+33         try:
+34             os.remove(output_file)
+35             logging.info(f"Deleted existing file: {output_file}")
+36         except FileNotFoundError:
+37             logging.info(f"No existing file to delete: {output_file}")
+38 
+39         ocr_results = []
+40 
+41         for index, image_file in enumerate(image_files, start=1):
+42             img_path = os.path.join(preprocessed_dir, image_file)
+43             logging.info(f"Starting analysis of file: {image_file}")
+44             img = Image.open(img_path)
+45             text, final_angle, confidence = check_orientations(img, self.language, tessdata_dir_config, self.psm, self.check_orientation, ocr_debug_dir )
+46             text_lines = text.split('\n')
+47 
+48             json_output = {
+49                 "page_number": index,
+50                 "source_file": image_file,
+51                 "final_angle": final_angle,
+52                 "confidence": confidence,
+53                 "text_lines": text_lines
+54             }
+55             ocr_results.append(json_output)
+56             logging.debug(f"Processed {image_file} with final angle: {final_angle}")
+57 
+58             # Save processed image if required
+59             if self.save_preprocessed:
+60                 img.save(os.path.join(ocr_result_dir, f"processed_{image_file}"))
+61 
+62         # Write all results to the output file as a single JSON array
+63         with open(output_file, 'w', encoding='utf-8') as file_out:
+64             json.dump(ocr_results, file_out, ensure_ascii=False, indent=4)
+65         logging.info(f"Saved all OCR results to {output_file}")
 
-// File: step_02_ocr\utils_optimization.py Depth: 1
+// File: src\step_02_ocr\utils_optimization.py Depth: 2
 
 001 # File: step_02_ocr/utils_optimization.py
-002 import os
-003 import numpy as np
-004 from PIL import Image
-005 from step_02_ocr.utils_tesseract import tesseract_ocr
-006 import logging
-007 
-008 # Constants for fine orientation checks
-009 DEFAULT_SMALL_ROTATION_STEP = 1  # degrees
-010 DEFAULT_MAX_ROTATION_STEPS = 20  # steps
-011 HIGH_CONFIDENCE_THRESHOLD = 95  # Set an appropriate threshold for high confidence
-012 
-013 def rotate_image(image, angle, ocr_debug_dir):
-014     """Rotate the image by a specific angle without cropping."""
-015     # width, height = image.size
-016     # diagonal = int(np.sqrt(width**2 + height**2))
-017     # new_image = Image.new("RGB", (diagonal, diagonal), (255, 255, 255))
-018     # new_image.paste(image, ((diagonal - width) // 2, (diagonal - height) // 2))
-019     # rotated_image = new_image.rotate(angle, expand=True)
-020     
-021     rotated_image = image.rotate(angle, expand=True)
-022     
-023     if ocr_debug_dir is not None:
-024         rotated_image.save(os.path.join(ocr_debug_dir, f"angle_{angle}.jpg"))
-025     return rotated_image
-026 
-027 def check_orientations(input_image, language, tessdata_dir_config, psm, check_orientation, ocr_debug_dir):
-028     if check_orientation == 'NONE':
-029         text, confidence, _ = tesseract_ocr(input_image, language, tessdata_dir_config, psm, ocr_debug_dir, 0)
-030         return text, 0, confidence
+002 
+003 import os
+004 import numpy as np
+005 from PIL import Image
+006 from step_02_ocr.utils_tesseract import tesseract_ocr
+007 import logging
+008 
+009 # Constants for fine orientation checks
+010 DEFAULT_SMALL_ROTATION_STEP = 2  # degrees
+011 DEFAULT_MAX_ROTATION_STEPS = 10  # steps
+012 HIGH_CONFIDENCE_THRESHOLD = 95  # Set an appropriate threshold for high confidence
+013 
+014 def rotate_image(image, angle, ocr_debug_dir):
+015     """Rotate the image by a specific angle without cropping."""
+016     rotated_image = image.rotate(angle, expand=True)
+017     if ocr_debug_dir is not None:
+018         rotated_image.save(os.path.join(ocr_debug_dir, f"angle_{angle}.jpg"))
+019     return rotated_image
+020 
+021 def check_orientations(input_image, language, tessdata_dir_config, psm, check_orientation, ocr_debug_dir):
+022     if check_orientation == 'NONE':
+023         text, confidence = tesseract_ocr(input_image, language, tessdata_dir_config, psm, ocr_debug_dir, 0)
+024         return text, 0, confidence
+025 
+026     orientations = [0, 90, 180, 270]
+027     best_text = ''
+028     highest_score = -1
+029     final_angle = 0
+030     max_text_length = 0
 031 
-032     orientations = [0, 90, 180, 270, 45, 135, 225, 315]
-033     best_text = ''
-034     highest_confidence = -1
-035     final_angle = 0
-036     baseline_length = 0
-037 
-038     logging.debug(f"Basic orientation check with psm={psm}, language={language}")
-039 
-040     # Basic orientation check
-041     for angle in orientations:
-042         rotated_image = rotate_image(input_image, angle, ocr_debug_dir)
-043         text, confidence, text_length = tesseract_ocr(rotated_image, language, tessdata_dir_config, psm, ocr_debug_dir, angle)
-044         logging.debug(f"..... angle={angle} degrees, confidence={confidence}, text length={len(text)}")
+032     logging.debug(f"Basic orientation check with psm={psm}, language={language}")
+033 
+034     # Basic orientation check
+035     results = []
+036     for angle in orientations:
+037         rotated_image = rotate_image(input_image, angle, ocr_debug_dir)
+038         text, confidence = tesseract_ocr(rotated_image, language, tessdata_dir_config, psm, ocr_debug_dir, angle)
+039         logging.debug(f"..... angle={angle} degrees, confidence={confidence}, text length={len(text)}")
+040         results.append((text, confidence, angle))
+041         if len(text) > max_text_length:
+042             max_text_length = len(text)
+043 
+044     logging.debug(f"..... overall max length={max_text_length}")
 045 
-046         if confidence > highest_confidence:
-047             highest_confidence = confidence
-048             best_text = text
-049             final_angle = angle
-050             baseline_length = text_length
+046     # Calculate the score based on confidence and normalized text length
+047     for text, confidence, angle in results:
+048         normalized_length = len(text) / max_text_length if max_text_length > 0 else 0
+049         score = confidence * normalized_length  # You can adjust this formula as needed
+050         logging.debug(f"..... angle={angle} confidence={confidence} text_length={len(text)} degrees, score={score}")
 051 
-052         # Early stopping if confidence is high enough
-053         if confidence >= HIGH_CONFIDENCE_THRESHOLD:
-054             logging.debug(f"High confidence {confidence} at {angle} degrees, stopping coarse check early.")
-055             break
+052         if score > highest_score:
+053             highest_score = score
+054             best_text = text
+055             final_angle = angle
 056 
-057     logging.debug(f"Basic orientation correction result: Confidence={highest_confidence}, orientation={final_angle}")
+057     logging.debug(f"Basic orientation correction result: Score={highest_score}, orientation={final_angle}")
 058 
 059     if check_orientation == 'FINE':
 060         logging.debug(f"Fine orientation check around angle={final_angle}, direction 1")
@@ -235,50 +1999,49 @@
 065         while step <= DEFAULT_MAX_ROTATION_STEPS and improved:
 066             adjusted_angle = final_angle + step
 067             adjusted_image = rotate_image(input_image, adjusted_angle, ocr_debug_dir)
-068             adjusted_text, adjusted_confidence, adjusted_length = tesseract_ocr(adjusted_image, language, tessdata_dir_config, psm, ocr_debug_dir, adjusted_angle)
-069             # Penalize the confidence if the length of the text deviates significantly from the baseline
-070             length_penalty = abs(baseline_length - adjusted_length) / baseline_length
-071             adjusted_confidence -= length_penalty * adjusted_confidence
-072             logging.debug(f"Fine check at {adjusted_angle} degrees: Confidence={adjusted_confidence}, Text={adjusted_text}")
-073 
-074             if adjusted_confidence > highest_confidence:
-075                 highest_confidence = adjusted_confidence
-076                 best_text = adjusted_text
-077                 final_angle = adjusted_angle
-078                 improved = True
-079             else:
-080                 improved = False
-081 
-082             step += 1
-083 
-084         logging.debug(f"Fine orientation check around angle={final_angle}, direction 2")
-085 
-086         # If no improvement was found, try the other direction
-087         if not improved:
-088             step = DEFAULT_SMALL_ROTATION_STEP
-089             improved = True
-090             while step <= DEFAULT_MAX_ROTATION_STEPS and improved:
-091                 adjusted_angle = final_angle - step
-092                 adjusted_image = rotate_image(input_image, adjusted_angle, ocr_debug_dir)
-093                 adjusted_text, adjusted_confidence, adjusted_length = tesseract_ocr(adjusted_image, language, tessdata_dir_config, psm, ocr_debug_dir, adjusted_angle)
-094                 length_penalty = abs(baseline_length - adjusted_length) / baseline_length
-095                 adjusted_confidence -= length_penalty * adjusted_confidence
-096                 logging.debug(f"Fine check at {adjusted_angle} degrees: Confidence={adjusted_confidence}")
-097 
-098                 if adjusted_confidence > highest_confidence:
-099                     highest_confidence = adjusted_confidence
-100                     best_text = adjusted_text
-101                     final_angle = adjusted_angle
-102                     improved = True
-103                 else:
-104                     improved = False
-105 
-106                 step += 1
-107 
-108     logging.info(f"Orientation correction result: Confidence={highest_confidence}, orientation={final_angle}")
-109     return best_text, final_angle, highest_confidence
+068             adjusted_text, adjusted_confidence = tesseract_ocr(adjusted_image, language, tessdata_dir_config, psm, ocr_debug_dir, adjusted_angle)
+069             normalized_length = len(adjusted_text) / max_text_length if max_text_length > 0 else 0
+070             adjusted_score = adjusted_confidence * normalized_length
+071             logging.debug(f"Fine check at {adjusted_angle} degrees: Score={adjusted_score}, text length={len(adjusted_text)}")
+072 
+073             if adjusted_score > highest_score:
+074                 highest_score = adjusted_score
+075                 best_text = adjusted_text
+076                 final_angle = adjusted_angle
+077                 improved = True
+078             else:
+079                 improved = False
+080 
+081             step += 1
+082 
+083         logging.debug(f"Fine orientation check around angle={final_angle}, direction 2")
+084 
+085         # If no improvement was found, try the other direction
+086         if not improved:
+087             step = DEFAULT_SMALL_ROTATION_STEP
+088             improved = True
+089             while step <= DEFAULT_MAX_ROTATION_STEPS and improved:
+090                 adjusted_angle = final_angle - step
+091                 adjusted_image = rotate_image(input_image, adjusted_angle, ocr_debug_dir)
+092                 adjusted_text, adjusted_confidence = tesseract_ocr(adjusted_image, language, tessdata_dir_config, psm, ocr_debug_dir, adjusted_angle)
+093                 normalized_length = len(adjusted_text) / max_text_length if max_text_length > 0 else 0
+094                 adjusted_score = adjusted_confidence * normalized_length
+095                 logging.debug(f"Fine check at {adjusted_angle} degrees: Score={adjusted_score}")
+096 
+097                 if adjusted_score > highest_score:
+098                     highest_score = adjusted_score
+099                     best_text = adjusted_text
+100                     final_angle = adjusted_angle
+101                     improved = True
+102                 else:
+103                     improved = False
+104 
+105                 step += 1
+106 
+107     logging.info(f"Orientation correction result: Score={highest_score}, orientation={final_angle}")
+108     return best_text, final_angle, highest_score
 
-// File: step_02_ocr\utils_tesseract.py Depth: 1
+// File: src\step_02_ocr\utils_tesseract.py Depth: 2
 
 01 # File: step_02_ocr/utils_tesseract.py
 02 import pytesseract
@@ -287,8 +2050,8 @@
 05 import json
 06 
 07 # Constants
-08 MIN_WORD_LENGTH_FOR_CONFIDENCE = 3
-09 MIN_WORD_COUNT_FOR_CONFIDENCE = 3
+08 MIN_WORD_LENGTH_FOR_CONFIDENCE = 4
+09 MIN_WORD_COUNT_FOR_CONFIDENCE = 4
 10 MIN_CONFIDENCE_FOR_WORD = 60
 11 
 12 def tesseract_ocr(image, language, tessdata_dir_config, psm, ocr_debug_dir, angle):
@@ -322,22 +2085,546 @@
 40             json.dump(data, debug_file, ensure_ascii=False, indent=4)
 41             debug_file.write('\n')
 42 
-43     return text, average_confidence, len(data['text'])
+43     return text, average_confidence
 
-// File: step_02_ocr\__init__.py Depth: 1
-
-
-// File: step_03_postprocess\spellcheck_step.py Depth: 1
+// File: src\step_02_ocr\__init__.py Depth: 2
 
 
-// File: step_03_postprocess\toc_generation_step Depth: 1
+// File: src\step_03_hyphenation\hyphenation_step.py Depth: 2
+
+001 import os
+002 import enchant
+003 import logging
+004 import json
+005 import re
+006 from pipeline_step import PipelineStep
+007 
+008 class HyphenationStep(PipelineStep):
+009     CONTEXT_WORD_COUNT = 10  # Number of words before and after the word in question for context
+010 
+011     def __init__(self, args):
+012         self.args = args
+013         self.dictionary = self.load_dictionary(args.language_enchanted)
+014 
+015     def load_dictionary(self, language):
+016         try:
+017             dictionary = enchant.Dict(language)
+018             logging.info(f"Preparing Enchant dictionary {language}")
+019         except enchant.DictNotFoundError:
+020             raise ValueError(f"No dictionary found for language: {language}")
+021         return dictionary
+022 
+023     def run(self, input_data):
+024         input_file = f"{input_data}/ocr_result/ocr_result.json"
+025         output_dir = f"{input_data}/hyphenation"
+026         suggestions_file = f"{output_dir}/hyphenation_suggestions.txt"
+027         whitelist_candidates_file = f"{output_dir}/hyphenation_whitelist_candidates.txt"
+028         output_file = f"{output_dir}/hyphenation_output.json"
+029 
+030         logging.info(f"Input file: {input_file} suggestion file: {suggestions_file}, output file: {output_file}")
+031 
+032         os.makedirs(output_dir, exist_ok=True)
+033 
+034         with open(input_file, "r") as f:
+035             ocr_output = json.load(f)
+036 
+037         suggestions = []
+038         for page_index, page in enumerate(ocr_output):
+039             text_lines = page.get("text_lines", [])
+040             for line_index, line in enumerate(text_lines):
+041                 logging.debug(f"Preparing suggestions for page {page_index} line {line_index}")
+042                 line_suggestions = self.generate_suggestions(page_index, line_index, text_lines)
+043                 suggestions.extend(line_suggestions)
+044 
+045         with open(suggestions_file, "w") as f:
+046             for idx, (page_index, line_index, original, proposed) in enumerate(suggestions):
+047                 if not proposed:
+048                     continue  # Skip if there are no suggestions
+049                 if self.is_legitimate_word(proposed[0]):  # Prevent overwhelming the user with trivial changes
+050                     continue  # COMMENT: Omit this message to prevent overwhelming the user
+051                 context = self.get_context(ocr_output[page_index]["text_lines"], line_index, original)
+052                 f.write(f"Proposed Change {idx+1}:\n\n")
+053                 f.write(f"Source File: {ocr_output[page_index]['source_file']}\n")
+054                 f.write(f"Page Number: {page_index + 1}\n")
+055                 f.write(f"Line Number: {line_index}\n")
+056                 f.write(f"Context: {context}\n\n")
+057                 f.write(f"now:      {original}\n")
+058                 f.write(f"then:      {proposed}\n\n")
+059                 f.write(f"{original}  --->   {proposed}\n")
+060                 f.write(f"--------------------------------------------\n\n")
+061 
+062         original_words = set(original for _, _, original, _ in suggestions)
+063         with open(whitelist_candidates_file, "w") as wf:
+064             for word in original_words:
+065                 wf.write(word + "\n")
+066 
+067         if self.args.interactive_mode:
+068             input("Review the suggestions and press Enter to apply changes...")
+069 
+070         # Apply suggestions to the output JSON structure
+071         for page in ocr_output:
+072             text_lines = page.get("text_lines", [])
+073             for i, line in enumerate(text_lines):
+074                 words = line.split()
+075                 corrected_line = " ".join([self.apply_suggestion(word, suggestions) for word in words])
+076                 text_lines[i] = corrected_line
+077             page["text_lines"] = text_lines
+078 
+079         with open(output_file, "w") as f:
+080             json.dump(ocr_output, f, indent=4)
+081         return output_dir
+082 
+083     def generate_suggestions(self, page_index, line_index, text_lines):
+084         suggestions = []
+085         current_line = text_lines[line_index].split()
+086         if current_line and re.search(r'-\W*$', current_line[-1]):  # Check for hyphen followed by non-letter characters
+087             next_line = self.get_next_line(text_lines, line_index)
+088             if next_line and next_line.strip():  # Check if next_line is not empty or only whitespace
+089                 next_words = next_line.split()
+090                 if next_words:
+091                     next_word = next_words[0]
+092                     current_word_part = current_line[-1][:-1]
+093                     if current_word_part and self.is_word_valid(next_word):
+094                         combined_word_with_hyphen = current_word_part + '-' + next_word
+095                         combined_word_no_hyphen = current_word_part + next_word
+096                         if self.dictionary.check(current_word_part) and self.dictionary.check(next_word):
+097                             suggestions.append((page_index, line_index, current_line[-1], combined_word_with_hyphen))
+098                         elif self.dictionary.check(combined_word_no_hyphen):
+099                             suggestions.append((page_index, line_index, current_line[-1], combined_word_no_hyphen))
+100                         else:
+101                             sanitized_combined_word = current_word_part + next_word
+102                             suggestions.append((page_index, line_index, current_line[-1], sanitized_combined_word))
+103         return suggestions
+104 
+105     def get_next_line(self, text_lines, line_index):
+106         if line_index + 1 < len(text_lines):
+107             return text_lines[line_index + 1]
+108         return None
+109 
+110     def get_context(self, text_lines, line_index, word):
+111         words = text_lines[line_index].split()
+112         try:
+113             index = words.index(word)
+114         except ValueError:
+115             logging.warning(f"Word '{word}' not found in line: {text_lines[line_index]}")
+116             return text_lines[line_index]  # Return the whole line as context if the word is not found
+117         start = max(0, index - self.CONTEXT_WORD_COUNT)
+118         end = min(len(words), index + self.CONTEXT_WORD_COUNT + 1)
+119         return " ".join(words[start:end])
+120 
+121     def apply_suggestion(self, word, suggestions):
+122         for page_index, line_index, original, proposed in suggestions:
+123             if word == original:
+124                 return proposed if proposed else word
+125         return word
+126 
+127     def is_word_valid(self, word):
+128         if not word.isalpha():
+129             return False
+130         if re.match(r'^[IVXLCDM]+$', word):  # Check for Roman numerals
+131             return False
+132         if word.isupper() or word.islower():  # Check if the word is all uppercase or all lowercase
+133             return True
+134         return False
+135 
+136     def is_legitimate_word(self, word):
+137         return self.dictionary.check(word)
+
+// File: src\step_03_hyphenation\__init__.py Depth: 2
 
 
-// File: step_03_postprocess\__init__.py Depth: 1
+// File: src\step_04_sanitize\sanitization_step.py Depth: 2
+
+001 import os
+002 import enchant
+003 import logging
+004 import json
+005 import re
+006 from pipeline_step import PipelineStep
+007 
+008 class SanitizationStep(PipelineStep):
+009     CONTEXT_WORD_COUNT = 10  # Number of words before and after the word in question for context
+010 
+011     def __init__(self, args):
+012         self.args = args
+013         self.dictionary = self.load_dictionary(args.language_enchanted)
+014         self.whitelist = self.load_whitelists(args.language, args.whitelist_filter)
+015 
+016     def load_dictionary(self, language):
+017         try:
+018             dictionary = enchant.Dict(language)
+019             logging.info(f"Preparing Enchant dictionary {language}")
+020         except enchant.DictNotFoundError:
+021             raise ValueError(f"No dictionary found for language: {language}")
+022         return dictionary
+023 
+024     def load_whitelists(self, language, filter_keywords):
+025         whitelist = set()
+026         project_whitelist_path = f"/workspace/resources"
+027         input_whitelist_path = f"{self.args.input_dir}"
+028 
+029         def process_whitelist_file(path):
+030             with open(path, "r") as f:
+031                 for line in f:
+032                     line = line.split('#', 1)[0].strip()
+033                     if line:
+034                         whitelist.add(line)
+035 
+036         if os.path.exists(project_whitelist_path):
+037             for filename in os.listdir(project_whitelist_path):
+038                 if filename.startswith(f"spelling-whitelist-{language}") and self.filter_file(filename, filter_keywords):
+039                     process_whitelist_file(os.path.join(project_whitelist_path, filename))
+040                     logging.info(f"Loaded project-specific whitelist from {filename}")
+041 
+042         if os.path.exists(input_whitelist_path):
+043             for filename in os.listdir(input_whitelist_path):
+044                 if filename.startswith(f"spelling-whitelist-{language}"):
+045                     process_whitelist_file(os.path.join(input_whitelist_path, filename))
+046                     logging.info(f"Loaded input directory whitelist from {filename}")
+047 
+048         if not whitelist:
+049             logging.warning(f"No whitelists found for language: {language}")
+050 
+051         return whitelist
+052 
+053     def filter_file(self, filename, filter_keywords):
+054         if not filter_keywords:
+055             return True
+056         for keyword in filter_keywords.split(','):
+057             if keyword.strip() in filename:
+058                 return True
+059         return False
+060 
+061     def run(self, input_data):
+062         input_file = f"{input_data}/ocr_result/ocr_result.json"
+063         output_dir = f"{input_data}/sanitized"
+064         suggestions_file = f"{output_dir}/suggestions.txt"
+065         whitelist_candidates_file = f"{output_dir}/whitelist_candidates.txt"
+066         output_file = f"{output_dir}/sanitized_output.json"
+067 
+068         logging.info(f"Input file: {input_file} suggestion file: {suggestions_file}, output file: {output_file}")
+069 
+070         os.makedirs(output_dir, exist_ok=True)
+071 
+072         with open(input_file, "r") as f:
+073             ocr_output = json.load(f)
+074 
+075         suggestions = []
+076         for page_index, page in enumerate(ocr_output):
+077             text_lines = page.get("text_lines", [])
+078             for line_index, line in enumerate(text_lines):
+079                 logging.debug(f"Preparing suggestions for page {page_index} line {line_index}")
+080                 line_suggestions = self.generate_suggestions(line, text_lines, line_index)
+081                 suggestions.extend([(page_index, line_index, word, sugg) for word, sugg in line_suggestions])
+082 
+083         with open(suggestions_file, "w") as f:
+084             for idx, (page_index, line_index, original, proposed) in enumerate(suggestions):
+085                 if not proposed:
+086                     continue  # Skip if there are no suggestions
+087                 context = self.get_context(ocr_output[page_index]["text_lines"], line_index, original)
+088                 f.write(f"Proposed Change {idx+1}:\n\n")
+089                 f.write(f"Source File: {ocr_output[page_index]['source_file']}\n")
+090                 f.write(f"Page Number: {page_index + 1}\n")
+091                 f.write(f"Line Number: {line_index}\n")
+092                 f.write(f"Context: {context}\n\n")
+093                 f.write(f"now:      {original}\n")
+094                 f.write(f"then:      {proposed}\n\n")
+095                 f.write(f"{original}  --->   {proposed}\n")
+096                 f.write(f"--------------------------------------------\n\n")
+097 
+098         original_words = set(original for _, _, original, _ in suggestions)
+099         with open(whitelist_candidates_file, "w") as wf:
+100             for word in original_words:
+101                 wf.write(word + "\n")
+102 
+103         if self.args.interactive_mode:
+104             input("Review the suggestions and press Enter to apply changes...")
+105 
+106         # Apply suggestions to the output JSON structure
+107         for page in ocr_output:
+108             text_lines = page.get("text_lines", [])
+109             for i, line in enumerate(text_lines):
+110                 words = line.split()
+111                 corrected_line = " ".join([self.apply_suggestion(word, suggestions) for word in words])
+112                 text_lines[i] = corrected_line
+113             page["text_lines"] = text_lines
+114 
+115         with open(output_file, "w") as f:
+116             json.dump(ocr_output, f, indent=4)
+117         return output_dir
+118 
+119     def generate_suggestions(self, text, text_lines, line_index):
+120         suggestions = []
+121         words = text.split()
+122         for word in words:
+123             if not re.match(r'^[a-zA-ZäöüÄÖÜß]+$', word):
+124                 continue
+125             if len(word) == 1:
+126                 continue
+127             if word in self.whitelist:
+128                 continue
+129             if not self.dictionary.check(word):
+130                 suggestions.append((word, self.dictionary.suggest(word)))
+131 
+132         if words and words[-1].endswith('-'):
+133             next_line = self.get_next_line(text_lines, line_index)
+134             if next_line and next_line.strip():
+135                 next_words = next_line.split()
+136                 if next_words:
+137                     next_word = next_words[0]
+138                     combined_word = words[-1][:-1] + next_word
+139                     if not self.dictionary.check(combined_word):
+140                         suggestions.append((words[-1], self.dictionary.suggest(combined_word)))
+141 
+142         return suggestions
+143 
+144     def get_next_line(self, text_lines, line_index):
+145         if line_index + 1 < len(text_lines):
+146             return text_lines[line_index + 1]
+147         return None
+148 
+149     def get_context(self, text_lines, line_index, word):
+150         words = text_lines[line_index].split()
+151         try:
+152             index = words.index(word)
+153         except ValueError:
+154             logging.warning(f"Word '{word}' not found in line: {text_lines[line_index]}")
+155             return text_lines[line_index]  # Return the whole line as context if the word is not found
+156         start = max(0, index - self.CONTEXT_WORD_COUNT)
+157         end = min(len(words), index + self.CONTEXT_WORD_COUNT + 1)
+158         return " ".join(words[start:end])
+159 
+160     def apply_suggestion(self, word, suggestions):
+161         for page_index, line_index, original, proposed in suggestions:
+162             if word == original:
+163                 return proposed[0] if proposed else word
+164         return word
+165 
+166     def parse_suggestions(self, suggestions_text):
+167         suggestions = []
+168         lines = suggestions_text.split("\n")
+169         for line in lines:
+170             if " ---> " in line:
+171                 original, corrected = line.split(" ---> ")
+172                 suggestions.append((original.strip(), corrected.strip()))
+173         return suggestions
+
+// File: src\step_04_sanitize\__init__.py Depth: 2
 
 
-// File: __init__ copy.py Depth: 0
+// File: src\__init__.py Depth: 1
 
 
-// File: __init__.py Depth: 0
+// File: tessdata.txt Depth: 0
+
+1 https://github.com/tesseract-ocr/tessdata/raw/main/eng.traineddata
+2 https://github.com/tesseract-ocr/tessdata/raw/main/spa.traineddata
+3 https://github.com/tesseract-ocr/tessdata/raw/main/deu.traineddata
+4 https://github.com/tesseract-ocr/tessdata/raw/main/ita.traineddata
+5 https://github.com/tesseract-ocr/tessdata/raw/main/lat.traineddata
+
+// File: tests\conftest.py Depth: 1
+
+1 # tests/conftest.py
+2 
+3 import sys
+4 import os
+5 
+6 # Add the src directory to the system path
+7 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
+
+// File: tests\step_01_preprocess\test_preprocess_step_integration.py Depth: 2
+
+01 import pytest
+02 import os
+03 from PIL import Image, ImageDraw, ImageFont
+04 from step_01_preprocess.preprocess_step import PreprocessStep
+05 from argparse import Namespace
+06 
+07 @pytest.mark.integration
+08 def test_preprocess_step_integration(tmpdir):
+09     # Setup test directories
+10     input_dir = tmpdir.mkdir("data")
+11     preprocessed_dir = input_dir.mkdir("preprocessed")
+12 
+13     # Create a test image
+14     img_path = os.path.join(input_dir, "test_image.jpg")
+15     create_test_image(img_path, "This is a test image.")
+16 
+17     # Setup arguments
+18     args = Namespace(
+19         grayscale=True,
+20         remove_noise=True,
+21         threshold=128,
+22         dilate=False,
+23         erode=False,
+24         opening=False,
+25         canny=False,
+26         deskew=False
+27     )
+28 
+29     # Run Preprocess step
+30     preprocess_step = PreprocessStep(args)
+31     preprocess_step.run(str(input_dir))
+32 
+33     # Check if preprocessed images are created
+34     processed_files = os.listdir(str(preprocessed_dir))
+35     assert len(processed_files) > 0
+36 
+37     # Read and print results (for demonstration purposes, not typical for automated tests)
+38     if os.getenv("DEBUG_PRINTS", "false").lower() == "true":
+39         for processed_file in processed_files:
+40             print(processed_file)
+41 
+42 def create_test_image(file_path, text):
+43     """Creates a simple image with text for testing purposes."""
+44     # Create an image with white background
+45     image = Image.new('RGB', (200, 100), color=(255, 255, 255))
+46     draw = ImageDraw.Draw(image)
+47     
+48     # Use a basic font
+49     font = ImageFont.load_default()
+50 
+51     # Add text to the image
+52     draw.text((10, 40), text, font=font, fill=(0, 0, 0))
+53 
+54     # Save the image
+55     image.save(file_path)
+
+// File: tests\step_01_preprocess\__init__.py Depth: 2
+
+
+// File: tests\step_02_ocr\test_ocr_step_integration.py Depth: 2
+
+01 import os
+02 import pytest
+03 from PIL import Image, ImageDraw, ImageFont
+04 from step_02_ocr.ocr_step import OCRStep
+05 from argparse import Namespace
+06 import json
+07 
+08 @pytest.mark.integration
+09 def test_ocr_step_integration(tmpdir):
+10     # Setup test directories
+11     data_dir = tmpdir.mkdir("data")
+12     preprocessed_dir = data_dir.mkdir("preprocessed")
+13     ocr_result_dir = data_dir.mkdir("ocr_result")
+14 
+15     # Create a test image
+16     img_path = os.path.join(preprocessed_dir, "test_image.jpg")
+17     create_test_image(img_path, "This is a test image with text.", rotation_angle=273)
+18 
+19     # Setup arguments
+20     args = Namespace(
+21         language='eng',
+22         path_to_tesseract='/usr/share/tesseract-ocr/4.00/tessdata',
+23         check_orientation='FINE',
+24         psm=6,
+25         save_preprocessed=False
+26     )
+27 
+28     # Run OCR step
+29     ocr_step = OCRStep(args)
+30     ocr_step.run(str(data_dir))
+31 
+32     # Check if OCR results are written to the output file
+33     result_file = os.path.join(ocr_result_dir, 'ocr_result.json')
+34     assert os.path.exists(result_file)
+35 
+36     # Read and print results (for demonstration purposes, not typical for automated tests)
+37     if os.getenv("DEBUG_PRINTS", "false").lower() == "true":
+38         with open(result_file, 'r', encoding='utf-8') as file:
+39             for line in file:
+40                 print(line)
+41 
+42     # Verify the OCR output
+43     with open(result_file, 'r', encoding='utf-8') as file:
+44         for line in file:
+45             result = json.loads(line)
+46             assert result["final_angle"] in [90, 270]  # Adjust this based on your final rotation logic
+47             assert "This is a test image with text." in " ".join(result["text_lines"])
+48 
+49 def create_test_image(file_path, text, rotation_angle=0):
+50     """Creates a simple image with text for testing purposes."""
+51     # Create an image with white background
+52     image = Image.new('RGB', (300, 100), color=(255, 255, 255))
+53     draw = ImageDraw.Draw(image)
+54     
+55     # Try to use a specific TTF font
+56     try:
+57         font_path = "/workspace/tests/data/arial.ttf"
+58         font = ImageFont.truetype(font_path, 20)
+59     except IOError:
+60         # Fall back to the default font if the specific font is not found
+61         font = ImageFont.load_default()
+62 
+63     # Add text to the image
+64     draw.text((10, 40), text, font=font, fill=(0, 0, 0))
+65     
+66     # Rotate the image
+67     if rotation_angle != 0:
+68         image = image.rotate(rotation_angle, expand=1)
+69 
+70     # Save the image
+71     image.save(file_path)
+
+// File: tests\step_02_ocr\__init__.py Depth: 2
+
+
+// File: tests\test_pipeline.py Depth: 1
+
+01 import os
+02 import pytest
+03 from PIL import Image
+04 import numpy as np
+05 from argparse import Namespace
+06 from src.pipeline import run_pipeline
+07 
+08 def test_pipeline():
+09     args = Namespace(
+10         grayscale=True,
+11         remove_noise=True,
+12         threshold=128,
+13         dilate=False,
+14         erode=False,
+15         opening=False,
+16         canny=False,
+17         deskew=False,
+18         language='eng',
+19         check_orientation=True,
+20         psm=6,
+21         no_pause=True
+22     )
+23 
+24     input_data = "/tmp/test_pipeline_data"
+25     os.makedirs(input_data, exist_ok=True)
+26 
+27     # Create dummy images
+28     dummy_image_path = os.path.join(input_data, 'test_image.png')
+29     image = Image.fromarray(np.zeros((100, 100), dtype=np.uint8))
+30     image.save(dummy_image_path)
+31 
+32     run_pipeline(args)
+33 
+34     assert os.path.exists(os.path.join(input_data, 'preprocessed'))
+35     assert os.path.exists(os.path.join(input_data, 'preprocessed', 'test_image.png'))
+36     assert os.path.exists(os.path.join(input_data, 'ocr_result.txt'))
+
+// File: tests\test_pipeline_step.py Depth: 1
+
+01 # tests/test_pipeline_step.py
+02 
+03 import pytest
+04 from src.pipeline_step import PipelineStep
+05 
+06 class DummyStep(PipelineStep):
+07     def run(self, input_data):
+08         return input_data
+09 
+10 def test_pipeline_step():
+11     step = DummyStep()
+12     result = step.run("test_input")
+13     assert result == "test_input"
+
+// File: tests\__init__.py Depth: 1
 
