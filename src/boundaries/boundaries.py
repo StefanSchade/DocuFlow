@@ -23,9 +23,7 @@ class Boundaries(PipelineStep):
                 print(f"Failed to load image {image_path}")
                 continue
 
-            # Convert to grayscale for processing
-            gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            preprocessed_image = self.preprocess_image(gray_image)
+            preprocessed_image = self.preprocess_image_for_boundary_recoginition(image)
             bounding_boxes = self.detect_text_regions(preprocessed_image)
 
             # Draw bounding boxes on the original colored image
@@ -36,14 +34,24 @@ class Boundaries(PipelineStep):
 
             print(f"Processed {filename}, saved to {output_path}")
 
-    def preprocess_image(self, image):
+    def preprocess_image_for_boundary_recoginition(self, image):
+        # gray scale        
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         # Apply adaptive thresholding
         block_size = self.args.block_size if self.args.block_size else 51
-        constant = 2
-        binary_image = cv2.adaptiveThreshold(
+        constant = 3
+        image = cv2.adaptiveThreshold(
             image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, block_size, constant
         )
-        return binary_image
+        image = cv2.GaussianBlur(image, (7,7), 0)
+           
+        image = cv2.medianBlur(image, 13)
+   
+   
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,13))
+        image = cv2.dilate(image, kernel, iterations = 1)
+   
+        return image
 
     def detect_text_regions(self, preprocessed_image):
         # Find contours
