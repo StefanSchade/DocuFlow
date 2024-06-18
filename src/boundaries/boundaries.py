@@ -18,16 +18,22 @@ class Boundaries(PipelineStep):
         for filename in os.listdir(input_dir):
             image_path = os.path.join(input_dir, filename)
             image = cv2.imread(image_path)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # Ensure grayscale
             
-            bounding_boxes = self.detect_text_regions(image)
+            if image is None:
+                print(f"Failed to load image {image_path}")
+                continue
+
+            # Convert to grayscale for processing
+            gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            bounding_boxes = self.detect_text_regions(gray_image)
+
+            # Draw bounding boxes on the original colored image
             image_with_boxes = self.draw_bounding_boxes(image, bounding_boxes)
-         
+
             output_path = os.path.join(output_dir, filename)
             cv2.imwrite(output_path, image_with_boxes)
 
             print(f"Processed {filename}, saved to {output_path}")
-
 
     def detect_text_regions(self, preprocessed_image):
         # Find contours
@@ -35,7 +41,6 @@ class Boundaries(PipelineStep):
         
         bounding_boxes = []
         for contour in contours:
-            print(f"box found with {contour}")
             x, y, w, h = cv2.boundingRect(contour)
             bounding_boxes.append((x, y, w, h))
         
@@ -43,10 +48,11 @@ class Boundaries(PipelineStep):
 
     def draw_bounding_boxes(self, image, bounding_boxes):
         for (x, y, w, h) in bounding_boxes:
-            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 9)  # Draw green rectangles
+            print("draw")
         return image
 
-    def process(image):
+    def process(self, image):
         bounding_boxes = self.detect_text_regions(image)
         image_with_boxes = self.draw_bounding_boxes(image, bounding_boxes)
         return image_with_boxes
