@@ -30,7 +30,7 @@ class PreprocessStep(PipelineStep):
         if self.args.grayscale or self.args.threshold > 0:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         if self.args.remove_noise:
-            image = cv2.medianBlur(image, 5)
+            image = cv2.medianBlur(image, 15)
         if self.args.wiener_filter: # de-blurring with a wiener filter
             kernel = np.ones((5,5)) / 25  # Example kernel, adjust as needed
             K = 0.005  # Example noise-to-signal ratio, adjust as needed
