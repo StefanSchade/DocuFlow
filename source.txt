@@ -1184,6 +1184,12 @@
 16 Pipeline script started
 17 Received arguments: Namespace(from_step=None, to_step='OCRStep', interactive_mode=False, whitelist_filter=None, grayscale=True, remove_noise=True, threshold=True, wiener_filter=False, enhanced_contrast=False, adaptive_threshold=True, block_size=51, dilate=False, erode=False, sharpen=True, opening=False, canny=False, language='deu', check_orientation='FINE', psm=6, save_preprocessed=True, log_level='DEBUG')
 18 root@346e6157f1ad:/workspace/src# 
+19 
+20 
+21  python pipeline.py --log-level 'DEBUG' --grayscale --language deu --check-orientation FINE --psm 6 --save-preprocessed --threshold --adaptive-threshold --block-size 51 --noise-constant 3 --to_step 'Boundaries' --sharpen 
+22 
+23 
+24  python pipeline.py --log-level 'DEBUG' --grayscale --language deu --check-orientation FINE --psm 6 --save-preprocessed --threshold --adaptive-threshold --block-size 51 --noise-constant 3 --to_step 'Boundaries' --sharpen --dilate
 
 // File: promt.txt Depth: 0
 
@@ -1687,47 +1693,155 @@
 
 // File: src\boundaries\boundaries.py Depth: 2
 
-01 import cv2
-02 import numpy as np
-03 
-04 class Boundaries(PipelineStep):
-05     def __init__(self, args):
-06         self.args = args
-07         
-08     def run(self, input_data):
-09         input_dir = f"{input_data}/preprocessed"
-10         output_dir = f"{input_data}/boundaries"
-11         
-12         for filename in os.listdir(input_dir):
-13             image_path = os.path.join(input_dir, filename)
-14             imgage = cv2.imread(img_path)
-15             
-16             output_path = os.path.join(output_dir, filename)
-17             cv2.imwrite(output_path, image_with_boxes)
-18 
-19             print(f"Processed {filename}, saved to {output_path}")
-20 
-21 
-22     def detect_text_regions(self, preprocessed_image):
-23         # Find contours
-24         contours, _ = cv2.findContours(preprocessed_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-25         
-26         bounding_boxes = []
-27         for contour in contours:
-28             x, y, w, h = cv2.boundingRect(contour)
-29             bounding_boxes.append((x, y, w, h))
-30         
-31         return bounding_boxes
-32 
-33     def draw_bounding_boxes(self, image, bounding_boxes):
-34         for (x, y, w, h) in bounding_boxes:
-35             cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-36         return image
-37 
-38     def process(image):
-39         bounding_boxes = self.detect_text_regions(image)
-40         image_with_boxes = self.draw_bounding_boxes(image, bounding_boxes)
-41         return image_with_boxes
+001 import cv2
+002 import numpy as np
+003 import os
+004 from pipeline_step import PipelineStep
+005 
+006 class Boundaries(PipelineStep):
+007     def __init__(self, args):
+008         self.args = args
+009 
+010     def run(self, input_data):
+011         input_dir = f"{input_data}/preprocessed"
+012         output_dir = f"{input_data}/boundaries"
+013         
+014         # Create the output directory if it does not exist
+015         if not os.path.exists(output_dir):
+016             os.makedirs(output_dir)
+017         
+018         for filename in os.listdir(input_dir):
+019             image_path = os.path.join(input_dir, filename)
+020             image = cv2.imread(image_path)
+021             
+022             if image is None:
+023                 print(f"Failed to load image {image_path}")
+024                 continue
+025 
+026             preprocessed_image = self.preprocess_image_for_boundary_recognition(image)
+027             bounding_boxes, quadrilaterals = self.detect_text_regions(preprocessed_image)
+028             
+029             print(f"Detected quadrilaterals: {len(quadrilaterals)}")
+030 
+031             # Draw bounding boxes on the original colored image
+032             image_with_boxes = self.draw_bounding_boxes(image, bounding_boxes)
+033             image_with_quadrilaterals = self.draw_quadrilaterals(image_with_boxes, quadrilaterals)
+034 
+035             output_path = os.path.join(output_dir, filename)
+036             cv2.imwrite(output_path, image_with_quadrilaterals)
+037 
+038             print(f"Processed {filename}, saved to {output_path}")
+039 
+040             # Save each bounding box as a separate image
+041             self.save_bounding_boxes(image, bounding_boxes, filename, output_dir)
+042 
+043     def draw_bounding_boxes(self, image, bounding_boxes):
+044         for i, (x, y, w, h) in enumerate(bounding_boxes):
+045             print(f"Drawing bounding box at ({x}, {y}), width: {w}, height: {h}")  # Debugging output
+046             cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+047 
+048             # Calculate the center of the bounding box
+049             center_x = x + w // 2
+050             center_y = y + h // 2
+051 
+052             # Determine the text size (80% of the bounding box height)
+053             text = str(i + 1)
+054             text_scale = min(w, h) * 0.8 / (cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0][1])
+055             text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, text_scale, 2)
+056 
+057             text_width, text_height = text_size[0]
+058             text_offset_x = center_x - text_width // 2
+059             text_offset_y = center_y + text_height // 2
+060 
+061             # Draw the number centered in the bounding box
+062             cv2.putText(image, text, (text_offset_x, text_offset_y), cv2.FONT_HERSHEY_SIMPLEX, text_scale, (0, 255, 0), round(text_height/10), cv2.LINE_AA)
+063         return image
+064 
+065 
+066     def preprocess_image_for_boundary_recognition(self, image):
+067         # Convert to grayscale        
+068         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+069         # Apply adaptive thresholding
+070         block_size = self.args.block_size if self.args.block_size else 51
+071         constant = 3
+072         image = cv2.adaptiveThreshold(
+073             image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, block_size, constant
+074         )
+075         image = cv2.GaussianBlur(image, (49, 49), 0)  # Adjusted to a more typical kernel size
+076         image = cv2.medianBlur(image, 29)
+077         
+078         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 13))
+079         image = cv2.dilate(image, kernel, iterations=1)
+080         
+081         return image
+082     
+083     def detect_text_regions(self, preprocessed_image):
+084         # Find contours
+085         contours, _ = cv2.findContours(preprocessed_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+086         
+087         bounding_boxes = []
+088         min_width, min_height = 50, 50  # Minimum size to consider
+089         for contour in contours:
+090             x, y, w, h = cv2.boundingRect(contour)
+091             # Filter out too large or too small contours
+092             if w > min_width and h > min_height and w < preprocessed_image.shape[1] * 0.9 and h < preprocessed_image.shape[0] * 0.9:
+093                 bounding_boxes.append((x, y, w, h))
+094   
+095         # Filter out boxes that are contained within other boxes
+096         filtered_boxes = []
+097         for i, box1 in enumerate(bounding_boxes):
+098             contained = False
+099             for j, box2 in enumerate(bounding_boxes):
+100                 if i != j and is_contained(box1, box2):
+101                     contained = True
+102                     break
+103             if not contained:
+104                 filtered_boxes.append(box1)
+105                 
+106         # Sort the filtered boxes from top to bottom and then left to right
+107         filtered_boxes = sorted(filtered_boxes, key=lambda b: (b[1] // 50, b[0]))
+108         
+109         quadrilaterals = []
+110         for contour in contours:
+111             epsilon = 0.005 * cv2.arcLength(contour, True)
+112             approx = cv2.approxPolyDP(contour, epsilon, True)
+113             print(f"Approximated contour: {approx}")
+114             print(f"Contour length: {len(approx)}")
+115             if len(approx) == 4:
+116                 quadrilaterals.append(approx)
+117                 print(f"Detected quadrilateral: {approx}")
+118 
+119         return filtered_boxes, quadrilaterals
+120     
+121     def draw_quadrilaterals(self, image, quadrilaterals):
+122         for quadrilateral in quadrilaterals:
+123             print(f"Drawing quadrilateral: {quadrilateral}")
+124             if quadrilateral.shape == (4, 1, 2):
+125                 quadrilateral = quadrilateral.reshape(4, 2)
+126             cv2.polylines(image, [quadrilateral], True, (255, 0, 0), 2)  # Draw quadrilaterals in blue
+127         return image
+128     
+129     def save_bounding_boxes(self, image, bounding_boxes, filename, output_dir):
+130         base_filename = os.path.splitext(filename)[0]
+131         num_boxes = len(bounding_boxes)
+132         for i, (x, y, w, h) in enumerate(bounding_boxes):
+133             box_image = image[y:y+h, x:x+w]
+134             box_filename = f"{base_filename}_{i+1:0{len(str(num_boxes))}d}.png"
+135             box_filepath = os.path.join(output_dir, box_filename)
+136             cv2.imwrite(box_filepath, box_image)
+137             print(f"Saved bounding box {i+1} to {box_filepath}")
+138 
+139     def process(self, image):
+140         bounding_boxes, quadrilaterals = self.detect_text_regions(image)
+141         image_with_boxes = self.draw_bounding_boxes(image, bounding_boxes)
+142         image_with_quadrilaterals = self.draw_quadrilaterals(image_with_boxes, quadrilaterals)
+143         return image_with_quadrilaterals
+144 
+145 def is_contained(inner_box, outer_box):
+146     ix, iy, iw, ih = inner_box
+147     ox, oy, ow, oh = outer_box
+148     return ix >= ox and iy >= oy and (ix + iw) <= (ox + ow) and (iy + ih) <= (oy + oh)
+149 
 
 // File: src\boundaries\__init__.py Depth: 2
 
@@ -1839,37 +1953,38 @@
 102     parser.add_argument('--enhanced-contrast', action='store_true', help='Enhance contrast of image')
 103     parser.add_argument('--adaptive-threshold', action='store_true', help='adaptive thresholding flag')
 104     parser.add_argument('--block-size', type=int, default=3, help='Choose an uneven number - smaller is more local')
-105     parser.add_argument('--dilate', action='store_true', help='Apply dilation')
-106     parser.add_argument('--erode', action='store_true', help='Apply erosion')
-107     parser.add_argument('--sharpen', action='store_true', help='sharpen imageO')
-108     parser.add_argument('--opening', action='store_true', help='Apply opening (erosion followed by dilation)')
-109     parser.add_argument('--canny', action='store_true', help='Apply Canny edge detection')
-110     parser.add_argument('--language', type=str, default='eng', help='Language for Tesseract OCR')
-111     parser.add_argument('--check-orientation', type=str, choices=['NONE', 'BASIC', 'FINE'], default='NONE', help='Check and correct orientation')
-112     parser.add_argument('--psm', type=int, choices=list(range(14)), default=6, help='Tesseract Page Segmentation Mode (PSM)')
-113     parser.add_argument('--save-preprocessed', action='store_true', help='Save preprocessed images')
-114     parser.add_argument('--log-level', type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='INFO', help='Set the logging level')
-115     
-116     args = parser.parse_args()
-117 
-118     print("Pipeline script started")
-119     print(f"Received arguments: {args}")
-120 
-121     # Add PATH_TO_TESSERACT to args
-122     args.path_to_tesseract = PATH_TO_TESSERACT
-123     
-124     # Add input directory to args
-125     args.input_dir = INPUT_DIRECTORY
-126 
-127     # Translate the language code for Enchanted
-128     args.language_enchanted = LANGUAGE_MAP.get(args.language, 'en_US')  # default to English consistent with our language default
-129 
-130     # Setup logging
-131     logging.basicConfig(filename=LOG_FILE, level=getattr(logging, args.log_level.upper()), format='%(asctime)s - %(levelname)s - %(message)s')
-132 
-133     logging.debug(f"Running Pipeline args={args}")    
-134 
-135     run_pipeline(args)
+105     parser.add_argument('--noise-constant', type=int, default=5, help='higher constant removes more noise during adaptive thresholding')
+106     parser.add_argument('--dilate', action='store_true', help='Apply dilation')
+107     parser.add_argument('--erode', action='store_true', help='Apply erosion')
+108     parser.add_argument('--sharpen', action='store_true', help='sharpen imageO')
+109     parser.add_argument('--opening', action='store_true', help='Apply opening (erosion followed by dilation)')
+110     parser.add_argument('--canny', action='store_true', help='Apply Canny edge detection')
+111     parser.add_argument('--language', type=str, default='eng', help='Language for Tesseract OCR')
+112     parser.add_argument('--check-orientation', type=str, choices=['NONE', 'BASIC', 'FINE'], default='NONE', help='Check and correct orientation')
+113     parser.add_argument('--psm', type=int, choices=list(range(14)), default=6, help='Tesseract Page Segmentation Mode (PSM)')
+114     parser.add_argument('--save-preprocessed', action='store_true', help='Save preprocessed images')
+115     parser.add_argument('--log-level', type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='INFO', help='Set the logging level')
+116     
+117     args = parser.parse_args()
+118 
+119     print("Pipeline script started")
+120     print(f"Received arguments: {args}")
+121 
+122     # Add PATH_TO_TESSERACT to args
+123     args.path_to_tesseract = PATH_TO_TESSERACT
+124     
+125     # Add input directory to args
+126     args.input_dir = INPUT_DIRECTORY
+127 
+128     # Translate the language code for Enchanted
+129     args.language_enchanted = LANGUAGE_MAP.get(args.language, 'en_US')  # default to English consistent with our language default
+130 
+131     # Setup logging
+132     logging.basicConfig(filename=LOG_FILE, level=getattr(logging, args.log_level.upper()), format='%(asctime)s - %(levelname)s - %(message)s')
+133 
+134     logging.debug(f"Running Pipeline args={args}")    
+135 
+136     run_pipeline(args)
 
 // File: src\pipeline_step.py Depth: 1
 
@@ -1914,7 +2029,7 @@
 30         if self.args.grayscale or self.args.threshold > 0:
 31             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 32         if self.args.remove_noise:
-33             image = cv2.medianBlur(image, 5)
+33             image = cv2.medianBlur(image, 15)
 34         if self.args.wiener_filter: # de-blurring with a wiener filter
 35             kernel = np.ones((5,5)) / 25  # Example kernel, adjust as needed
 36             K = 0.005  # Example noise-to-signal ratio, adjust as needed
@@ -1923,7 +2038,7 @@
 39         if self.args.enhanced_contrast:
 40             image = image.enhance_contrast(image)
 41         if self.args.adaptive_threshold:
-42            image = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,self.args.block_size, 5)
+42            image = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,self.args.block_size, cv2.THRESH_BINARY,self.args.noise_constant)
 43         if self.args.threshold:
 44             _, image = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)  
 45         if self.args.sharpen:

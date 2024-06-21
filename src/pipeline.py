@@ -102,6 +102,7 @@ if __name__ == "__main__":
     parser.add_argument('--enhanced-contrast', action='store_true', help='Enhance contrast of image')
     parser.add_argument('--adaptive-threshold', action='store_true', help='adaptive thresholding flag')
     parser.add_argument('--block-size', type=int, default=3, help='Choose an uneven number - smaller is more local')
+    parser.add_argument('--noise-constant', type=int, default=5, help='higher constant removes more noise during adaptive thresholding')
     parser.add_argument('--dilate', action='store_true', help='Apply dilation')
     parser.add_argument('--erode', action='store_true', help='Apply erosion')
     parser.add_argument('--sharpen', action='store_true', help='sharpen imageO')

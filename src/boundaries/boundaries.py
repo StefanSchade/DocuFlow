@@ -23,7 +23,7 @@ class Boundaries(PipelineStep):
                 print(f"Failed to load image {image_path}")
                 continue
 
-            preprocessed_image = self.preprocess_image_for_boundary_recoginition(image)
+            preprocessed_image = self.preprocess_image_for_boundary_recognition(image)
             bounding_boxes, quadrilaterals = self.detect_text_regions(preprocessed_image)
             
             print(f"Detected quadrilaterals: {len(quadrilaterals)}")
@@ -36,6 +36,9 @@ class Boundaries(PipelineStep):
             cv2.imwrite(output_path, image_with_quadrilaterals)
 
             print(f"Processed {filename}, saved to {output_path}")
+
+            # Save each bounding box as a separate image
+            self.save_bounding_boxes(image, bounding_boxes, filename, output_dir)
 
     def draw_bounding_boxes(self, image, bounding_boxes):
         for i, (x, y, w, h) in enumerate(bounding_boxes):
@@ -60,7 +63,7 @@ class Boundaries(PipelineStep):
         return image
 
 
-    def preprocess_image_for_boundary_recoginition(self, image):
+    def preprocess_image_for_boundary_recognition(self, image):
         # Convert to grayscale        
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         # Apply adaptive thresholding
@@ -76,7 +79,7 @@ class Boundaries(PipelineStep):
         image = cv2.dilate(image, kernel, iterations=1)
         
         return image
-
+    
     def detect_text_regions(self, preprocessed_image):
         # Find contours
         contours, _ = cv2.findContours(preprocessed_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -122,6 +125,16 @@ class Boundaries(PipelineStep):
                 quadrilateral = quadrilateral.reshape(4, 2)
             cv2.polylines(image, [quadrilateral], True, (255, 0, 0), 2)  # Draw quadrilaterals in blue
         return image
+    
+    def save_bounding_boxes(self, image, bounding_boxes, filename, output_dir):
+        base_filename = os.path.splitext(filename)[0]
+        num_boxes = len(bounding_boxes)
+        for i, (x, y, w, h) in enumerate(bounding_boxes):
+            box_image = image[y:y+h, x:x+w]
+            box_filename = f"{base_filename}_{i+1:0{len(str(num_boxes))}d}.png"
+            box_filepath = os.path.join(output_dir, box_filename)
+            cv2.imwrite(box_filepath, box_image)
+            print(f"Saved bounding box {i+1} to {box_filepath}")
 
     def process(self, image):
         bounding_boxes, quadrilaterals = self.detect_text_regions(image)
