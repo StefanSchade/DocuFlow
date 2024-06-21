@@ -107,6 +107,7 @@ if __name__ == "__main__":
     parser.add_argument('--erode', action='store_true', help='Apply erosion')
     parser.add_argument('--sharpen', action='store_true', help='sharpen imageO')
     parser.add_argument('--opening', action='store_true', help='Apply opening (erosion followed by dilation)')
+    parser.add_argument('--invert', action='store_true', help='Apply inversion')
     parser.add_argument('--canny', action='store_true', help='Apply Canny edge detection')
     parser.add_argument('--language', type=str, default='eng', help='Language for Tesseract OCR')
     parser.add_argument('--check-orientation', type=str, choices=['NONE', 'BASIC', 'FINE'], default='NONE', help='Check and correct orientation')

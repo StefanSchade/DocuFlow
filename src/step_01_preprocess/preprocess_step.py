@@ -29,22 +29,25 @@ class PreprocessStep(PipelineStep):
     def preprocess_image(self, image):
         if self.args.grayscale or self.args.threshold > 0:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        if self.args.remove_noise:
-            image = cv2.medianBlur(image, 15)
         if self.args.wiener_filter: 
             kernel = np.ones((5,5)) / 25  
             K = 0.005  
             deblurred_image = wiener_filter(image, kernel, K)
             image = np.uint8(np.clip(deblurred_image, 0, 255))
         if self.args.enhanced_contrast:
-            image = image.enhance_contrast(image)
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+            image = clahe.apply(image)
         if self.args.adaptive_threshold:
-            adaptive_thresh  = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,self.args.block_size, cv2.THRESH_BINARY,self.args.noise_constant)
-            global_thresh = cv2.threshold(image , 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-            image2 = cv2.bitwise_or(adaptive_thresh , global_thresh)
-            print("got here")
+            image = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY_INV, self.args.block_size, self.args.noise_constant)
+            #global_thresh = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+            #image = cv2.bitwise_or(adaptive_thresh, global_thresh)
+            print("hello")
+        if self.args.invert:
+            image = cv2.bitwise_not(image)  
         if self.args.threshold:
             _, image = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)  
+        if self.args.remove_noise:
+            image = cv2.medianBlur(image, 25)
         if self.args.sharpen:
             kernel = np.array([[0, -1, 0], [-1, 5,-1], [0, -1, 0]])
             image = cv2.filter2D(image, -1, kernel)     

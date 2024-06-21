@@ -8,17 +8,6 @@ getrennte worte
 
 
 
- python pipeline.py --log-level 'DEBUG' --grayscale --remove-noise --language deu --check-orientation FINE --psm 3 --save-preprocessed --from_step 'SanitizationStep'
-
- python pipeline.py --log-level 'DEBUG' --grayscale --remove-noise --language deu --threshold  --check-orientation FINE --psm 3 --save-preprocessed --adaptive-threshold --block-size 31 --to_step 'PreprocessStep'D
-
- root@346e6157f1ad:/workspace/src# python pipeline.py --log-level 'DEBUG' --grayscale --remove-noise --language deu --threshold  --check-orientation FINE --psm 6 --save-preprocessed --adaptive-threshold --block-size 51 --to_step 'OCRStep' --sharpen
-Pipeline script started
-Received arguments: Namespace(from_step=None, to_step='OCRStep', interactive_mode=False, whitelist_filter=None, grayscale=True, remove_noise=True, threshold=True, wiener_filter=False, enhanced_contrast=False, adaptive_threshold=True, block_size=51, dilate=False, erode=False, sharpen=True, opening=False, canny=False, language='deu', check_orientation='FINE', psm=6, save_preprocessed=True, log_level='DEBUG')
-root@346e6157f1ad:/workspace/src# 
-
-
- python pipeline.py --log-level 'DEBUG' --grayscale --language deu --check-orientation FINE --psm 6 --save-preprocessed --threshold --adaptive-threshold --block-size 51 --noise-constant 3 --to_step 'Boundaries' --sharpen 
-
-
- python pipeline.py --log-level 'DEBUG' --grayscale --language deu --check-orientation FINE --psm 6 --save-preprocessed --threshold --adaptive-threshold --block-size 51 --noise-constant 3 --to_step 'Boundaries' --sharpen --dilate
+ good parameters for roman history book
+ 
+ python pipeline.py --log-level 'DEBUG' --grayscale --language deu --erode  --check-orientation FINE --psm 6 --save-preprocessed  --adaptive-threshold --block-size 139 --noise-constant 26 --to_step 'Boundaries' --invert
