@@ -72,7 +72,7 @@ class Boundaries(PipelineStep):
         image = cv2.adaptiveThreshold(
             image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, block_size, constant
         )
-        image = cv2.GaussianBlur(image, (49, 49), 0)  # Adjusted to a more typical kernel size
+        image = cv2.GaussianBlur(image, (79, 79), 0)  # Adjusted to a more typical kernel size
         image = cv2.medianBlur(image, 29)
         
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 13))

@@ -1,0 +1,3 @@
+Config follows this blog post
+
+https://www.davidspencer.xyz/posts/neovim-as-an-ide-python/

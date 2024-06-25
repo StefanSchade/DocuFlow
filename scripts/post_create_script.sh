@@ -51,4 +51,8 @@ pip list
 echo 'export TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata' >> ~/.bashrc
 echo 'export TESSDATA_PREFIX=/usr/local/Cellar/tesseract/4.00/share/tessdata' >> ~/.zshrc
 
+# setting up aliases
+
+echo 'alias update_nvim="~/workspace/update_nvim_config.sh' >> ~/.bashrc
+echo 'alias update_nvim="~/workspace/update_nvim_config.sh' >> ~/.zshrc
 

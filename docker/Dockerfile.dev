@@ -3,8 +3,6 @@ FROM ubuntu:latest
 
 # Set environment variables to non-interactive
 ENV DEBIAN_FRONTEND=noninteractive
-
-# Set proxy environment variables
 ARG http_proxy
 ARG https_proxy
 ARG no_proxy
@@ -15,6 +13,7 @@ ENV no_proxy=${no_proxy}
 # Install tools, Docker, and dependencies
 RUN apt-get update && \
     apt-get install -y \
+    neovim \
     apt-transport-https \
     ca-certificates \
     curl \
@@ -65,6 +64,9 @@ COPY resources /workspace/resources
 
 # Copy the tessdata.txt file
 COPY tessdata.txt /workspace
+
+# Copy Neovim configuration
+COPY .config/nvim /root/.config/nvim
 
 # Download Tesseract language data
 RUN set -e; \
