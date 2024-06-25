@@ -20,8 +20,6 @@ chmod +x /workspace/scripts/*.sh
 # Execute additional setup scripts
 source /workspace/scripts/setup_ssh_git.sh 
 source /workspace/scripts/setup_docker_proxy.sh 
-# redundant, as already in Dockerfile.dev
-# source /workspace/scripts/install_python_dependencies.sh
 
 # Check for ZScaler certificate and add to default CA store if it exists
 CERT_PATH="/workspace/zscaler.crt"
@@ -46,13 +44,10 @@ fi
 echo "The following Python packages are installed:"
 pip list
 
-# setting env variables
-
+# Setting environment variables
 echo 'export TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata' >> ~/.bashrc
 echo 'export TESSDATA_PREFIX=/usr/local/Cellar/tesseract/4.00/share/tessdata' >> ~/.zshrc
 
-# setting up aliases
-
-echo 'alias update_nvim="~/workspace/update_nvim_config.sh' >> ~/.bashrc
-echo 'alias update_nvim="~/workspace/update_nvim_config.sh' >> ~/.zshrc
-
+# Setting up aliases
+echo 'alias update_nvim="~/workspace/update_nvim_config.sh"' >> ~/.bashrc
+echo 'alias update_nvim="~/workspace/update_nvim_config.sh"' >> ~/.zshrc

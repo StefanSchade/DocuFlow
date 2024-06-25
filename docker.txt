@@ -1,0 +1,144 @@
+
+// File: Dockerfile.dev Depth: 0
+
+# Use an official Ubuntu as a parent image
+FROM ubuntu:latest
+
+# Set environment variables to non-interactive
+ENV DEBIAN_FRONTEND=noninteractive
+ARG http_proxy
+ARG https_proxy
+ARG no_proxy
+ENV http_proxy=${http_proxy}
+ENV https_proxy=${https_proxy}
+ENV no_proxy=${no_proxy}
+
+# Install tools, Docker, and dependencies
+RUN apt-get update && \
+    apt-get install -y \
+    neovim \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    wget \
+    vim \
+    gnupg2 \
+    tesseract-ocr \
+    enchant-2 \
+    aspell \
+    aspell-en \
+    aspell-de \
+    libtesseract-dev \
+    libenchant-2-2 \
+    libglib2.0-dev \
+    software-properties-common \
+    build-essential \
+    python3 \
+    python3-pip \
+    python3-venv \
+    asciidoctor \
+    bash \
+    jq \
+    git \
+    kmod \
+    fuse-overlayfs \
+    parallel \
+    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - \
+    && add-apt-repository \
+       "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+       $(lsb_release -cs) \
+       stable" \
+    && apt-get update && apt-get install -y \
+       docker-ce docker-ce-cli containerd.io \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set the working directory for the project
+WORKDIR /workspace
+
+# Copy the scripts
+COPY scripts /workspace/scripts
+
+# Copy the source code
+COPY src /workspace/src
+
+# Copy the spelling whitelists
+COPY resources /workspace/resources
+
+# Copy the tessdata.txt file
+COPY tessdata.txt /workspace
+
+# Copy Neovim configuration
+COPY .config/nvim /root/.config/nvim
+
+# Download Tesseract language data
+RUN set -e; \
+    for url in $(cat /workspace/tessdata.txt | tr -d '\r'); do \
+        echo "Downloading $url"; \
+        wget --no-check-certificate -P /usr/share/tesseract-ocr/4.00/tessdata/ "$url"; \
+    done
+
+# Copy the requirements file
+COPY requirements.txt /workspace
+COPY requirements-dev.txt /workspace
+
+# Create and activate a virtual environment and install dependencies
+RUN python3 -m venv /workspace/venv && \
+    /bin/bash -c "source /workspace/venv/bin/activate && pip install --no-cache-dir -r /workspace/requirements.txt && pip install --no-cache-dir -r /workspace/requirements-dev.txt && pip list"
+
+# Expose any ports if necessary
+# EXPOSE 8000
+
+# Set environment variables for the virtual environment
+ENV PATH="/workspace/venv/bin:$PATH"
+
+# Copy the source code
+COPY src /workspace/src
+
+# Start Docker daemon
+CMD ["dockerd"]
+
+// File: Dockerfile.prod Depth: 0
+
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim
+
+# Set environment variables to non-interactive
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    wget \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create necessary directories for the application
+RUN mkdir -p /workspace/data
+
+# Set environment variables for pip to use the local user directory
+ENV PATH=/root/.local/bin:$PATH \
+    PYTHONUSERBASE=/root/.local
+
+# Set the working directory for the application
+WORKDIR /app
+
+# Copy the source code
+COPY ./src /app/src
+COPY requirements.txt /app
+COPY tessdata.txt /app
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# Download Tesseract language data, removing any carriage return characters
+RUN cat /app/tessdata.txt | tr -d '\r' | xargs -n 1 wget --no-check-certificate -P /usr/share/tesseract-ocr/4.00/tessdata/
+
+# Set environment variables for the virtual environment
+ENV PATH="/app/venv/bin:$PATH"
+
+# Declare the mount point
+VOLUME /workspace/data
+
+# Set the entry point for the container
+ENTRYPOINT ["python", "/app/src/pipeline.py"]

@@ -1,3 +1,9 @@
+
+// File: init.lua.bak Depth: 0
+
+
+// File: init.vim Depth: 0
+
 syntax on                       "syntax highlighting, see :help syntax
 filetype plugin indent on       "file type detection, see :help filetype
 set number                      "display line number
@@ -44,3 +50,28 @@ inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
 inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
 let g:completion_enable_fuzzy_match = 1
 set completeopt=menuone,noinsert,noselect
+
+// File: lua\lsp_config.lua Depth: 1
+
+
+// File: lua\lua_config.lua Depth: 1
+
+require('lsp_config')
+
+local lsp = require('lspconfig')
+local completion = require('completion')
+
+local custom_attach = function()
+    completion.on_attach()
+    -- Python specifically isn't setting omnifunc correctly, ftplugin conflict
+    vim.api.nvim_buf_set_option(0, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
+end
+
+lsp.pylsp.setup{on_attach=custom_attach}
+
+
+// File: notes.txt Depth: 0
+
+Config follows this blog post
+
+https://www.davidspencer.xyz/posts/neovim-as-an-ide-python/

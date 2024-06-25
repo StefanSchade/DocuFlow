@@ -1,0 +1,490 @@
+
+// File: analyse_ocr_debug.sh Depth: 0
+
+#!/bin/bash
+
+# Check if the filename argument is provided
+if [ -z "$1" ]; then
+  echo "Usage: $0 <filename>"
+  exit 1
+fi
+
+# Set the file name from the first argument
+FILENAME=$1
+
+# Define the path to the JSON file
+JSON_FILE="/workspace/data/ocr_debug/$FILENAME"
+
+# Extract and join the text elements
+jq -r '.text | join(" ")' "$JSON_FILE"
+
+# Extract and join the confidence elements
+jq -r '[.conf[] | tostring] | join("  ")' "$JSON_FILE"
+
+# Extract and combine text elements with their corresponding confidence
+jq -r '[
+    .text as $texts | 
+    .conf as $confs | 
+    range(0; ($texts | length)) | 
+    "(" + $texts[.] + " | " + ($confs[.] | tostring) + ")" 
+] | join(" ")' "$JSON_FILE"
+
+// File: build_prod_container_dind.sh Depth: 0
+
+#!/bin/bash
+
+# Ensure Docker daemon is running
+dockerd &
+
+# Wait for Docker daemon to start
+while(! docker info > /dev/null 2>&1); do
+    echo "Waiting for Docker to start..."
+    sleep 1
+done
+
+# Check if Dockerfile path is provided
+if [ -z "$1" ]; then
+    echo "Usage: $0 /path/to/Dockerfile.prod"
+    exit 1
+fi
+
+DOCKERFILE_PATH=$1
+
+# Get the directory of the provided Dockerfile
+DOCKERFILE_DIR=$(dirname "$DOCKERFILE_PATH")
+
+# Build the Docker image
+docker build -f "$DOCKERFILE_PATH" "$DOCKERFILE_DIR" -t prod-environment .
+
+if [ $? -ne 0 ]; then
+    echo "Docker build failed"
+    exit 1
+fi
+
+echo "Docker build completed successfully"
+
+// File: dev_container_build.cmd Depth: 0
+
+@echo off
+REM Script to build the development Docker image
+cd ..
+docker build -t dev-environment .
+pause
+
+// File: dev_container_start..cmd Depth: 0
+
+@echo off
+REM Script to start the Docker container for development
+
+REM Check if data directory argument is provided
+if "%1"=="" (
+    echo Usage: dev_start_container.cmd [data_directory_path]
+    exit /b 1
+)
+
+REM Get the absolute path of the data directory
+set DATA_DIR=%~1
+
+REM Change to the project root directory
+cd ..
+
+REM Start the development container
+docker run -it --rm -v %DATA_DIR%:/workspace/data -v %cd%/src:/workspace/src -w /workspace dev-environment
+pause
+
+// File: extract_text_from_result.sh Depth: 0
+
+jq -r '
+  .[] as $page |
+  $page.text_lines[] |
+  if . == ($page.text_lines | last) then
+    . + "\n\n\n" + $page.source_file + "\n\n\n"
+  else
+    .
+  end
+' /workspace/data/ocr_result/ocr_result.json 
+
+// File: fix_permissions.sh Depth: 0
+
+#!/bin/bash
+
+# Ensure Docker daemon is running
+dockerd &
+
+# Wait for Docker daemon to start
+while(! docker info > /dev/null 2>&1); do
+    echo "Waiting for Docker to start..."
+    sleep 1
+done
+
+# Ensure the appuser owns the data directory and its contents
+chown -R appuser:appgroup /workspace/data
+
+# Run the pipeline script with the provided arguments
+exec python /app/src/pipeline.py "$@"
+
+// File: generate_pdfs.sh Depth: 0
+
+#!/bin/bash
+
+# Navigate to the docs directory
+cd /workspace/docs
+
+# Generate PDFs from all Asciidoc files
+for file in *.adoc; do
+  asciidoctor-pdf "$file" -o "/workspace/target/${file%.adoc}.pdf"
+done
+
+// File: install_python_dependencies.sh Depth: 0
+
+#!/bin/bash
+
+# Ensure we are in the correct working directory
+cd /workspace
+
+# Activate the virtual environment
+source /workspace/venv/bin/activate
+
+# Install Python dependencies from requirements.txt
+pip install --no-cache-dir -r /workspace/requirements.txt
+pip install --no-cache-dir -r /workspace/requirements-dev.txt
+
+# List installed packages to verify installation
+pip list
+
+// File: post_create_script.sh Depth: 0
+
+#!/bin/bash
+
+# Some output for troubleshooting
+ls -la /workspace/scripts
+
+# Retrieve the Git user and email from command-line arguments
+GIT_USER="$1"
+GIT_EMAIL="$2"
+
+# Configure Git with the provided user name and email
+git config --global user.name "$GIT_USER"
+git config --global user.email "$GIT_EMAIL"
+
+# Display the current Git configuration
+git config --list
+
+# Make sure scripts are executable
+chmod +x /workspace/scripts/*.sh
+
+# Execute additional setup scripts
+source /workspace/scripts/setup_ssh_git.sh 
+source /workspace/scripts/setup_docker_proxy.sh 
+# redundant, as already in Dockerfile.dev
+# source /workspace/scripts/install_python_dependencies.sh
+
+# Check for ZScaler certificate and add to default CA store if it exists
+CERT_PATH="/workspace/zscaler.crt"
+
+if [ -f "$CERT_PATH" ]; then
+    echo "ZScaler certificate found. Adding to default CA store."
+
+    # Copy the ZScaler certificate to the system CA directory
+    cp $CERT_PATH /usr/local/share/ca-certificates/zscaler.crt
+
+    # Ensure the certificate has correct permissions
+    chmod 644 /usr/local/share/ca-certificates/zscaler.crt
+
+    # Update the CA certificates
+    update-ca-certificates --fresh
+
+    echo "ZScaler certificate added to default CA store."
+else
+    echo "ZScaler certificate not found. Skipping CA store update."
+fi
+
+echo "The following Python packages are installed:"
+pip list
+
+# setting env variables
+
+echo 'export TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata' >> ~/.bashrc
+echo 'export TESSDATA_PREFIX=/usr/local/Cellar/tesseract/4.00/share/tessdata' >> ~/.zshrc
+
+# setting up aliases
+
+echo 'alias update_nvim="~/workspace/update_nvim_config.sh' >> ~/.bashrc
+echo 'alias update_nvim="~/workspace/update_nvim_config.sh' >> ~/.zshrc
+
+
+// File: prod_container_build.cmd Depth: 0
+
+@echo off
+REM Build the production Docker container
+
+REM Check if Dockerfile path is provided
+IF "%~1"=="" (
+    echo Usage: prod_container_build.cmd path\to\Dockerfile.prod
+    exit /B 1
+)
+
+SET DOCKERFILE_PATH=%~1
+
+REM Get the directory of the provided Dockerfile
+SET DOCKERFILE_DIR=%~dp1
+
+REM Convert the Dockerfile path and directory to Unix-style paths for Docker
+FOR /f "tokens=*" %%i IN ('wsl wslpath "%DOCKERFILE_PATH%"') DO SET DOCKERFILE_PATH_UNIX=%%i
+FOR /f "tokens=*" %%i IN ('wsl wslpath "%DOCKERFILE_DIR%"') DO SET DOCKERFILE_DIR_UNIX=%%i
+
+REM Build the Docker image
+docker build -f %DOCKERFILE_PATH_UNIX% %DOCKERFILE_DIR_UNIX% -t prod-environment .
+
+IF %ERRORLEVEL% NEQ 0 (
+    echo Docker build failed
+    exit /B 1
+)
+
+echo Docker build completed successfully
+
+// File: prod_container_build.sh Depth: 0
+
+#!/bin/bash
+
+# Ensure Docker is available
+if ! command -v docker &> /dev/null
+then
+    echo "Docker could not be found. Please ensure Docker Desktop is running."
+    exit 1
+fi
+
+# Navigate to the project directory
+cd /mnt/c/Users/your-username/Documents/REPOS/docuflow
+
+# Build the Docker image
+docker build -f ./docker/Dockerfile.prod -t prod-environment .
+
+# Check if the build was successful
+if [ $? -ne 0 ]; then
+    echo "Docker build failed"
+    exit 1
+fi
+
+echo "Docker build completed successfully"
+
+// File: requirements.sh Depth: 0
+
+# Update requirements.txt
+echo -e "pyenchant\ntqdm\nfuzzywuzzy\npillow\npytesseract\nprompt_toolkit" > requirements.txt
+
+# Rebuild Docker image
+#docker build -f docker/Dockerfile.dev -t dev-environment .
+
+# Start Docker container
+#docker run -it --rm -v $(pwd):/workspace -w /workspace dev-environment
+
+# Inside Docker container, check installed packages
+python -m pip list | grep -E 'pyenchant|tqdm|fuzzywuzzy|pillow|pytesseract|prompt_toolkit'
+
+# Start Python interactive session to check imports
+python -c "import PIL; import pytesseract; import enchant; import tqdm; import fuzzywuzzy; import prompt_toolkit; print('All imports are successful')"
+
+// File: run_container.sh Depth: 0
+
+#!/bin/bash
+
+# Check if data directory and additional arguments are provided
+if [ $# -lt 1 ]; then
+    echo "Usage: $0 /path/to/data [additional arguments for pipeline.py]"
+    exit 1
+fi
+
+DATA_DIR=$1
+shift
+
+# Debug information
+echo "Data directory: $DATA_DIR"
+echo "Additional arguments: $@"
+
+# Run the Docker container with the provided data directory and additional arguments
+docker run --rm -v "$DATA_DIR":/workspace/data prod-environment "$@"
+
+# Check if the docker command was successful
+if [ $? -ne 0 ]; then
+    echo "Docker command failed"
+    exit 1
+fi
+
+// File: run_prod_container.cmd Depth: 0
+
+@echo off
+REM Script to run the production Docker container
+
+REM Check if data directory argument is provided
+if "%~1"=="" (
+    echo Usage: run_prod_container.cmd [data_directory_path] [script_arguments...]
+    exit /b 1
+)
+
+REM Get the absolute path of the data directory
+set DATA_DIR=%~1
+echo Data directory: %DATA_DIR%
+
+REM Shift the first argument (data directory) and pass the rest to the script
+shift
+
+REM Initialize SCRIPT_ARGS variable
+set SCRIPT_ARGS=
+
+REM Loop through the remaining arguments and append them to SCRIPT_ARGS
+:loop
+if "%1"=="" goto endloop
+    set SCRIPT_ARGS=%SCRIPT_ARGS% %1
+    shift
+    goto loop
+:endloop
+
+echo Additional arguments: %SCRIPT_ARGS%
+
+REM Change to the project root directory
+cd %~dp0..
+
+REM Start the production container with additional script arguments
+docker run -it --rm -v "%DATA_DIR%:/workspace/data" prod-environment %SCRIPT_ARGS%
+
+pause
+
+// File: run_tests.sh Depth: 0
+
+#!/bin/bash
+
+# Check if a test type parameter is provided
+if [ -z "$1" ]; then
+    echo "Usage: $0 [unit|integration]"
+    exit 1
+fi
+
+# Set the PYTHONPATH to the src directory
+export PYTHONPATH=/workspace/src
+export DEBUG_PRINTS=true
+
+# Run pytest with the specified marker
+if [ "$1" == "unit" ]; then
+    pytest -m unit -s
+elif [ "$1" == "integration" ]; then
+    pytest -m integration -s
+else
+    echo "Invalid parameter: $1"
+    echo "Usage: $0 [unit|integration]"
+    exit 1
+fi
+
+// File: setup_docker_proxy.sh Depth: 0
+
+#!/bin/bash
+
+# Ensure we are in the correct working directory
+cd /workspace
+
+# Example proxy settings (replace with actual proxy information)
+HTTP_PROXY="http://your.proxy.address:8080"
+HTTPS_PROXY="http://your.proxy.address:8080"
+NO_PROXY="localhost,127.0.0.1"
+
+# Export proxy settings for the Docker build process
+export http_proxy=$HTTP_PROXY
+export https_proxy=$HTTPS_PROXY
+export no_proxy=$NO_PROXY
+
+# Verify proxy settings
+echo "Proxy settings applied: http_proxy=$http_proxy, https_proxy=$https_proxy, no_proxy=$no_proxy"
+
+# Check for the custom CA certificates path in OpenSSL configuration
+if ! grep -q "CApath = /usr/local/share/custom-ca-certificates" /etc/ssl/openssl.cnf; then
+    echo "Custom CApath not found in OpenSSL configuration. Adding it."
+    echo "CApath = /usr/local/share/custom-ca-certificates" >> /etc/ssl/openssl.cnf
+else
+    echo "Custom CApath already present in OpenSSL configuration."
+fi
+
+# Verify the certificate installation
+openssl s_client -CApath /usr/local/share/custom-ca-certificates -connect github.com:443
+
+# Configure Git to use the updated CA certificates
+git config --global http.sslCAInfo /etc/ssl/certs/ca-certificates.crt
+
+# Verify Git configuration
+git config --global --get http.sslCAInfo
+
+echo "Proxy and certificate setup completed successfully."
+
+// File: setup_ssh_git.sh Depth: 0
+
+#!/bin/bash
+
+# Start the SSH agent
+eval "$(ssh-agent -s)"
+
+# Fix permissions of the private key files
+chmod 600 /root/.ssh/*_rsa
+
+# Fix permissions of the .ssh/config file if it exists
+if [ -f /root/.ssh/config ]; then
+    chmod 600 /root/.ssh/config
+fi
+
+# Add all SSH keys to the agent
+for key in /root/.ssh/*_rsa; do
+    ssh-add $key
+done
+
+# Remove the offending key for GitHub from known_hosts
+ssh-keygen -f "/root/.ssh/known_hosts" -R "github.com"
+
+# Add GitHub's new RSA key to known_hosts
+ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
+
+# List all identities added to the SSH agent
+echo "SSH Identities:"
+ssh-add -l
+
+# Print the contents of the known_hosts file for debugging
+echo "Known Hosts:"
+cat /root/.ssh/known_hosts
+
+# Test the SSH connection to GitHub (optional, can be removed if not needed)
+ssh -T git@github.com || true  # Add || true to avoid script failure
+
+// File: set_environment_variables.cmd Depth: 0
+
+setx HOME "C:\Users\your_windows_name"
+setx GIT_USER "Your Name"
+setx GIT_EMAIL "your.email@example.com"
+
+// File: update_nvim_config.sh Depth: 0
+
+#!/bin/bash
+
+# Define the source and destination paths
+SOURCE_PATH="/workspace/.config/nvim"
+DEST_PATH="/root/.config/nvim"
+
+# Check if the source directory exists
+if [ -d "$SOURCE_PATH" ]; then
+    # Copy the Neovim configuration to the destination
+    cp -r $SOURCE_PATH/* $DEST_PATH
+    echo "Neovim configuration copied to $DEST_PATH"
+else
+    echo "Source directory $SOURCE_PATH does not exist. Please check the path."
+fi
+
+# Install vim-plug if not already installed
+if [ ! -f ~/.local/share/nvim/site/autoload/plug.vim ]; then
+    echo "Installing vim-plug..."
+    curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
+        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+fi
+
+pip3 install -U setuptools pip
+pip3 install 'python-lsp-server[all]'
+echo "vim-plug installed."
+
+# Provide a message to run :PlugInstall inside nvim
+echo "Please run :PlugInstall inside nvim to install plugins."
+
