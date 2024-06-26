@@ -1,0 +1,34 @@
+This setup follows the description in the video tutorial series by the creator typecraft
+https://www.youtube.com/watch?v=zHTeCSVAFNY&list=PLsz00TDipIffreIaUNk64KxTIkQaGguqn
+
+Lesson 1 outline
+
+1. Init.lua
+2. Lazy.nvim
+3. colorscheme
+4. telescope
+5. treesitter
+
+1. Init.lua
+
+https://github.com/nanotee/nvim-lua-guide
+
+
+recording macro
+
+2. installing Lazy
+
+https://lazy.folke.io/installation
+
+https://lazy.folke.io/usage/structuring
+https://lazy.folke.io/installation
+
+3. colorscheme
+
+https://github.com/catppuccin/nvim
+
+4. telescope
+
+grepping files 
+
+https://github.com/nvim-telescope/telescope.nvim

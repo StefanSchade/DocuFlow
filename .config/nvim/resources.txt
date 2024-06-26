@@ -1,0 +1,18 @@
+https://github.com/nanotee/nvim-lua-guide
+
+
+
+
+
+
+https://neovim.io/doc/user/lua-guide.html
+
+
+
+typecraft - Neovim 0 to IDE
+Basics (Package Manager)            https://www.youtube.com/watch?v=zHTeCSVAFNY&list=PLsz00TDipIffreIaUNk64KxTIkQaGguqn&index=1
+2 Modularized Config with Lazy      https://www.youtube.com/watch?v=4zyZ3sw_ulc&list=PLsz00TDipIffreIaUNk64KxTIkQaGguqn&index=2
+LSP Integration                     https://www.youtube.com/watch?v=S-xzYgTLVJE&list=PLsz00TDipIffreIaUNk64KxTIkQaGguqn&index=3
+Lull-LSP                            
+Autocomplete and Snipplets          
+Debuggers                           

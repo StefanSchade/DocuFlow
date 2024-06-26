@@ -1,0 +1,50 @@
+vim.g.mapleader = ' '
+vim.g.maplocalleader = ' '
+
+vim.opt.backspace = '2'
+vim.opt.showcmd = true
+vim.opt.laststatus = 2
+vim.opt.autowrite = true
+vim.opt.cursorline = true
+vim.opt.autoriead = true
+
+--- use spaces for tabs and etc.
+vim.opt.tabstop = 2
+vim.opt.shiftwidth = 2
+vim.opt.shiftround = true
+vim.opt.expandtab = true
+
+vim.keymap.set('n', '<leader>h', ':nohlsearch<R>')
+
+
+----------
+
+-- Basic settings
+vim.o.number = true
+vim.o.relativenumber = true
+vim.o.tabstop = 4
+vim.o.shiftwidth = 4
+vim.o.expandtab = true
+vim.o.autoindent = true
+vim.o.autoread = true
+
+-- Ensure runtime path includes plugin directory
+vim.o.runtimepath = vim.o.runtimepath .. ',~/.local/share/nvim/plugged/*'
+
+-- Plugin manager setup using vim-plug
+vim.cmd [[
+  call plug#begin('~/.local/share/nvim/plugged')
+
+  Plug 'neovim/nvim-lspconfig'
+  Plug 'nvim-lua/completion-nvim'
+
+  call plug#end()
+]]
+
+-- LSP and completion setup
+local lsp = require('lspconfig')
+local completion = require('completion')
+
+local custom_attach = function()
+    completion.on_attach()
+    vim.api.nvim_buf_set_option(0, 'omnifunc', 'v:lua.vim.lsp.om
