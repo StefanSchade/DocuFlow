@@ -37,6 +37,19 @@ https://github.com/nvim-telescope/telescope.nvim
 https://github.com/nvim-treesitter/nvim-treesitter
 https://github.com/nvim-treesitter/nvim-treesitter/wiki/Installation
 
+---------------------------------------------
 
+lecture 2
+
+file explorer treesitter
+neo tree 
+
+https://github.com/nvim-neo-tree/neo-tree.nvim
+https://github.com/nvim-neo-tree/neo-tree.nvim
+
+
+nvim web icons
+
+https://github.com/nvim-tree/nvim-web-devicons
 
 
