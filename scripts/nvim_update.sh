@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Check if a configuration name is provided
-if [ -z "$2" ]; then
+if [ -z "$1" ]; then
     echo "Usage: $0 <config-name>"
     exit 1
 fi
 
-CONFIG_NAME=$2
+CONFIG_NAME=$1
 SOURCE_PATH="/workspace/.config/nvim-$CONFIG_NAME"
 DEST_PATH="/root/.config/nvim"
 NVIM_STATE="/root/.local/state/nvim/"

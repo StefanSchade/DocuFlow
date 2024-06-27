@@ -13,10 +13,9 @@ Lesson 1 outline
 
 https://github.com/nanotee/nvim-lua-guide
 
-
 recording macro
 
-2. installing Lazy
+2. Lazy
 
 https://lazy.folke.io/installation
 
@@ -32,3 +31,12 @@ https://github.com/catppuccin/nvim
 grepping files 
 
 https://github.com/nvim-telescope/telescope.nvim
+
+5. treesitter
+
+https://github.com/nvim-treesitter/nvim-treesitter
+https://github.com/nvim-treesitter/nvim-treesitter/wiki/Installation
+
+
+
+
