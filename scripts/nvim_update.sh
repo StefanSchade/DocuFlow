@@ -7,7 +7,7 @@ if [ -z "$1" ]; then
 fi
 
 CONFIG_NAME=$1
-SOURCE_PATH="/workspace/.config/nvim-$CONFIG_NAME"
+SOURCE_PATH="/workspace/config/nvim-$CONFIG_NAME"
 DEST_PATH="/root/.config/nvim"
 NVIM_STATE="/root/.local/state/nvim/"
 
