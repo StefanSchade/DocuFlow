@@ -1,0 +1,78 @@
+= Configuring Fonts for Neovim in a Docker Container
+
+This guide explains how to install and configure Nerd Fonts for Neovim when working in a Docker container on different operating systems. It ensures proper display of icons in Neotree and other plugins.
+
+== Windows
+
+=== Install a Nerd Font
+
+1. Download a Nerd Font from the https://www.nerdfonts.com/[Nerd Fonts website].
+2. Extract the downloaded zip file.
+3. Right-click on the font file (e.g., `JetBrains Mono Regular Nerd Font Complete.ttf`) and select "Install" or "Install for all users".
+
+=== Configure Windows Terminal
+
+. Open Windows Terminal.
+. Click on the down arrow next to the tab bar to open the dropdown menu.
+. Select "Settings" from the dropdown menu.
+. In the settings UI, click on "Open JSON file" to open `settings.json`.
+. Add or modify the `fontFace` and `fontSize` properties in the `settings.json` file as follows:
+
+[source, json]
+-----
+   {
+     "profiles": {
+       "defaults": {
+         "fontFace": "JetBrainsMono NF",
+         "fontSize": 14
+       }
+     }
+   }
+-----
+
+[start=6]
+. Save the settings.json file and restart Windows Terminal to apply the changes.
+
+== Linux
+
+=== Install a Nerd Font
+
+. Open a terminal and run the following commands:
+
+
+[source, shell]
+-----
+mkdir -p ~/.local/share/fonts
+cd ~/.local/share/fonts
+curl -fLo "JetBrains Mono Regular Nerd Font Complete.ttf" https://github.com/ryanoasis/nerd-fonts/releases/download/v2.1.0/JetBrainsMono.zip
+unzip JetBrainsMono.zip
+fc-cache -fv
+-----
+
+=== Configure GNOME Terminal
+
+Open GNOME Terminal.
+Go to Preferences > (Profile) > Text.
+Change the font to the Nerd Font you installed.
+Optionally, adjust the font size to your preference.
+== macOS
+
+=== Install a Nerd Font
+
+Open a terminal and run the following commands:
+
+
+[source, shell]
+-----
+brew tap homebrew/cask-fonts
+brew install --cask font-jetbrains-mono-nerd-font
+-----
+
+=== Configure iTerm2
+
+Open iTerm2.
+Go to Preferences > Profiles > Text.
+Change the font to the Nerd Font you installed.
+Optionally, adjust the font size to your preference.
+
+

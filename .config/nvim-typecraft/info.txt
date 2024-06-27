@@ -1,6 +1,13 @@
 This setup follows the description in the video tutorial series by the creator typecraft
 https://www.youtube.com/watch?v=zHTeCSVAFNY&list=PLsz00TDipIffreIaUNk64KxTIkQaGguqn
 
+older series
+
+https://www.youtube.com/watch?v=J9yqSdvAKXY&list=PLsz00TDipIffxsNXSkskknolKShdbcALR
+
+
+
+
 Lesson 1 outline
 
 1. Init.lua
@@ -52,4 +59,8 @@ nvim web icons
 
 https://github.com/nvim-tree/nvim-web-devicons
 
+
+lualine
+
+https://github.com/nvim-lualine/lualine.nvim
 
