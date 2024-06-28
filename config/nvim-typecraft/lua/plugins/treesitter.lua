@@ -9,5 +9,7 @@ return {
             highlight = { enable = true },
             indent = { enable = true }    
         })
+        -- This binds the leader key followed by i in visual mode to automatically indent the selected code.
+        vim.api.nvim_set_keymap('v', '<leader>i', ':normal! =<CR>', { noremap = true, silent = true })
     end
 }
