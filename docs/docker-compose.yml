@@ -1,0 +1,10 @@
+version: '3'
+services:
+  asciidoctor:
+    image: asciidoctor/docker-asciidoctor
+    volumes:
+      - .:/documents
+    ports:
+      - "35729:35729"
+      - "4000:4000"
+    command: asciidoctor-livereload -D /documents
