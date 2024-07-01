@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Log the determined paths
+echo
+echo "******************************************************************"
+echo "$0"
+echo "******************************************************************"
+
 # Define the output directory
 OUTPUT_DIR=/workspace/target/docs/html
 INPUT_DIR=/workspace/docs
@@ -61,6 +67,9 @@ WATCH_PID=$!
 
 # Start livereloadx to serve the files
 cd $OUTPUT_DIR
+echo "Current working directory before starting livereloadx: $(pwd)"
+echo "Content of output dir"
+ls -al
 echo "Starting livereloadx..."
 livereloadx -s . -p 4000 &
 
