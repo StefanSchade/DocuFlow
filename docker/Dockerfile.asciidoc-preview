@@ -1,0 +1,45 @@
+# Use an official Ubuntu as a parent image
+FROM ubuntu:latest
+
+# Set environment variables to non-interactive
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install tools, Docker, and dependencies
+RUN apt-get update && \
+    apt-get install -y \
+    neovim \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    wget \
+    vim \
+    gnupg2 \
+    software-properties-common \
+    build-essential \
+    python3 \
+    python3-pip \
+    python3-venv \
+    asciidoctor \
+    bash \
+    jq \
+    git \
+    kmod \
+    fuse-overlayfs \
+    parallel \
+    nodejs \
+    npm && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install livereloadx
+RUN npm install -g livereloadx
+
+# Copy the asciidoc_preview_entrypoint script into the container
+COPY scripts/asciidoc_preview_entrypoint.sh /usr/local/bin/asciidoc_preview_entrypoint.sh
+RUN chmod +x /usr/local/bin/asciidoc_preview_entrypoint.sh
+
+# Set the working directory for the project
+WORKDIR /workspace
+
+# Use the asciidoc_preview_entrypoint script
+ENTRYPOINT ["asciidoc_preview_entrypoint.sh"]

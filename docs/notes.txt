@@ -1,0 +1,5 @@
+docker build -t asciidoctor-livereload .
+
+docker run --rm -v "%cd%:/documents" -p 35729:35729 -p 4000:4000 asciidoctor-livereload
+
+
