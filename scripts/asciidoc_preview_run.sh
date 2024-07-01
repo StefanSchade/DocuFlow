@@ -9,14 +9,15 @@ normalize_path() {
 }
 
 # Define the project root and other directories
+ROOT_IN_CONTAINER=$(dirname $(dirname $(realpath $0)))
 HOST_HOME=$(normalize_path "$HOST_HOME")
 REPO_ROOT=$(normalize_path "$REPO_ROOT")
 REPO_NAME=$(normalize_path "$REPO_NAME")
 
 PROJECT_ROOT="${HOST_HOME}${REPO_ROOT}${REPO_NAME}"
-DOCKERFILE="$PROJECT_ROOT/docker/Dockerfile.asciidoc-preview"
-DOCS_DIR="$PROJECT_ROOT/docs"
-OUTPUT_DIR="$PROJECT_ROOT/target/docs/html"
+DOCKERFILE="${ROOT_IN_CONTAINER}/docker/Dockerfile.asciidoc-preview"
+DOCS_DIR="${PROJECT_ROOT}docs"
+OUTPUT_DIR="${PROJECT_ROOT}target/docs/html"
 
 # Log the determined paths
 echo "PROJECT_ROOT: $PROJECT_ROOT"
@@ -24,18 +25,27 @@ echo "DOCKERFILE: $DOCKERFILE"
 echo "DOCS_DIR: $DOCS_DIR"
 echo "OUTPUT_DIR: $OUTPUT_DIR"
 
+# Ensure the Dockerfile path exists
+if [ ! -f "$DOCKERFILE" ]; then
+  echo "ERROR: Dockerfile not found at $DOCKERFILE"
+  exit 1
+fi
+
 # Create the output directory
 mkdir -p "$OUTPUT_DIR"
 
 # Build the Docker image
-docker build -t asciidoc-preview -f "$DOCKERFILE" "$PROJECT_ROOT"
+docker build -t asciidoc-preview -f "$DOCKERFILE" .
 
 # List the docs directory
 echo "Listing DOCS_DIR before running the container:"
 ls -al "$DOCS_DIR"
 
 # Run the Docker container
-docker run --rm -v "$DOCS_DIR:/workspace/docs" -v "$OUTPUT_DIR:/workspace/target/docs/html" -p 35729:35729 -p 4000:4000 --name asciidoc-preview asciidoc-preview
+docker run --rm -v "$(normalize_path "$DOCS_DIR"):/workspace/docs" -v "$(normalize_path "$OUTPUT_DIR"):/workspace/target/docs/html" -p 35729:35729 -p 4000:4000 --name asciidoc-preview asciidoc-preview &
+
+# Wait a few seconds to ensure the container is up and running
+sleep 5
 
 # Check if input directory is correctly mounted
 if [ -d "/workspace/docs" ]; then
