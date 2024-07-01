@@ -8,6 +8,26 @@ normalize_path() {
   echo "$path"
 }
 
+# Function to wait for a Docker container to be up and running
+wait_for_container() {
+  local container_name="$1"
+  local retries=10
+  local count=0
+
+  while [ $count -lt $retries ]; do
+    if docker ps | grep -q "$container_name"; then
+      echo "Container $container_name is running."
+      return 0
+    fi
+    count=$((count + 1))
+    echo "Waiting for container $container_name to start... ($count/$retries)"
+    sleep 1
+  done
+
+  echo "Error: Container $container_name did not start within expected time."
+  return 1
+}
+
 # Define the project root and other directories
 ROOT_IN_CONTAINER=$(dirname $(dirname $(realpath $0)))
 HOST_HOME=$(normalize_path "$HOST_HOME")
@@ -31,11 +51,13 @@ if [ ! -f "$DOCKERFILE" ]; then
   exit 1
 fi
 
-# Create the output directory
+# Create the output directory and clear any previous content
 mkdir -p "$OUTPUT_DIR"
+rm -rf "$OUTPUT_DIR"/*
 
 # Build the Docker image
-docker build -t asciidoc-preview -f "$DOCKERFILE" .
+echo "Building Docker image..."
+docker build -t asciidoc-preview -f "$DOCKERFILE" "$ROOT_IN_CONTAINER"
 
 # List the docs directory
 echo "Listing DOCS_DIR before running the container:"
@@ -44,8 +66,10 @@ ls -al "$DOCS_DIR"
 # Run the Docker container
 docker run --rm -v "$(normalize_path "$DOCS_DIR"):/workspace/docs" -v "$(normalize_path "$OUTPUT_DIR"):/workspace/target/docs/html" -p 35729:35729 -p 4000:4000 --name asciidoc-preview asciidoc-preview &
 
-# Wait a few seconds to ensure the container is up and running
-sleep 5
+# Wait for the container to be up and running
+if ! wait_for_container "asciidoc-preview"; then
+  exit 1
+fi
 
 # Check if input directory is correctly mounted
 if [ -d "/workspace/docs" ]; then
@@ -88,6 +112,4 @@ WATCH_PID=$!
 # Start livereloadx to serve the files
 cd /workspace/target/docs/html
 echo "Starting livereloadx..."
-livereloadx -s . -p 4000 &
-
-wait $WATCH_PID
+livereloadx -s . -p
