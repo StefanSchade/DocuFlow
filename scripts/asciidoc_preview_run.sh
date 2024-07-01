@@ -36,8 +36,8 @@ REPO_NAME=$(normalize_path "$REPO_NAME")
 
 PROJECT_ROOT="${HOST_HOME}${REPO_ROOT}${REPO_NAME}"
 DOCKERFILE="${ROOT_IN_CONTAINER}/docker/Dockerfile.asciidoc-preview"
-DOCS_DIR="${PROJECT_ROOT}docs"
-OUTPUT_DIR="${PROJECT_ROOT}target/docs/html"
+DOCS_DIR=$(normalize_path "${PROJECT_ROOT}docs")
+OUTPUT_DIR="${ROOT_IN_CONTAINER}/target/docs/html"
 
 # Log the determined paths
 echo "PROJECT_ROOT: $PROJECT_ROOT"
@@ -59,6 +59,12 @@ rm -rf "$OUTPUT_DIR"/*
 echo "Building Docker image..."
 docker build -t asciidoc-preview -f "$DOCKERFILE" "$ROOT_IN_CONTAINER"
 
+# Handle existing container conflict
+if docker ps -a --format '{{.Names}}' | grep -Eq "^asciidoc-preview\$"; then
+  echo "Removing existing asciidoc-preview container..."
+  docker rm -f asciidoc-preview
+fi
+
 # List the docs directory
 echo "Listing DOCS_DIR before running the container:"
 ls -al "$DOCS_DIR"
@@ -71,45 +77,14 @@ if ! wait_for_container "asciidoc-preview"; then
   exit 1
 fi
 
-# Check if input directory is correctly mounted
-if [ -d "/workspace/docs" ]; then
-  echo "/workspace/docs exists."
-else
-  echo "Error: /workspace/docs does not exist. Exiting."
-  exit 1
-fi
+# Function to handle SIGINT and SIGTERM signals
+cleanup() {
+  echo "Received signal, shutting down..."
+  docker stop asciidoc-preview
+  exit 0
+}
 
-# Check input directory contents before initial conversion
-echo "Checking input directory contents before initial conversion..."
-ls -al /workspace/docs
+trap 'cleanup' SIGINT SIGTERM
 
-# Perform initial conversion of .adoc files to .html
-echo "Performing initial conversion of .adoc files to .html..."
-find /workspace/docs -name "*.adoc" -exec asciidoctor -D /workspace/target/docs/html {} \;
-echo "Initial conversion complete."
-
-# Log the files found
-echo "Files found for conversion:"
-find /workspace/docs -name "*.adoc" -print
-
-# Watch and convert .adoc files to .html
-echo "Starting inotifywait to monitor input dir (/workspace/docs)..."
-inotifywait -m -e modify,create,delete -r /workspace/docs |
-while read path action file; do
-  echo "inotifywait detected a change: $path $action $file"
-  if [[ "$file" =~ .*\.adoc$ ]]; then
-    echo "Change detected: $action $file"
-    echo "Converting $path$file to HTML..."
-    asciidoctor -D /workspace/target/docs/html "$path$file"
-    echo "Conversion complete: $path$file"
-  else
-    echo "Ignored change: $action $file"
-  fi
-done &
-
-WATCH_PID=$!
-
-# Start livereloadx to serve the files
-cd /workspace/target/docs/html
-echo "Starting livereloadx..."
-livereloadx -s . -p
+# Wait for the container process to exit
+wait $!

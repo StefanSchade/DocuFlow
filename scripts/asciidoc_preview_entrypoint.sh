@@ -22,11 +22,16 @@ if [ -d "$INPUT_DIR" ]; then
   echo "$INPUT_DIR exists."
 else
   echo "$INPUT_DIR does not exist."
+  exit 1
 fi
 
 # Input dir
 echo "Checking input directory contents before initial conversion..."
 ls -la $INPUT_DIR
+
+# Clean the output directory before initial conversion
+echo "Cleaning output directory..."
+rm -rf $OUTPUT_DIR/*
 
 # Convert all .adoc files to .html initially
 echo "Performing initial conversion of .adoc files to .html..."
@@ -35,7 +40,7 @@ echo "Initial conversion complete."
 
 # Log the files found
 echo "Files found for conversion:"
-find $INPUT_DIR -name "*.adoc" -print
+find $OUTPUT_DIR -name "*.html" -print
 
 # Watch and convert .adoc files to .html
 echo "Starting inotifywait to monitor input dir ($INPUT_DIR)..."
@@ -58,5 +63,18 @@ WATCH_PID=$!
 cd $OUTPUT_DIR
 echo "Starting livereloadx..."
 livereloadx -s . -p 4000 &
+
+LIVERELOAD_PID=$!
+
+# Wait for livereloadx to start
+sleep 5
+
+# Check if livereloadx is running
+if ps -p $LIVERELOAD_PID > /dev/null; then
+  echo "livereloadx started successfully."
+else
+  echo "Error: livereloadx failed to start."
+  exit 1
+fi
 
 wait $WATCH_PID
