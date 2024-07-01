@@ -1,0 +1,490 @@
+= Developer Guide
+
+== Abstract
+
+== Setup for development in a Container (VSCode)
+
+*Sources:* We heavly rely on an official https://code.visualstudio.com/docs/devcontainers/containers[blog article] and a https://code.visualstudio.com/docs/devcontainers/tutorial[tutorial], but make mor narrow choices for wich we apply the concepts laid out there.
+
+*Assumptions:*
+
+* *VSCode* as IDE
+* *local* Docker agent (Windows or MacOS: Docker Desktop)footnote:[As detailed in the article use of a remote Docker host or even a Kubernetes Cluster would be other viable options]
+
+=== Use of other IDEs
+
+The strategy we are about  to follow is based on a standard (Dev Container), so this setup could likely be transfered to other IDEs as for instance IntelliJ. We focus on VSCode for the moment to keep things simple.
+
+For an IDE agnostic setup, we do not check in IDE config directly, however it will be checked in as part of the documentation to be used as a template.
+
+It is a good idea to avoid committing the actual configuration to Git because:
+
+  * The configuration contains user specific data that need to be replaced when using the template.
+
+  * The individual developer might have the need to further individualize the template:
+
+  
+
+    ** User specific path names/
+
+    ** Additional extentions need to be configured.
+
+is also good practice because the individual configuration might vary (e.g. additional plugins, paths on the home system etc).
+
+=== Why develop in a Container
+
+The setup makes the project less accessible for inexperienced developers as they need to deal with Docker, but it comes with strong advantages:
+
+* *Lack of features under Windows* +
+The Python library https://pyenchant.github.io/pyenchant/install.html#on-windows[Enchanted] offers limited support for German under Windows.
+
+* *local setup closer to CI/CD and production* +
+For an effective dev-cycle, it is best practice for your local dev setup to represent the target environment closely. While esp. Java (Write once run anywhere) abstracts away the OS, the implementation of compiled languages like RUST might differ between OS systems. Having access to Linux / Unix is therefore a good plattform outside the niche of desktop development.
+
+* *Dependency Management* +
+As we depend on a range of dependencies (Tesseract_ORC, Python, a multitude of python libs sometimes requiring further dependencies like dictionaries) the following problems we face are alleviated having them checked into the project:
+
+** Setup and maintenance of dev or production systems.
+
+** code becomes clustered with parameters, heuristics and conditions that deal with varying local dependencies (e.g. path names) 
+
+=== Setup of the IDE
+
+==== Install and Configure Plugin from the Marketplace
+
+Load the plugin "Dev Containers" published by Microsoft and put the following config into `/.devcontainer/devcontainer.json`.
+
+Key settings in `devcontainer.json`:
+
+- **dockerFile**: Points to the Dev-Dockerfile in the `docker` directory.
+- **workspaceFolder**: Sets the working directory inside the container.
+- **mounts**: Binds the local directories to the container directories.
+- **settings**: Configures the terminal shell to use bash.
+- **extensions**: Installs the necessary VS Code extensions inside the container.
+- **postCreateCommand**: runs some commands after creation to configure git and load necessary python packages.
+- **remoteUser**: Sets the user as `root` to ensure necessary permissions.
+
+[source, json]
+-----
+{
+  "name": "Dev Container",
+  "dockerFile": "../docker/Dockerfile.dev",
+  "workspaceFolder": "/workspace",
+  "context": "..",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind",
+    "source=C:/Users/schades/.ssh,target=/root/.ssh,type=bind"
+  ],
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "extensions": [
+    "ms-python.python",
+    "ms-azuretools.vscode-docker",
+    "GitHub.vscode-pull-request-github",
+    "asciidoctor.asciidoctor-vscode",
+    "mhutchie.git-graph"
+  ],
+  "postCreateCommand": "chmod +x /workspace/scripts/setup_ssh_git.sh && /workspace/scripts/setup_ssh_git.sh && git config --global user.name 'Stefan Schade' && git config --global user.email 'dr_stefan_schade@yahoo.com' && python3 -m venv /workspace/venv && /workspace/venv/bin/pip install --no-cache-dir -r /workspace/requirements.txt",
+  "remoteUser": "root"
+}
+-----
+
+IMPORTANT: change `<YourUsername>`, `<your.email@example.com>`, and `<Your Name>`  into the to your Windows login, your email and the User that should appear on the Git commits!
+
+* The Post Create Command does the following
+
+    ** Setup Git
+
+    ** Install packages
+
+==== Setup Dockerfile Dependencies
+
+The fact, that our project requires a complex setup on the target environment was one motivation, to move to a container. Conclusively the Dockerfiles depend on secondary files
+
+===== Python requirements
+
+`requirements.txt` is a textfile that contains the python packages that need to be installed with 'pip'
+
+[source]
+-----
+pyenchant
+tqdm
+hunspell
+-----
+
+===== Tesseract config
+
+`tessdata.txt` is a textfile that contains additiona training files optimised for the relevant languages
+
+[source]
+-----
+https://github.com/tesseract-ocr/tessdata/raw/main/eng.traineddata
+https://github.com/tesseract-ocr/tessdata/raw/main/spa.traineddata
+-----
+
+==== Setup Dockerfile
+
+The `Dockerfile` represents the development environment. It is common practice to use a different Docker file to generate the production setup because the two environments have drastically different requirements: While development environments need various tools and libraries for editing, debugging, and testing code, production environments need a lean and optimized setup for performance and security.
+
+===== Dockerfile for development (`Dockerfile.dev`)
+
+[source, dockerfile]
+----
+# Use an official Ubuntu as a parent image
+FROM ubuntu:latest
+
+# Install required tools
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    wget \
+    git \
+    vim \
+    python3 \
+    python3-pip \
+    python3-venv \
+    tesseract-ocr \
+    asciidoctor \
+    bash \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory for the project
+WORKDIR /workspace
+
+# Copy the requirements file
+COPY ../requirements.txt /workspace
+
+# Copy the tessdata.txt file
+COPY ../tessdata.txt /workspace
+
+# Copy the Zscaler certificate if it exists and update CA certificates
+RUN if [ -f ../zscaler.crt ]; then \
+    cp ../zscaler.crt /usr/local/share/ca-certificates/zscaler.crt && \
+    update-ca-certificates; \
+    fi
+
+# Copy the source code
+COPY ../src /workspace/src
+
+# Download Tesseract language data, removing any carriage return characters
+RUN cat /workspace/tessdata.txt | tr -d '\r' | xargs -n 1 wget --no-check-certificate -P /usr/share/tesseract-ocr/4.00/tessdata/
+
+
+# Create and activate a virtual environment
+RUN python3 -m venv /workspace/venv
+
+# Install any Python dependencies in the virtual environment
+RUN /workspace/venv/bin/pip install --no-cache-dir -r /workspace/requirements.txt
+
+# Set environment variables for the virtual environment
+ENV PATH="/workspace/venv/bin:$PATH"
+
+# Run bash by default
+CMD ["bash"]
+----
+
+===== Dockerfile for production (`Dockerfile.prod`)
+
+[source, dockerfile]
+----
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the source code
+COPY ./src /app/src
+
+# Copy the requirements file
+COPY requirements.txt /app
+
+# Copy the tessdata list
+COPY tessdata.txt /app
+
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# Install Tesseract OCR and necessary language data
+RUN apt-get update && apt-get install -y tesseract-ocr wget \
+    && cat /app/tessdata.txt | tr -d '\r' | xargs -n 1 wget -P /usr/share/tesseract-ocr/4.00/tessdata/ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set environment variables for the virtual environment
+ENV PATH="/app/venv/bin:$PATH"
+
+# Set the entrypoint to ensure additional arguments are passed to the Python script
+ENTRYPOINT ["python", "/app/src/main_script.py"]
+----
+
+====== The base image is a lightweight version of Python
+
+[source]
+----
+FROM python:3.9-slim
+----
+
+====== Install required tools
+
+`wget` is required to download language data
+
+====== Installation of the Python dependencies
+
+[source]
+----
+RUN pip install --no-cache-dir -r /app/requirements.txt
+----
+
+====== Installation of the Tessdata dependencies
+
+* Install `wget`
+
+[source]
+----
+RUN apt-get update && apt-get install -y tesseract-ocr \
+    && apt-get install -y wget \
+----
+
+* Download Language Data Files
+
+These lines download the English (eng.traineddata) and Spanish (spa.traineddata) language data files from the Tesseract GitHub repository and place them in the appropriate directory (`/usr/share/tesseract-ocr/4.00/tessdata/`)
+
+[source]
+----
+&& wget -P /usr/share/tesseract-ocr/4.00/tessdata/ https://github.com/tesseract-ocr/tessdata/raw/main/eng.traineddata \
+&& wget -P /usr/share/tesseract-ocr/4.00/tessdata/ https://github.com/tesseract-ocr/tessdata/raw/main/spa.traineddata \
+...
+----
+
+* Streamline the download
+
+Use `xargs` to read each URL from `tessdata.txt` and download the corresponding file(s). This makes it easy to manage and update the list of languages without modifying the Dockerfile directly.
+
+[source]
+----
+xargs -n 1 wget -P /usr/share/tesseract-ocr/4.00/tessdata/ < /app/tessdata.txt \
+----
+
+* This removes the package lists to reduce the image size.
+
+[source]
+----
+rm -rf /var/lib/apt/lists/*
+----
+
+====== Handle Carriage Return Characters when downloading languages
+
+The `cat` command is used to read `tessdata.txt`, and `tr -d '\r'` is used to remove any carriage return characters before passing the URLs to `xargs` and `wget`.
+
+====== Set entrypoint
+
+The `ENTRYPOINT` directive ensures that any additional arguments passed to the Docker container are forwarded to the Python script.
+
+==== Setup ssh for Github
+
+We assume the following
+
+* The `.ssh` directory contains the private / public key pair to be used for communication with gitfootnote:[if not `ssh-keygen -t rsa -b 4096 -C "<your email>"` will generate it, you have to configure it in your github settings] *The name must end on rsa*
+
+* The `.ssh` directory contains a config file that associates this key with github
+
+[source]
+----
+# GitHub configuration
+Host github.com
+  HostName github.com
+  User <my_email>
+  IdentityFile ~/.ssh/<my_key_ending_on_rsa>
+----
+
+==== Start the Container
+
+Make sure that the Docker Daemon is running (e.g. by starting Docker Desktop)
+
+In the Dialog `Ctrl+Shift+P` Choose the option "Dev Container: Open Folder in Container" or (in case you retry after a configuration change) "Dev Container: Rebuild Container"
+
+You can view the setup steps in the terminal which gives you an indication for the problems if anything fails.
+
+If everything is running, you can test the SSH connection to GitHub:
+[source, shell]
+----
+ssh -T git@github.com
+----
+
+==== Managing the connection between the IDE and the development container
+
+The connection between the  IDE and the development container is managed by an https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers[extention]
+
+* Start Docker Daemon (usually by starting Docker Desktop)
+* Make sure the service is running:`docker info` (optional)
+* Make sure there is no container lingering from the last session:`docker ps -a` (optional)
+* Stop and remove a lingering container: `docker stop <container_id>` and `docker rm <container_id>`
+* Open VS Code will start in local mode
+* Switch to Container mode: `Str + Shift + P` and type "Dev Containers: Open Folder in Container"
+* Switch back to Local mode `Str + Shift + P` and type "Dev Containers: Open Folder Locally"
+* Perform a container restart, e.g. after a config change `Str + Shift + P` and type "Dev Containers: Reopen Folder Locally"
+* Trouble-Shooting: If you get tangled. Stop VS Code and make sure there is no process running (Code), stop all containers and start afresh.
+
+==== Adding Extentions to VSCode
+
+If you install a new extension in VS Code while using a Dev Container, it will not automatically persist across container restarts or rebuilds unless specified in the devcontainer.json configuration. To ensure that the extension is always available in your Dev Container, you need to add it to the extensions list in your devcontainer.json. This can be done directly from the Marketplace view via the context menu.
+
+You might also have to restart VS Code to complete the process.
+
+==== Setup Dev Container for Zscaler environment
+
+To ensure that your development environment functions correctly behind a Zscaler proxy, follow these steps to configure your development container:
+
+1. **Proxy and Certificate Configuration**:
+   We need to configure the proxy settings and install the Zscaler certificate to allow secure HTTPS access and dependency installation. This setup is automated using a script that is executed within the container.
+
+2. **Scripts for Configuration**:
+   Two main scripts are used:
+   
+   - `setup_docker_proxy.sh`: Configures proxy settings and installs the Zscaler certificate.
+   - `install_python_dependencies.sh`: Installs Python dependencies listed in `requirements.txt`.
+
+3. **Adding the Scripts**:
+   Place the scripts in the `/workspace/scripts` directory of your project.
+
+   `setup_docker_proxy.sh`:
+
+[source, bash]
+-----
+   #!/bin/bash
+
+   # Ensure we are in the correct working directory
+   cd /workspace
+
+   # Example proxy settings (replace with actual proxy information)
+   HTTP_PROXY="http://your.proxy.address:8080"
+   HTTPS_PROXY="http://your.proxy.address:8080"
+   NO_PROXY="localhost,127.0.0.1"
+
+   # Export proxy settings for the Docker build process
+   export http_proxy=$HTTP_PROXY
+   export https_proxy=$HTTPS_PROXY
+   export no_proxy=$NO_PROXY
+
+   # Path to the Zscaler certificate in the workspace directory
+   CERT_PATH="/workspace/zscaler.crt"
+
+   # Copy the Zscaler certificate to the appropriate directory
+   cp $CERT_PATH /usr/local/share/ca-certificates/zscaler.crt
+
+   # Update CA certificates
+   update-ca-certificates
+
+   # Verify the certificate installation
+   ls -l /etc/ssl/certs/ca-certificates.crt
+
+   # Configure Git to use the updated CA certificates
+   git config --global http.sslCAInfo /etc/ssl/certs/ca-certificates.crt
+
+   # Verify Git configuration
+   git config --global --get http.sslCAInfo
+
+   echo "Proxy and certificate setup completed successfully."
+-----
+
+install_python_dependencies.sh:
+
+[source, bash]
+-----
+#!/bin/bash
+
+# Ensure we are in the correct working directory
+cd /workspace
+
+# Activate the virtual environment
+source /workspace/venv/bin/activate
+
+# Install Python dependencies from requirements.txt
+pip install --no-cache-dir -r /workspace/requirements.txt
+
+# List installed packages to verify installation
+pip list
+=====
+
+Configure the Dev Container:
+Update the .devcontainer/devcontainer.json file to include the post-create commands that execute these scripts automatically after the container is created.
+
+Example .devcontainer/devcontainer.json:
+
+json
+-----
+
+Configure the Dev Container:
+Update the .devcontainer/devcontainer.json file to include the post-create commands that execute these scripts automatically after the container is created.
+
+Example .devcontainer/devcontainer.json:
+
+[source, json]
+-----
+{
+  "name": "Dev Container",
+  "dockerFile": "../docker/Dockerfile.dev",
+  "workspaceFolder": "/workspace",
+  "context": "..",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind",
+    "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind"
+  ],
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "extensions": [
+    "ms-python.python",
+    "ms-azuretools.vscode-docker",
+    "GitHub.vscode-pull-request-github",
+    "asciidoctor.asciidoctor-vscode",
+    "mhutchie.git-graph",
+    "njqdev.vscode-python-typehint",
+    "VisualStudioExptTeam.vscodeintellicode"
+  ],
+  "postCreateCommand": "ls -la /workspace/scripts && chmod +x /workspace/scripts/setup_ssh_git.sh && bash /workspace/scripts/setup_ssh_git.sh && git config --global user.name 'Stefan Schade' && git config --global user.email 'dr_stefan_schade@yahoo.com' && /workspace/scripts/setup_docker_proxy.sh && /workspace/scripts/install_python_dependencies.sh",
+  "remoteUser": "root"
+}
+-----
+
+Rebuild the Container:
+Use the VS Code command palette (Ctrl+Shift+P) to select Remote-Containers: Rebuild Container to apply all the changes and ensure everything is set up correctly.
+
+By following these steps, your development environment will be configured to work seamlessly with the Zscaler proxy, ensuring secure access to necessary resources and successful dependency installations.
+
+This section explains the steps we took to set up the development container for a Zscaler environment, ensuring the explanation is clear and fits smoothly into your AsciiDoc document.
+
+
+
+
+
+notes
+
+export TESSDATA_PREFIX=/usr/local/Cellar/tesseract/<version>/share/
+
+tesseract /path/to/your/image.jpg stdout -l eng --psm 3
+
+tesseract /path/to/saved_image.jpg stdout -l eng --psm 3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
