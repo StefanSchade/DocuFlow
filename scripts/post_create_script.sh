@@ -1,58 +1,51 @@
 #!/bin/bash
 
+set -e  # Exit the script immediately if any command fails
+
+# Source and call helper script
+source /workspace/scripts/helper/log_helper.sh && log_script_name
+
 echo "Script started."
 
 # Some output for troubleshooting
 ls -la /workspace/scripts
 
 echo "Checking the necessary env variables"
-# Check if GIT_USER and GIT_EMAIL and REPO_ROOT are set
-if [ -z "$GIT_USER" ]; then
-  echo "Error: GIT_USER is not set. Exiting."
-  exit 1
-else
-  echo "GIT_USER is set to: $GIT_USER"
-fi
 
-if [ -z "$GIT_EMAIL" ]; then
-  echo "Error: GIT_EMAIL is not set. Exiting."
-  exit 1
-else
-  echo "GIT_EMAIL is set to: $GIT_EMAIL"
-fi
+# Check if GIT_USER, GIT_EMAIL, REPO_ROOT, and HOST_HOME are set
+: "${GIT_USER:?Error: GIT_USER is not set. Exiting.}"
+: "${GIT_EMAIL:?Error: GIT_EMAIL is not set. Exiting.}"
+: "${REPO_ROOT:?Error: REPO_ROOT is not set. Exiting.}"
+: "${HOST_HOME:?Error: HOST_HOME is not set. Exiting.}"
 
-if [ -z "$REPO_ROOT" ]; then
-  echo "Error: REPO_ROOT is not set. Exiting."
-  exit 1
-else
-  echo "REPO_ROOT is set to: $REPO_ROOT"
-fi
-
-if [ -z "$HOST_HOME" ]; then
-  echo "Error: HOST_HOME is not set. Exiting."
-  exit 1
-else
-  echo "HOST_HOME is set to: $HOST_HOME"
-fi
+echo "GIT_USER is set to: $GIT_USER"
+echo "GIT_EMAIL is set to: $GIT_EMAIL"
+echo "REPO_ROOT is set to: $REPO_ROOT"
+echo "HOST_HOME is set to: $HOST_HOME"
 
 if [ -z "$REPO_NAME" ]; then
-  echo "Error: REPO_NAME is not set. We will try to determin this from the git setup."
+  echo "Error: REPO_NAME is not set. We will try to determine this from the git setup."
+  export REPO_NAME=$(basename "$(git rev-parse --show-toplevel)")
+  echo "Determined REPO_NAME to be: $REPO_NAME"
 else
   echo "REPO_NAME is set to: $REPO_NAME"
 fi
 
-# Configure Git with the provided user name and email
-echo "Configuring Git with user: $GIT_USER and email: $GIT_EMAIL"
-git config --global user.name "$GIT_USER"
-git config --global user.email "$GIT_EMAIL"
+echo "Configuring Git with user: ${GIT_USER} and email: ${GIT_EMAIL}"
+git config --global user.name "${GIT_USER}"
+git config --global user.email "${GIT_EMAIL}"
 
-# Display the current Git configuration
+# Display the current Git configuration (disable pager first)
+export GIT_PAGER=
 echo "Current Git configuration:"
 git config --list
 
+# Debugging information
+echo "After git config --list"
+
 # Make sure scripts are executable
 echo "Making sure all scripts in /workspace/scripts are executable."
-chmod +x /workspace/scripts/*.sh
+chmod +x /workspace/scripts/*
 
 # Execute additional setup scripts
 echo "Executing setup_ssh_git.sh"

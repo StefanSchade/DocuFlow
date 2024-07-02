@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Source and call helper script
+source /workspace/scripts/helper/log_helper.sh && log_script_name
+
 # Check if a configuration name is provided
 if [ -z "$1" ]; then
     echo "Usage: $0 <config-name>"
@@ -15,6 +18,8 @@ NVIM_STATE="/root/.local/state/nvim/"
 if [ ! -d "$SOURCE_PATH" ]; then
     echo "Error: Configuration '$CONFIG_NAME' does not exist at $SOURCE_PATH"
     exit 1
+else 
+    echo "Configuration '$CONFIG_NAME' found in folder $SOURCE_PATH."
 fi
 
 # Check if the destination directory exists and prompt the user for confirmation
@@ -38,6 +43,7 @@ if [ -d "$DEST_PATH" ]; then
         ;;
     esac
 else
+    mkdir -p "$DEST_PATH"
     cp -r $SOURCE_PATH/* $DEST_PATH
     echo "Neovim configuration copied to $DEST_PATH"
 fi
