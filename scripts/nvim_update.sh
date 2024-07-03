@@ -53,3 +53,5 @@ cp /workspace/config/tmux/tmux.conf ~/.tmux.conf
 #gem install neovim
 
 #export PATH="$(ruby -e 'print Gem.user_dir')/bin:$PATH"
+
+tmux source-file ~/.tmux.conf

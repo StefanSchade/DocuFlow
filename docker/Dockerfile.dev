@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Copy the Zscaler certificate to the container
 COPY zscaler.crt /usr/local/share/ca-certificates/zscaler.crt
 
-RUN echo "Install basic dependencies and update certificates" && \
+RUN echo "basic dependencies and update certificates" && \
     apt-get update && \
     apt-get install -y \
     locales \
@@ -27,7 +27,7 @@ RUN echo "Install basic dependencies and update certificates" && \
     locale-gen it_IT.UTF-8 && \
     update-locale LANG=en_US.UTF-8
 
-RUN echo "Install development tools and dependencies" && \
+RUN echo "development tools and dependencies" && \
     apt-get update && \
     apt-get install -y \
     neovim \
@@ -41,12 +41,13 @@ RUN echo "Install development tools and dependencies" && \
     tmux \
     luarocks \
     lua5.1 \
+    lua5.1-dev \
     lua5.3 \
     ripgrep \
     fd-find && \
     ln -s $(which fdfind) /usr/local/bin/fd
 
-RUN echo "Install language runtimes and related tools" && \
+RUN echo "language runtimes and related tools" && \
     apt-get update && \
     apt-get install -y \
     python3 \
@@ -60,7 +61,7 @@ RUN echo "Install language runtimes and related tools" && \
     php-cli \
     composer
 
-RUN echo "Install Docker CLI" && \
+RUN echo "Docker CLI" && \
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
     echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
     apt-get update && \
@@ -68,7 +69,7 @@ RUN echo "Install Docker CLI" && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN echo "Download and install Julia" && \
+RUN echo "Julia" && \
     wget https://julialang-s3.julialang.org/bin/linux/x64/1.8/julia-1.8.5-linux-x86_64.tar.gz && \
     tar -xvzf julia-1.8.5-linux-x86_64.tar.gz && \
     mv julia-1.8.5 /opt/julia && \
@@ -76,14 +77,13 @@ RUN echo "Download and install Julia" && \
     rm julia-1.8.5-linux-x86_64.tar.gz
 
 # Install dependencies for dev environment
-RUN echo "Install dependencies for dev environment" && \
-    npm install -g tree-sitter-cli neovim && \
-    gem install neovim && \
-    echo 'export PATH="$(ruby -e '\''puts Gem.user_dir'\''')/bin:$PATH"' >> ~/.bashrc && \
-    source ~/.bashrc && \
+RUN echo "Installing npm dependencies" && \
+    npm install -g tree-sitter-cli neovim
+
+# Install Perl modules
+RUN /bin/bash -c "echo 'Installing Perl modules' && \
     cpan App::cpanminus && \
-    echo "Installing Neovim::Ext via cpanm" && \
-    cpanm --notest Neovim::Ext
+    cpanm --notest Neovim::Ext"
 
 # Set environment variable for Node.js to use the custom CA
 ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/zscaler.crt
@@ -97,6 +97,10 @@ ENV GIT_PAGER=
 # Set the working directory for the project and copy the files
 WORKDIR /workspace
 COPY . /workspace
+
+# run ruby setup
+RUN chmod +x /workspace/scripts/ruby_setup.sh && \
+    /bin/bash /workspace/scripts/ruby_setup.sh
 
 # Create and activate a virtual environment and install dependencies
 RUN python3 -m venv /workspace/venv && \
