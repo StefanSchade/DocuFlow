@@ -39,14 +39,12 @@ RUN echo "development tools and dependencies" && \
     fuse-overlayfs \
     parallel \
     tmux \
-    luarocks \
-    lua5.1 \
-    lua5.1-dev \
     lua5.3 \
+    lua5.1 \
+    luarocks \
     ripgrep \
     fd-find && \
-    ln -s $(which fdfind) /usr/local/bin/fd && \
-    luarocks install image.nvim
+    ln -s $(which fdfind) /usr/local/bin/fd
 
 RUN echo "language runtimes and related tools" && \
     apt-get update && \
@@ -77,14 +75,16 @@ RUN echo "Julia" && \
     ln -s /opt/julia/bin/julia /usr/local/bin/julia && \
     rm julia-1.8.5-linux-x86_64.tar.gz
 
+# Install dependencies for dev environment
+RUN echo "Installing npm dependencies" && \
+    npm install -g tree-sitter-cli neovim
+
 # Install Perl modules
 RUN /bin/bash -c "echo 'Installing Perl modules' && \
     cpan App::cpanminus && \
     cpanm --notest Neovim::Ext"
 
 # Set environment variables
-ENV LUA_PATH="/usr/share/lua/5.1/?.lua;/usr/share/lua/5.1/?/init.lua;./?.lua;/usr/share/luajit-2.0.4/?.lua;/usr/local/share/lua/5.1/?.lua;/usr/local/share/lua/5.1/?/init.lua"
-ENV LUA_CPATH="/usr/lib/lua/5.1/?.so;/usr/local/lib/lua/5.1/?.so;./?.so"
 ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/zscaler.crt
 
 # Set environment variables for locale
