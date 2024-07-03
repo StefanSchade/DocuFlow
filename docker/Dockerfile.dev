@@ -19,15 +19,18 @@ RUN apt-get update && \
     gnupg2 \
     software-properties-common \
     build-essential && \
-    update-ca-certificates
+    update-ca-certificates && \
+    locale-gen en_US.UTF-8 && \
+    locale-gen de_DE.UTF-8 && \
+    locale-gen fr_FR.UTF-8 && \
+    locale-gen es_ES.UTF-8 && \
+    locale-gen it_IT.UTF-8 && \
+    update-locale LANG=en_US.UTF-8
 
-# Install additional tools and dependencies
+# Install development tools and dependencies
 RUN apt-get update && \
     apt-get install -y \
     neovim \
-    python3 \
-    python3-pip \
-    python3-venv \
     asciidoctor \
     bash \
     jq \
@@ -37,23 +40,25 @@ RUN apt-get update && \
     parallel \
     tmux \
     luarocks \
+    lua5.1 \
     lua5.3 \
     ripgrep \
-    fd-find \
+    fd-find && \
+    ln -s $(which fdfind) /usr/local/bin/fd
+
+# Install language runtimes and related tools
+RUN apt-get update && \
+    apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-venv \
     nodejs \
+    npm \
     openjdk-11-jdk \
     golang-go \
     cargo \
     php-cli \
     composer
-
-# Generate locales
-RUN locale-gen en_US.UTF-8 && \
-    locale-gen de_DE.UTF-8 && \
-    locale-gen fr_FR.UTF-8 && \
-    locale-gen es_ES.UTF-8 && \
-    locale-gen it_IT.UTF-8 && \
-    update-locale LANG=en_US.UTF-8
 
 # Install Docker CLI
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
@@ -70,30 +75,22 @@ RUN wget https://julialang-s3.julialang.org/bin/linux/x64/1.8/julia-1.8.5-linux-
     ln -s /opt/julia/bin/julia /usr/local/bin/julia && \
     rm julia-1.8.5-linux-x86_64.tar.gz
 
+# Set environment variable for Node.js to use the custom CA
+ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/zscaler.crt
+
 # Set environment variables for locale
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 ENV GIT_PAGER=
 
-# Create symlink for fd
-RUN ln -s $(which fdfind) /usr/local/bin/fd
-
-# Set the working directory for the project
+# Set the working directory for the project and copy the files
 WORKDIR /workspace
-
-# Copy the project files
 COPY . /workspace
-
-# Expose any ports if necessary
-# EXPOSE 8000
-
-# Set environment variables for the virtual environment
-ENV PATH="/workspace/venv/bin:$PATH"
 
 # Create and activate a virtual environment and install dependencies
 RUN python3 -m venv /workspace/venv && \
     /bin/bash -c "source /workspace/venv/bin/activate && pip install --no-cache-dir -r /workspace/requirements.txt && pip install --no-cache-dir -r /workspace/requirements-dev.txt && pip list"
 
 # Start Docker daemon (if needed)
-# CMD ["dockerd"]
+CMD ["bash", "/workspace/scripts/post_create_script.sh"]

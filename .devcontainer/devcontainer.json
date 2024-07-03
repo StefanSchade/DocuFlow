@@ -1,0 +1,42 @@
+{
+  "name": "Dev Container",
+  "dockerFile": "../docker/Dockerfile.dev",
+  "workspaceFolder": "/workspace",
+  "context": "..",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind",
+    "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind",
+    "source=${localWorkspaceFolder}/../ocr_dev_data,target=/workspace/data,type=bind"
+  ],
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "extensions": [
+    "ms-python.python",
+    "ms-azuretools.vscode-docker",
+    "GitHub.vscode-pull-request-github",
+    "asciidoctor.asciidoctor-vscode",
+    "mhutchie.git-graph",
+    "njqdev.vscode-python-typehint",
+    "franneck94.vscode-python-dev-extension-pack",
+    "ms-python.debugpy",
+    "KevinRose.vsc-python-indent",
+    "dustypomerleau.rust-syntax",
+    "donjayamanne.githistory",
+    "vscodevim.vim"
+  ],
+  "runArgs": [
+    "--name", "dev_container_startup",
+    "--init",
+    "--privileged",
+    "-v", "/var/run/docker.sock:/var/run/docker.sock",
+    "--env", "REPO_ROOT=${localEnv:REPO_ROOT}",
+    "--env", "REPO_NAME=${localEnv:REPO_NAME}",
+    "--env", "GIT_USER=${localEnv:GIT_USER}",
+    "--env", "GIT_EMAIL=${localEnv:GIT_EMAIL}",
+    "--env", "HOST_HOME=${localEnv:HOME}",
+    "--env", "NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/zscaler.crt"
+  ],
+  "postCreateCommand": "chmod +x /workspace/scripts/post_create_script.sh && bash /workspace/scripts/post_create_script.sh",
+  "remoteUser": "root"
+}

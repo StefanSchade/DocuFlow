@@ -47,3 +47,9 @@ else
     cp -r $SOURCE_PATH/* $DEST_PATH
     echo "Neovim configuration copied to $DEST_PATH"
 fi
+
+cp /workspace/config/tmux/tmux.conf ~/.tmux.conf
+
+gem install neovim
+
+export PATH="$(ruby -e 'print Gem.user_dir')/bin:$PATH"
