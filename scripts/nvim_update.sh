@@ -50,6 +50,11 @@ fi
 
 cp /workspace/config/tmux/tmux.conf ~/.tmux.conf
 
+export LUA_PATH='/usr/share/lua/5.1/?.lua;/usr/share/lua/5.1/?/init.lua;./?.lua;/usr/share/luajit-2.0.4/?.lua;/usr/local/share/lua/5.1/?.lua;/usr/local/share/lua/5.1/?/init.lua'
+export LUA_CPATH='/usr/lib/lua/5.1/?.so;/usr/local/lib/lua/5.1/?.so;./?.so'
+
+echo "abc"
+
 #gem install neovim
 
 #export PATH="$(ruby -e 'print Gem.user_dir')/bin:$PATH"
