@@ -1,6 +1,6 @@
 -- enable copy and paste
 
-let g:loaded_perl_provider = 0
+-- let g:loaded_perl_provider = 0
 
 vim.g.clipboard = {
   name = 'tmux',
