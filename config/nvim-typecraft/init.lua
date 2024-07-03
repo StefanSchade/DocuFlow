@@ -1,3 +1,23 @@
+-- enable copy and paste
+
+vim.g.clipboard = {
+  name = 'tmux',
+  copy = {
+      ['+'] = 'tmux load-buffer -w -',
+      ['*'] = 'tmux load-buffer -w -',
+  },
+  paste = {
+      ['+'] = 'tmux save-buffer -',
+      ['*'] = 'tmux save-buffer -',
+  },
+  cache_enabled = 1,
+}
+
+if vim.fn.has("termguicolors") == 1 then
+  vim.opt.termguicolors = true
+end
+
+
 -- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
