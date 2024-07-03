@@ -75,6 +75,16 @@ RUN echo "Download and install Julia" && \
     ln -s /opt/julia/bin/julia /usr/local/bin/julia && \
     rm julia-1.8.5-linux-x86_64.tar.gz
 
+# Install dependencies for dev environment
+RUN echo "Install dependencies for dev environment" && \
+    npm install -g tree-sitter-cli neovim && \
+    gem install neovim && \
+    echo 'export PATH="$(ruby -e '\''puts Gem.user_dir'\''')/bin:$PATH"' >> ~/.bashrc && \
+    source ~/.bashrc && \
+    cpan App::cpanminus && \
+    echo "Installing Neovim::Ext via cpanm" && \
+    cpanm --notest Neovim::Ext
+
 # Set environment variable for Node.js to use the custom CA
 ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/zscaler.crt
 
