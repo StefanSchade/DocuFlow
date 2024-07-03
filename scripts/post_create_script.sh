@@ -24,9 +24,7 @@ echo "REPO_ROOT is set to: $REPO_ROOT"
 echo "HOST_HOME is set to: $HOST_HOME"
 
 if [ -z "$REPO_NAME" ]; then
-  echo "Error: REPO_NAME is not set. We will try to determine this from the git setup."
-  export REPO_NAME=$(basename "$(git rev-parse --show-toplevel)")
-  echo "Determined REPO_NAME to be: $REPO_NAME"
+  echo "Error: REPO_NAME is not set. We will try to determine this from the git setup after configuring git."
 else
   echo "REPO_NAME is set to: $REPO_NAME"
 fi
@@ -113,5 +111,9 @@ echo "HOME: $HOME"
 # Rename the container
 echo "Renaming the container to: $REPO_NAME"
 docker rename dev_container_startup $REPO_NAME
+
+echo "Setup nvim."
+
+source /workspace/scripts/nvim_update.sh typecraft
 
 echo "Script completed."
