@@ -4,11 +4,13 @@ FROM ubuntu:latest
 # Set environment variables to non-interactive
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install dependencies, Docker CLI, and other tools
+# Copy the Zscaler certificate to the container
+COPY zscaler.crt /usr/local/share/ca-certificates/zscaler.crt
+
+# Install basic dependencies and update certificates
 RUN apt-get update && \
     apt-get install -y \
     locales \
-    neovim \
     apt-transport-https \
     ca-certificates \
     curl \
@@ -16,7 +18,13 @@ RUN apt-get update && \
     vim \
     gnupg2 \
     software-properties-common \
-    build-essential \
+    build-essential && \
+    update-ca-certificates
+
+# Install additional tools and dependencies
+RUN apt-get update && \
+    apt-get install -y \
+    neovim \
     python3 \
     python3-pip \
     python3-venv \
@@ -27,25 +35,49 @@ RUN apt-get update && \
     kmod \
     fuse-overlayfs \
     parallel \
-    tmux && \
-    locale-gen en_US.UTF-8 && \
+    tmux \
+    luarocks \
+    lua5.3 \
+    ripgrep \
+    fd-find \
+    nodejs \
+    openjdk-11-jdk \
+    golang-go \
+    cargo \
+    php-cli \
+    composer
+
+# Generate locales
+RUN locale-gen en_US.UTF-8 && \
     locale-gen de_DE.UTF-8 && \
     locale-gen fr_FR.UTF-8 && \
     locale-gen es_ES.UTF-8 && \
     locale-gen it_IT.UTF-8 && \
-    update-locale LANG=en_US.UTF-8 && \
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
+    update-locale LANG=en_US.UTF-8
+
+# Install Docker CLI
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
     echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
     apt-get update && \
     apt-get install -y docker-ce-cli && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Download and install Julia
+RUN wget https://julialang-s3.julialang.org/bin/linux/x64/1.8/julia-1.8.5-linux-x86_64.tar.gz && \
+    tar -xvzf julia-1.8.5-linux-x86_64.tar.gz && \
+    mv julia-1.8.5 /opt/julia && \
+    ln -s /opt/julia/bin/julia /usr/local/bin/julia && \
+    rm julia-1.8.5-linux-x86_64.tar.gz
+
 # Set environment variables for locale
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 ENV GIT_PAGER=
+
+# Create symlink for fd
+RUN ln -s $(which fdfind) /usr/local/bin/fd
 
 # Set the working directory for the project
 WORKDIR /workspace

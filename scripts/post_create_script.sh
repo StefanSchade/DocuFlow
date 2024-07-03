@@ -110,4 +110,8 @@ echo "REPO_ROOT: $REPO_ROOT"
 echo "REPO_NAME: $REPO_NAME"
 echo "HOME: $HOME"
 
+# Rename the container
+echo "Renaming the container to: $REPO_NAME"
+docker rename dev_container_startup $REPO_NAME
+
 echo "Script completed."
