@@ -1,7 +1,10 @@
 #!/bin/bash
 
-# Source and call helper script
-source /workspace/scripts/helper/log_helper.sh && log_script_name
+# Log the determined paths
+echo
+echo "******************************************************************"
+echo "$0"
+echo "******************************************************************"
 
 # Define the output directory
 OUTPUT_DIR=/workspace/target/docs/html
@@ -38,34 +41,36 @@ echo "Cleaning output directory..."
 rm -rf $OUTPUT_DIR/*
 mkdir -p $OUTPUT_DIR
 
-# Convert all .adoc files to .html initially
-echo "Performing initial conversion of .adoc files to .html..."
-find $INPUT_DIR -name "*.adoc" -exec asciidoctor -D $OUTPUT_DIR {} \;
-
-# Check if files were generated
-echo "Checking if HTML files were generated..."
-if [ "$(ls -A $OUTPUT_DIR)" ]; then
-  echo "HTML files were generated successfully:"
-  ls -la $OUTPUT_DIR
-else
-  echo "Error: No HTML files were generated."
-  exit 1
-fi
-
-echo "Initial conversion complete."
-
-# Create an index.html file with links to all generated HTML files
-INDEX_FILE="${OUTPUT_DIR}/index.html"
+# Function to generate index.html file with links to all generated HTML files
 generate_index() {
-  echo "<html><body><h1>Generated Documentation</h1><ul>" > $INDEX_FILE
-  for file in $OUTPUT_DIR/*.html; do
-    filename=$(basename "$file")
-    echo "<li><a href=\"$filename\">$filename</a></li>" >> $INDEX_FILE
+  local dir=$1
+  local base_path=$2
+  local index_file="${OUTPUT_DIR}${base_path}/index.html"
+
+  mkdir -p "$(dirname "$index_file")"
+
+  echo "<html><body><h1>Generated Documentation</h1><ul>" > $index_file
+
+  for entry in "$dir"/*; do
+    if [ -d "$entry" ]; then
+      local subdir=$(basename "$entry")
+      echo "<li><strong><a href=\"${subdir}/index.html\">${subdir}/</a></strong></li>" >> $index_file
+      generate_index "$entry" "${base_path}/${subdir}"
+    elif [[ "$entry" == *.adoc ]]; then
+      local filename=$(basename "${entry%.adoc}.html")
+      local relative_path="${base_path}/${filename}"
+      mkdir -p "${OUTPUT_DIR}${base_path}"
+      asciidoctor -D "${OUTPUT_DIR}${base_path}" "$entry"
+      echo "<li><a href=\"$filename\">$filename</a></li>" >> $index_file
+    fi
   done
-  echo "</ul></body></html>" >> $INDEX_FILE
+
+  echo "</ul></body></html>" >> $index_file
 }
 
-generate_index
+# Convert all .adoc files to .html initially and generate index.html
+echo "Performing initial conversion of .adoc files to .html..."
+generate_index $INPUT_DIR ""
 
 # Log the files found
 echo "Files found for conversion:"
@@ -73,24 +78,27 @@ find $OUTPUT_DIR -name "*.html" -print
 
 # Watch and convert .adoc files to .html
 echo "Starting inotifywait to monitor input dir ($INPUT_DIR)..."
-inotifywait -m -e modify,create,delete -r $INPUT_DIR |
+inotifywait -m -e modify,create,delete,move -r $INPUT_DIR |
 while read path action file; do
   echo "inotifywait detected a change: $path $action $file"
   if [[ "$file" =~ .*\.adoc$ ]]; then
     echo "Change detected: $action $file"
     echo "Converting $path$file to HTML..."
-    asciidoctor -D $OUTPUT_DIR "$path$file"
+    asciidoctor -D "${OUTPUT_DIR}$(dirname ${path#$INPUT_DIR})" "$path$file"
     
     # Check if file was converted
-    HTML_FILE="${OUTPUT_DIR}/$(basename "${file}" .adoc).html"
+    HTML_FILE="${OUTPUT_DIR}$(dirname ${path#$INPUT_DIR})/$(basename "${file}" .adoc).html"
     if [ -f "$HTML_FILE" ]; then
       echo "Conversion complete: $HTML_FILE"
       
       # Regenerate the index.html file
-      generate_index
+      generate_index $INPUT_DIR ""
     else
       echo "Error: Conversion failed for $path$file"
     fi
+  elif [[ "$action" == "CREATE" || "$action" == "MOVED_TO" || "$action" == "DELETE" || "$action" == "MOVED_FROM" ]]; then
+    echo "Structure change detected: $action $file"
+    generate_index $INPUT_DIR ""
   else
     echo "Ignored change: $action $file"
   fi

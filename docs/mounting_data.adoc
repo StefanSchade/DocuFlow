@@ -4,7 +4,8 @@
 
 == Introduction
 
-This document provides an overview of how to pass data to your application while developing in a containerized environment using dev containers. It outlines strategies for using volume mounts and configuring your development environment to closely mimic production setups.
+This document provides an overview of how to pass data to your application while developing in a containerized environment using dev containers. It outlines 
+strategies for using volume mounts and configuring your development environment to closely mimic production setups.
 
 == Strategies for Passing Data
 

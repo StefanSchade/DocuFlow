@@ -2,7 +2,7 @@
 
 The key takeaway from the openssl s_client output is that the ZScaler certificate is being used and trusted correctly in the certificate chain when establishing a connection to GitHub. This indicates that the certificate has been successfully added to the CA store and is recognized by OpenSSL.
 
-
+CCCCCC
 
 Use OpenSSL to verify that the ZScaler certificate is recognized
 
