@@ -78,23 +78,28 @@ find $OUTPUT_DIR -name "*.html" -print
 
 # Watch and convert .adoc files to .html
 echo "Starting inotifywait to monitor input dir ($INPUT_DIR)..."
-inotifywait -m -e modify,create,delete,move -r $INPUT_DIR |
-while read path action file; do
+inotifywait -m -e modify,create,delete,move -r $INPUT_DIR | 
+while read -r path action file; do
+  full_path="$path$file"
+  relative_path="${full_path#$INPUT_DIR/}"
+  output_subdir="${OUTPUT_DIR}/$(dirname "$relative_path")"
+  
   echo "inotifywait detected a change: $path $action $file"
+  
   if [[ "$file" =~ .*\.adoc$ ]]; then
     echo "Change detected: $action $file"
-    echo "Converting $path$file to HTML..."
-    asciidoctor -D "${OUTPUT_DIR}$(dirname ${path#$INPUT_DIR})" "$path$file"
+    echo "Converting $full_path to HTML..."
+    asciidoctor -D "$output_subdir" "$full_path"
     
     # Check if file was converted
-    HTML_FILE="${OUTPUT_DIR}$(dirname ${path#$INPUT_DIR})/$(basename "${file}" .adoc).html"
+    HTML_FILE="${output_subdir}/$(basename "${file}" .adoc).html"
     if [ -f "$HTML_FILE" ]; then
       echo "Conversion complete: $HTML_FILE"
       
       # Regenerate the index.html file
       generate_index $INPUT_DIR ""
     else
-      echo "Error: Conversion failed for $path$file"
+      echo "Error: Conversion failed for $full_path"
     fi
   elif [[ "$action" == "CREATE" || "$action" == "MOVED_TO" || "$action" == "DELETE" || "$action" == "MOVED_FROM" ]]; then
     echo "Structure change detected: $action $file"

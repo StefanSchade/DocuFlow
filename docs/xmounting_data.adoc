@@ -15,6 +15,7 @@ Volume mounts allow you to specify directories on the host machine that will be 
 
 Example `devcontainer.json` configuration:
 
+
 [source,json]
 ----
 {
