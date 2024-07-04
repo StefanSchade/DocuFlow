@@ -4,8 +4,17 @@ FROM ubuntu:latest
 # Set environment variables to non-interactive
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Copy the Zscaler certificate to the container
-COPY zscaler.crt /usr/local/share/ca-certificates/zscaler.crt
+# Check if the Zscaler certificate exists and copy it
+ARG CERT_PATH=/workspace/zscaler.crt
+
+# Set the default value for the argument to avoid errors if CERT_PATH does not exist
+RUN if [ -f "$CERT_PATH" ]; then \
+        cp $CERT_PATH /usr/local/share/ca-certificates/zscaler.crt && \
+        chmod 644 /usr/local/share/ca-certificates/zscaler.crt && \
+        update-ca-certificates --fresh; \
+    else \
+        echo "ZScaler certificate not found. Skipping CA store update."; \
+    fi
 
 RUN echo "basic dependencies and update certificates" && \
     apt-get update && \
@@ -104,6 +113,15 @@ RUN chmod +x /workspace/scripts/ruby_setup.sh && \
 # Create and activate a virtual environment and install dependencies
 RUN python3 -m venv /workspace/venv && \
     /bin/bash -c "source /workspace/venv/bin/activate && pip install --no-cache-dir -r /workspace/requirements.txt && pip install --no-cache-dir -r /workspace/requirements-dev.txt && pip list"
+
+# Remove the Zscaler certificate if it was added
+RUN if [ -f /usr/local/share/ca-certificates/zscaler.crt ]; then \
+        rm /usr/local/share/ca-certificates/zscaler.crt && \
+        update-ca-certificates --fresh; \
+        echo "ZScaler certificate removed from the container."; \
+    else \
+        echo "ZScaler certificate was not added, nothing to remove."; \
+    fi
 
 # Start Docker daemon (if needed)
 CMD ["bash", "/workspace/scripts/post_create_script.sh"]
