@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Source and call helper script
+source /workspace/scripts/helper/log_helper.sh && log_script_name
+
 # Function to ensure paths are Unix-style and have a trailing slash
 normalize_path() {
   local path="$1"
@@ -27,12 +30,6 @@ wait_for_container() {
   echo "Error: Container $container_name did not start within expected time."
   return 1
 }
-
-# Log the determined paths
-echo "******************************************************************"
-echo "$0"
-echo "******************************************************************"
-
 
 # Define the project root and other directories
 ROOT_IN_CONTAINER=$(dirname $(dirname $(realpath $0)))
@@ -91,6 +88,7 @@ docker run --rm -v "$(normalize_path "$DOCS_DIR_OUTSIDE"):/workspace/docs" -v "$
 
 # Wait for the container to be up and running
 if ! wait_for_container "asciidoc-preview"; then
+  echo "Container did not start in the expected time limit..."
   exit 1
 fi
 
