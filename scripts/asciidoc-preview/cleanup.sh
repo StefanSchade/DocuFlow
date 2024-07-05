@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Function to handle SIGINT and SIGTERM signals
 cleanup() {
   echo "Received signal, shutting down..."
