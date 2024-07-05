@@ -20,7 +20,7 @@ exec 2>>"$LOG_FILE"
 source "$SCRIPT_DIR/../helper/log_helper.sh" && log_script_name
 source "$SCRIPT_DIR/cleanup.sh"
 source "$SCRIPT_DIR/refresh_directory.sh"
-source "$SCRIPT_DIR/rerefresh_output.sh"
+source "$SCRIPT_DIR/refresh_output.sh"
 source "$SCRIPT_DIR/check_input_directory.sh"
 source "$SCRIPT_DIR/generate_index.sh"
 source "$SCRIPT_DIR/list_subdirs_contianing_adocs.sh"
@@ -36,6 +36,7 @@ main() {
   while true; do
     sleep 1
   done
+
 }
 
 main

@@ -22,7 +22,7 @@ find_dirs_containing_adoc_below() {
         echo "$relative_subdir"
       fi
     fi
-  done
+  done | tr '\n' ';'
 }
 
 partial_refresh_output() {
@@ -30,13 +30,13 @@ partial_refresh_output() {
   local absolute_input_start_path="${INPUT_DIR}/$1"
   local absolute_output_start_path="${OUTPUT_DIR}/$1"
 
-  echo "Cleaning directory {$absolute_output_start_path} of previous content..." >&2
+  echo "Cleaning dir {$absolute_output_start_path} of previous files..." >&2
   clean_output_directory "$absolute_output_start_path"
 
-  local subdirectories = $(find_dirs_containing_adoc_below "$relative_start_path")
+  IFS=';' read -r -a subdirectories <<< "$(find_dirs_containing_adoc_below "$relative_start_path")"
 
   for subdir in "${subdirectories[@]}"; do
-      echo "Processing directory: ${subdir}" >&2
+      echo "Processing directory: ${subdir} -  base path: ${OUTPUT_DIR} base path: ${INPUT_DIR}" >&2
       mkdir -p "${OUTPUT_DIR}/$subdir"
       find "${INPUT_DIR}/$subdir" -maxdepth 1 -name "*.adoc" -exec 'asciidoctor -D "${1}" "$0"' {} "${OUTPUT_DIR}/${subdir}" \;
       #local result
