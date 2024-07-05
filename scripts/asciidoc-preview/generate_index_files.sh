@@ -1,3 +1,5 @@
+#!/bin/bash
+
 list_all_output_dirs() {
   find "$OUTPUT_DIR" -type d
 }
@@ -10,19 +12,17 @@ generate_index() {
   echo "<html><body><h1>Generated Documentation</h1><ul>" > "$index_file"
   
   # Add links to subdirectory index files
-  for subdir in "$dir"/*; do
-    if [ -d "$subdir" ]; then
-      subdir_name=$(basename "$subdir")
-      echo "<li><a href=\"$subdir_name/index.html\">$subdir_name</a></li>" >> "$index_file"
-    fi
+  subdirs=($(find "$dir" -mindepth 1 -maxdepth 1 -type d | sort))
+  for subdir in "${subdirs[@]}"; do
+    subdir_name=$(basename "$subdir")
+    echo "<li><strong><a href=\"$subdir_name/index.html\">$subdir_name</a></strong></li>" >> "$index_file"
   done
 
   # Add links to HTML files in the current directory
-  for file in "$dir"/*.html; do
-    if [ -f "$file" ]; then
-      filename=$(basename "$file")
-      echo "<li><a href=\"$filename\">$filename</a></li>" >> "$index_file"
-    fi
+  files=($(find "$dir" -mindepth 1 -maxdepth 1 -type f -name "*.html" ! -name "index.html" | sort))
+  for file in "${files[@]}"; do
+    filename=$(basename "$file")
+    echo "<li><a href=\"$filename\">$filename</a></li>" >> "$index_file"
   done
 
   echo "</ul></body></html>" >> "$index_file"

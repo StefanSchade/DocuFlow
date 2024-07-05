@@ -25,6 +25,8 @@ source "$SCRIPT_DIR/check_input_directory.sh"
 source "$SCRIPT_DIR/generate_index.sh"
 source "$SCRIPT_DIR/list_subdirs_contianing_adocs.sh"
 source "$SCRIPT_DIR/convert_all_adoc_files.sh"
+source "$SCRIPT_DIR/start_server.sh"
+source "$SCRIPT_DIR/check_server_status.sh"
 echo "sourced scripts in: $SCRIPT_DIR" >&2
 
 # Trap the signals and call the cleanup function
@@ -32,8 +34,10 @@ trap 'cleanup' SIGINT SIGTERM
 # Main function to run the preview
 main() {
   check_input_directory "${INPUT_DIR}"
-  full_refresh_output 
+  full_refresh_output
+  start_server 
   while true; do
+    check_server_status
     sleep 1
   done
 
