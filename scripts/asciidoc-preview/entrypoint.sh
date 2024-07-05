@@ -33,9 +33,9 @@ trap 'cleanup' SIGINT SIGTERM
 # Main function to run the preview
 run_preview() {
   check_input_directory "$INPUT_DIR"
-  refresh_completely "$INPUT_DIR" "$OUTPUT_DIR"
+  refresh_completely "$INPUT_DIR"
   while true; do
-    sleep 1
+    wait
   done
 }
 

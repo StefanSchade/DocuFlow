@@ -11,7 +11,7 @@ list_subdirs_containing_adocs_absolute_paths() {
 
 # Function to list subdirectories containing .adoc files and return relative paths
 list_subdirs_containing_adocs_relative_path() {
-  echo "got here abc" >&2
+  echo "list_subdirs_containing_adocs_relative_path" >&2
   local dir=$1
   local base_path=$2
   find "$dir" -type d | while read -r subdir; do
@@ -30,7 +30,7 @@ list_subdirs_containing_adocs_relative_path() {
 
 # Function to list subdirectories containing .adoc files and return the last directory level name
 list_last_level_subdirs_containing_adocs_dirname() {
-  echo "got here abc" >&2
+  echo "list_last_level_subdirs_containing_adocs_dirname" >&2
   local dir=$1
   find "$dir" -type d | while read subdir; do
     if find "$subdir" -maxdepth 1 -name "*.adoc" | read; then
