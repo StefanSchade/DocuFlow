@@ -1,20 +1,24 @@
-#!/bin/bash
-
-# Function to generate index.html
 generate_index() {
   local subdirectories=$1
-  local input_dir=$2
-  local output_dir=$3
+  local adoc_subdir=$2
+  local html_subdir=$3
 
-  for subdir in $subdirectories; do
-    local index_file="${output_dir}/${subdir}index.html"
-    echo "<html><body><h1>Generated Documentation</h1><ul>" > "$index_file"
-    
-    for file in "$output_dir/$subdir"*.html; do
-      filename=$(basename "$file")
-      echo "<li><a href=\"$filename\">$filename</a></li>" >> "$index_file"
-    done
+  local index_file="${html_subdir}/index.html"
+  echo "Generating index.html file in: $index_file" >&2
 
-    echo "</ul></body></html>" >> "$index_file"
+  echo "<html><body><h1>Generated Documentation</h1><ul>" > "$index_file"
+  
+  # Add links to HTML files in the current directory
+  for file in "$html_subdir"/*.html; do
+    filename=$(basename "$file")
+    echo "<li><a href=\"$filename\">$filename</a></li>" >> "$index_file"
   done
+
+  # Add links to subdirectory index files
+  for subdir in $subdirectories; do
+    subdir_name=$(basename "$subdir")
+    echo "<li><a href=\"$subdir_name/index.html\">$subdir_name</a></li>" >> "$index_file"
+  done
+
+  echo "</ul></body></html>" >> "$index_file"
 }
