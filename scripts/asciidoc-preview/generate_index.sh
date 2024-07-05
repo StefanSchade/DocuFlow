@@ -2,20 +2,19 @@
 
 # Function to generate index.html
 generate_index() {
-  local dir=$1
-  for subdir in $(find "$dir" -type d); do
-    index_file="${subdir}/index.html"
+  local subdirectories=$1
+  local input_dir=$2
+  local output_dir=$3
+
+  for subdir in $subdirectories; do
+    local index_file="${output_dir}/${subdir}index.html"
     echo "<html><body><h1>Generated Documentation</h1><ul>" > "$index_file"
-    for file in "$subdir"/*.html; do
-      [ -e "$file" ] || continue
+    
+    for file in "$output_dir/$subdir"*.html; do
       filename=$(basename "$file")
       echo "<li><a href=\"$filename\">$filename</a></li>" >> "$index_file"
     done
-    for subsubdir in "$subdir"/*/; do
-      [ -d "$subsubdir" ] || continue
-      subsubdirname=$(basename "$subsubdir")
-      echo "<li><a href=\"$subsubdirname/index.html\">$subsubdirname/</a></li>" >> "$index_file"
-    done
+
     echo "</ul></body></html>" >> "$index_file"
   done
 }

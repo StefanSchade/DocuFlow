@@ -7,9 +7,9 @@ SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 OUTPUT_DIR=/workspace/target/docs/html
 INPUT_DIR=/workspace/docs
 LOG_DIR=/workspace/logs
-LOG_FILE="$LOG_FILE/logfile.txt"
+LOG_FILE="$LOG_DIR/logfile.txt"
 
-# Ensure the output directory exists
+# Ensure the output directory and log directory exist
 mkdir -p $OUTPUT_DIR
 mkdir -p $LOG_DIR
 
@@ -18,114 +18,89 @@ exec 2>>"$LOG_FILE"
 
 # Source helper scripts
 source "$SCRIPT_DIR/../helper/log_helper.sh" && log_script_name
-source "$SCRIPT_DIR/cleanup.sh" 
+source "$SCRIPT_DIR/cleanup.sh"
 source "$SCRIPT_DIR/helpers.sh"
 source "$SCRIPT_DIR/generate_index.sh"
 source "$SCRIPT_DIR/convert_all_adoc_files.sh"
-echo "sourced scripts in: $SCRIPT_DIR">&2
+echo "sourced scripts in: $SCRIPT_DIR" >&2
 
 # Trap the signals and call the cleanup function
 trap 'cleanup' SIGINT SIGTERM
 
-# Check if input directory is correctly mounted
-check_input_directory "$INPUT_DIR"
+# Function to check if the input directory is correctly mounted
+check_input_directory() {
+  local input_dir=$1
+  if [ -d "$input_dir" ]; then
+    echo "$input_dir exists." >&2
+  else
+    echo "$input_dir does not exist." >&2
+    exit 1
+  fi
+}
 
-# process a single directory completely
+# Function to list subdirectories containing .adoc files
+list_subdirs_containing_adocs() {
+  local dir=$1
+  find "$dir" -type d -exec sh -c 'shopt -s nullglob; adoc_files=("$1"/*.adoc); [ "${#adoc_files[@]}" -gt 0 ]' _ {} \; -print
+}
+
+# Function to clean the output directory
+clean_output_directory() {
+  local output_dir=$1
+  rm -rf "$output_dir"/*
+  mkdir -p "$output_dir"
+}
+
+# Function to refresh a single directory
 refresh_directory() {
   local adoc_input_dir=$1
   local html_output_dir=$2
 
-  echo "Performing initial conversion of .adoc files to .html...">&2
+  echo "Performing initial conversion of .adoc files to .html..." >&2
   convert_all_adoc_files "$adoc_input_dir" "$html_output_dir"
   
-  echo "looking for subdirs containing adocs...">&2 
-  subdirectories = list_subdirs_contianing_adocs "$adoc_input_dir"
+  echo "Looking for subdirectories containing .adoc files..." >&2 
+  local subdirectories
+  subdirectories=$(list_subdirs_containing_adocs "$adoc_input_dir")
 
-  echo "Generating index.html file...">&2
-  generate_index $subdirectories "$adoc_input_dir" "html_output_dir"
+  echo "Generating index.html file..." >&2
+  generate_index "$subdirectories" "$adoc_input_dir" "$html_output_dir"
 
-  # in lieu of a return value
-  echo subdirectories
+  # In lieu of a return value
+  echo "$subdirectories"
 }
 
-# function to clean all output and generate everything again
+# Function to clean all output and generate everything again
 refresh_completely() {
   local adoc_input_dir=$1
   local html_output_dir=$2
 
-  echo "Cleaning output directory of previous content...">&2
-  clean_output_directory "$OUTPUT_DIR"
+  echo "Cleaning output directory of previous content..." >&2
+  clean_output_directory "$html_output_dir"
 
-  subdirectories = "." // one entry to start with
+  local subdirectories=(".") # One entry to start with
 
-  now start a recursive sweep of the directories using the subfunction refresh_directory()
-
-  the result should be that the whole structure is transfered to a dir structure like that
-
-  html_base_dir
-  |- index.html
-  |- one.html
-  |
-  |-dev_guide/
-  |     |
-  |     |-index.html
-  |     |-chapter01.html
-  |     |-chapter02.html
-  |
-  |
-  |-arch_doc/
-  |     |
-  |     |-index.html
-  |     |-chapter01.html
-  |     |-chapter02.html
-
-
-
-  
-
+  while [ ${#subdirectories[@]} -gt 0 ]; do
+    local new_subdirs=()
+    for subdir in "${subdirectories[@]}"; do
+      local adoc_subdir="$adoc_input_dir/$subdir"
+      local html_subdir="$html_output_dir/$subdir"
+      echo "Processing directory: $adoc_subdir" >&2
+      local result
+      result=$(refresh_directory "$adoc_subdir" "$html_subdir")
+      new_subdirs+=($result)
+    done
+    subdirectories=("${new_subdirs[@]}")
+  done
 }
 
 # Main function to run the preview
 run_preview() {
+  check_input_directory "$INPUT_DIR"
+  refresh_completely "$INPUT_DIR" "$OUTPUT_DIR"
   while true; do
-    
-    
-    
-
-    
-
-    while ! FILE_SYSTEM_STRUCTURE_CHANGED; do
-      inotifywait -m -e modify,create,delete -r "$INPUT_DIR" | 
-      while read -r path action file; do
-        echo "inotifywait detected a change: path=$path action=$action file=$file">&2
-        full_path="${path}${file}"
-        relative_path="${full_path#$INPUT_DIR/}"
-        output_subdir="${OUTPUT_DIR}/$(dirname "$relative_path")"
-
-        if [[ "$file" =~ .*\.adoc$ ]]; then
-          echo "Change detected: $action $file">&2
-          echo "Converting $full_path to HTML...">&2
-          asciidoctor -D "$output_subdir" "$full_path"
-
-          # Check if file was converted
-          HTML_FILE="${output_subdir}/$(basename "${file}" .adoc).html"
-          if [ -f "$HTML_FILE" ]; then
-            echo "Conversion complete: $HTML_FILE">&2
-            generate_index "$INPUT_DIR" ""
-          else
-            echo "Error: Conversion failed for $full_path">&2
-          fi
-        elif [[ "$action" == "CREATE" || "$action" == "MOVED_TO" || "$action" == "DELETE" || "$action" == "MOVED_FROM" ]]; then
-          echo "Structure change detected: $action $file">&2
-          FILE_SYSTEM_STRUCTURE_CHANGED=true
-          break 2
-        else
-          echo "Ignored change: $action $file">&2
-        fi
-      done
-    done
+    sleep 1
   done
 }
 
-# Start the preview
 run_preview
