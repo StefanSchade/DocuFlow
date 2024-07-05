@@ -20,8 +20,8 @@ exec 2>>"$LOG_FILE"
 source "$SCRIPT_DIR/../helper/log_helper.sh" && log_script_name
 source "$SCRIPT_DIR/cleanup.sh"
 source "$SCRIPT_DIR/refresh_directory.sh"
-source "$SCRIPT_DIR/refresh_completely.sh"
-source "$SCRIPT_DIR/helpers.sh"
+source "$SCRIPT_DIR/rerefresh_output.sh"
+source "$SCRIPT_DIR/check_input_directory.sh"
 source "$SCRIPT_DIR/generate_index.sh"
 source "$SCRIPT_DIR/list_subdirs_contianing_adocs.sh"
 source "$SCRIPT_DIR/convert_all_adoc_files.sh"
@@ -29,14 +29,13 @@ echo "sourced scripts in: $SCRIPT_DIR" >&2
 
 # Trap the signals and call the cleanup function
 trap 'cleanup' SIGINT SIGTERM
-
 # Main function to run the preview
-run_preview() {
-  check_input_directory "$INPUT_DIR"
-  refresh_completely "$INPUT_DIR"
+main() {
+  check_input_directory "${INPUT_DIR}"
+  full_refresh_output 
   while true; do
-    wait
+    sleep 1
   done
 }
 
-run_preview
+main

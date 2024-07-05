@@ -2,35 +2,17 @@
 
 # Source and call helper script
 source /workspace/scripts/helper/log_helper.sh && log_script_name
+source /workspace/scripts/helper/wait_for_container.sh
+source /workspace/scripts/helper/normalize_path.sh
 
-# Function to ensure paths are Unix-style and have a trailing slash
-normalize_path() {
-  local path="$1"
-  path="${path//\\//}" # Convert backslashes to forward slashes
-  [[ "$path" != */ ]] && path="$path/" # Add trailing slash if not present
-  echo "$path"
+# Function to handle SIGINT and SIGTERM signals
+cleanup() {
+  echo "Received signal, shutting down..."
+  docker stop asciidoc-preview
+  exit 0
 }
 
-# Function to wait for a Docker container to be up and running
-wait_for_container() {
-  local container_name="$1"
-  local retries=10
-  local count=0
-
-  while [ $count -lt $retries ]; do
-    if docker ps | grep -q "$container_name"; then
-      echo "Container $container_name is running."
-      return 0
-    fi
-    count=$((count + 1))
-    echo "Waiting for container $container_name to start... ($count/$retries)"
-    sleep 1
-  done
-
-  echo "Error: Container $container_name did not start within expected time."
-  return 1
-}
-
+main() {
 # Define the project root and other directories
 ROOT_IN_CONTAINER=$(dirname $(dirname $(realpath $0)))
 HOST_HOME=$(normalize_path "$HOST_HOME")
@@ -53,10 +35,6 @@ echo "DOCS_DIR_OUTSIDE:         $DOCS_DIR_OUTSIDE"
 echo "DOCS_DIR_INSIDE:          $DOCS_DIR_INSIDE"
 echo "OUTPUT_DIR:               $OUTPUT_DIR"
 echo ""
-
-# Create the output directory and clear any previous content
-mkdir -p "$OUTPUT_DIR"
-rm -rf "$OUTPUT_DIR"/*
 
 # List the docs directory
 echo "Content of DOCS_DIR_OUTSIDE before running the container:"
@@ -84,7 +62,13 @@ if docker ps -a --format '{{.Names}}' | grep -Eq "^asciidoc-preview\$"; then
 fi
 
 # Run the Docker container
-docker run --rm -v "$(normalize_path "$DOCS_DIR_OUTSIDE"):/workspace/docs" -v "$(normalize_path "$OUTPUT_DIR"):/workspace/target/docs/html" -p 35729:35729 -p 4000:4000 --name asciidoc-preview asciidoc-preview &
+docker run --rm \
+           -v "$(normalize_path "$DOCS_DIR_OUTSIDE"):/workspace/docs" \
+           -v "$(normalize_path "$OUTPUT_DIR"):/workspace/target/docs/html" \
+           -p 35729:35729 \
+           -p 4000:4000 \
+           --name asciidoc-preview \
+           asciidoc-preview &
 
 # Wait for the container to be up and running
 if ! wait_for_container "asciidoc-preview"; then
@@ -92,14 +76,10 @@ if ! wait_for_container "asciidoc-preview"; then
   exit 1
 fi
 
-# Function to handle SIGINT and SIGTERM signals
-cleanup() {
-  echo "Received signal, shutting down..."
-  docker stop asciidoc-preview
-  exit 0
-}
-
 trap 'cleanup' SIGINT SIGTERM
 
 # Wait for the container process to exit
 wait $!
+}
+
+main
