@@ -1,0 +1,25 @@
+generate_index() {
+  local dir=$1
+  local base_path=$2
+  local index_file="${OUTPUT_DIR}${base_path}/index.html"
+
+  mkdir -p "$(dirname "$index_file")"
+
+  echo "<html><body><h1>Generated Documentation</h1><ul>" > "$index_file"
+
+  for entry in "$dir"/*; do
+    if [ -d "$entry" ]; then
+      local subdir=$(basename "$entry")
+      echo "<li><strong><a href=\"${subdir}/index.html\">${subdir}/</a></strong></li>" >> "$index_file"
+      generate_index "$entry" "${base_path}/${subdir}"
+    elif [[ "$entry" == *.adoc ]]; then
+      local filename=$(basename "${entry%.adoc}.html}")
+      local relative_path="${base_path}/${filename}"
+      mkdir -p "${OUTPUT_DIR}${base_path}"
+      asciidoctor -D "${OUTPUT_DIR}${base_path}" "$entry"
+      echo "<li><a href=\"$relative_path\">$filename</a></li>" >> "$index_file"
+    fi
+  done
+
+  echo "</ul></body></html>" >> "$index_file"
+}

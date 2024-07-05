@@ -1,12 +1,12 @@
-= Developer Guide
+= Developer Guide 
 
-== Abstractxxx
+== Abstract
 
 == Setup for development in a Container (VSCode)
 
 *Sources:* We heavly rely on an official https://code.visualstudio.com/docs/devcontainers/containers[blog article] and a https://code.visualstudio.com/docs/devcontainers/tutorial[tutorial], but make mor narrow choices for wich we apply the concepts laid out there.
 
-*Assumptions:*
+*Assumptions:*abc abc
 
 * *VSCode* as IDE
 * *local* Docker agent (Windows or MacOS: Docker Desktop)footnote:[As detailed in the article use of a remote Docker host or even a Kubernetes Cluster would be other viable options]

@@ -34,12 +34,12 @@ fi
 
 # Input dir
 echo "Checking input directory contents before initial conversion..."
-ls -la $INPUT_DIR
+ls -la "$INPUT_DIR"
 
 # Clean the output directory before initial conversion
 echo "Cleaning output directory..."
-rm -rf $OUTPUT_DIR/*
-mkdir -p $OUTPUT_DIR
+rm -rf "$OUTPUT_DIR/*"
+mkdir -p "$OUTPUT_DIR"
 
 # Function to generate index.html file with links to all generated HTML files
 generate_index() {
@@ -49,70 +49,91 @@ generate_index() {
 
   mkdir -p "$(dirname "$index_file")"
 
-  echo "<html><body><h1>Generated Documentation</h1><ul>" > $index_file
+  echo "<html><body><h1>Generated Documentation</h1><ul>" > "$index_file"
 
   for entry in "$dir"/*; do
     if [ -d "$entry" ]; then
       local subdir=$(basename "$entry")
-      echo "<li><strong><a href=\"${subdir}/index.html\">${subdir}/</a></strong></li>" >> $index_file
+      echo "<li><strong><a href=\"${subdir}/index.html\">${subdir}/</a></strong></li>" >> "$index_file"
       generate_index "$entry" "${base_path}/${subdir}"
     elif [[ "$entry" == *.adoc ]]; then
-      local filename=$(basename "${entry%.adoc}.html")
+      local filename=$(basename "${entry%.adoc}.html}")
       local relative_path="${base_path}/${filename}"
       mkdir -p "${OUTPUT_DIR}${base_path}"
       asciidoctor -D "${OUTPUT_DIR}${base_path}" "$entry"
-      echo "<li><a href=\"$filename\">$filename</a></li>" >> $index_file
+      echo "<li><a href=\"$relative_path\">$filename</a></li>" >> "$index_file"
     fi
   done
 
-  echo "</ul></body></html>" >> $index_file
+  echo "</ul></body></html>" >> "$index_file"
 }
 
 # Convert all .adoc files to .html initially and generate index.html
 echo "Performing initial conversion of .adoc files to .html..."
-generate_index $INPUT_DIR ""
+generate_index "$INPUT_DIR" ""
 
 # Log the files found
 echo "Files found for conversion:"
-find $OUTPUT_DIR -name "*.html" -print
+find "$OUTPUT_DIR" -name "*.html" -print
+
+# Basic test for inotifywait
+echo "Running basic inotifywait test..."
+touch /tmp/inotifywait_test_file
+inotifywait -e modify /tmp &
+TEST_PID=$!
+echo "Test PID: $TEST_PID"
+sleep 1
+echo "Modifying test file..."
+echo "test" >> /tmp/inotifywait_test_file
+sleep 2
+kill $TEST_PID
+echo "Basic inotifywait test completed."
 
 # Watch and convert .adoc files to .html
 echo "Starting inotifywait to monitor input dir ($INPUT_DIR)..."
-inotifywait -m -e modify,create,delete,move -r $INPUT_DIR | 
-while read -r path action file; do
-  full_path="$path$file"
-  relative_path="${full_path#$INPUT_DIR/}"
-  output_subdir="${OUTPUT_DIR}/$(dirname "$relative_path")"
+inotifywait -m -e modify,create,delete,move -r "$INPUT_DIR" | 
+{
+  echo "inotifywait triggered"
+  while read -r path action file; do
+    echo "inotifywait detected a change: path=$path action=$action file=$file"
   
-  echo "inotifywait detected a change: $path $action $file"
+    full_path="${path}${file}"
+    relative_path="${full_path#$INPUT_DIR/}"
+    output_subdir="${OUTPUT_DIR}/$(dirname "$relative_path")"
   
-  if [[ "$file" =~ .*\.adoc$ ]]; then
-    echo "Change detected: $action $file"
-    echo "Converting $full_path to HTML..."
-    asciidoctor -D "$output_subdir" "$full_path"
+    echo "Detected change in file: $relative_path with action: $action"
+    echo "Full path: $full_path"
+    echo "Relative path: $relative_path"
+    echo "Output subdir: $output_subdir"
+  
+    if [[ "$file" =~ .*\.adoc$ ]]; then
+      echo "Change detected in AsciiDoc file: $file"
+      echo "Converting $full_path to HTML..."
+      asciidoctor -D "$output_subdir" "$full_path"
     
-    # Check if file was converted
-    HTML_FILE="${output_subdir}/$(basename "${file}" .adoc).html"
-    if [ -f "$HTML_FILE" ]; then
-      echo "Conversion complete: $HTML_FILE"
+      # Check if file was converted
+      HTML_FILE="${output_subdir}/$(basename "${file}" .adoc).html"
+      if [ -f "$HTML_FILE" ]; then
+        echo "Conversion complete: $HTML_FILE"
       
-      # Regenerate the index.html file
-      generate_index $INPUT_DIR ""
+        # Regenerate the index.html file
+        generate_index "$INPUT_DIR" ""
+      else
+        echo "Error: Conversion failed for $full_path"
+      fi
+    elif [[ "$action" == "CREATE" || "$action" == "MOVED_TO" || "$action" == "DELETE" || "$action" == "MOVED_FROM" ]]; then
+      echo "Structure change detected: $action $file"
+      generate_index "$INPUT_DIR" ""
     else
-      echo "Error: Conversion failed for $full_path"
+      echo "Ignored change: $action $file"
     fi
-  elif [[ "$action" == "CREATE" || "$action" == "MOVED_TO" || "$action" == "DELETE" || "$action" == "MOVED_FROM" ]]; then
-    echo "Structure change detected: $action $file"
-    generate_index $INPUT_DIR ""
-  else
-    echo "Ignored change: $action $file"
-  fi
-done &
+  done
+} &
 
 WATCH_PID=$!
 
 # Start livereloadx to serve the files
-cd $OUTPUT_DIR
+cd "$OUTPUT_DIR"
 echo "Current working directory before starting livereloadx: $(pwd)"
 echo "Content of output dir"
 ls -al

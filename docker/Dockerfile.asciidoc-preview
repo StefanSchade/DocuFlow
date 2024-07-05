@@ -19,11 +19,11 @@ RUN apt-get update && \
 RUN npm install -g livereloadx
 
 # Copy the entrypoint script into the container
-COPY scripts/asciidoc_preview_entrypoint.sh /usr/local/bin/asciidoc_preview_entrypoint.sh
-RUN chmod +x /usr/local/bin/asciidoc_preview_entrypoint.sh
+COPY scripts/asciidoc-preview/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Set the working directory for the project
 WORKDIR /workspace
 
 # Use the entrypoint script
-ENTRYPOINT ["asciidoc_preview_entrypoint.sh"]
+ENTRYPOINT ["entrypoint.sh"]

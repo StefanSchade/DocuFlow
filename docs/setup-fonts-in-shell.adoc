@@ -1,5 +1,6 @@
 = Configuring Fonts for Neovim in a Docker Container
 
+
 This guide explains how to install and configure Nerd Fonts for Neovim when working in a Docker container on different operating systems. It ensures proper display of icons in Neotree and other plugins.
 
 == Windows
@@ -74,5 +75,5 @@ Open iTerm2.
 Go to Preferences > Profiles > Text.
 Change the font to the Nerd Font you installed.
 Optionally, adjust the font size to your preference.
-
-
+abc
+abc
