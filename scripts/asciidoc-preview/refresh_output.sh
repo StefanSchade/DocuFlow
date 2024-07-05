@@ -58,6 +58,8 @@ partial_refresh_output() {
     mkdir -p "$OUTPUT_DIR/$subdir"
     find "$INPUT_DIR/$subdir" -maxdepth 1 -name "*.adoc" -exec asciidoctor -D "$OUTPUT_DIR/$subdir" {} \;
   done
+  source "$SCRIPT_DIR/generate_index_files.sh"
+  generate_all_indexes "$OUTPUT_DIR/$subdir"
 }
 
 
