@@ -54,12 +54,12 @@ partial_refresh_output() {
   echo "Subdirectories: ${subdirectories[*]}" >&2
 
   for subdir in "${subdirectories[@]}"; do
-    echo "Processing directory: $subdir - base path: $OUTPUT_DIR base path: $INPUT_DIR" >&2
+    echo "Processing dir | iput $INPUT_DIR | output $OUTPUT_DIR | relative $subdir " >&2
     mkdir -p "$OUTPUT_DIR/$subdir"
     find "$INPUT_DIR/$subdir" -maxdepth 1 -name "*.adoc" -exec asciidoctor -D "$OUTPUT_DIR/$subdir" {} \;
   done
   source "$SCRIPT_DIR/generate_index_files.sh"
-  generate_all_indexes "$OUTPUT_DIR/$subdir"
+  generate_all_indexes "$relative_start_path"
 }
 
 

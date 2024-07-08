@@ -4,13 +4,13 @@ The key takeaway from the openssl s_client output is that the ZScaler certificat
 
 Use OpenSSL to verify that the ZScaler certificate is recognized
 
+
 [source, bash]
 -----
 openssl s_client -CApath /usr/local/share/custom-ca-certificates -connect github.com:443
 -----
-ddd
 
-d
+
 the output is rather lengthy, so we walk through it in steps
 
 *Connected Succesfully*
