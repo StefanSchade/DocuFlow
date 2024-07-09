@@ -5,8 +5,10 @@ generate_snapshot() {
   local dir=$1
   find "$dir" -type d -print0 | while IFS= read -r -d '' subdir; do
     echo "D $(stat --format='%Y' "$subdir") $subdir"
+    echo "D $(stat --format='%Y' "$subdir") $subdir" >&2
     find "$subdir" -maxdepth 1 -type f -print0 | while IFS= read -r -d '' file; do
       echo "F $(stat --format='%Y' "$file") $file"
+      echo "F $(stat --format='%Y' "$file") $file" >&2
     done
   done
 }
@@ -77,13 +79,13 @@ start_watching_input_changes() {
 
   # Initial snapshot
   snapshot=$(generate_snapshot "$INPUT_DIR")
-  echo "generated snapshot"
+
   while true; do
     old_snapshot=$snapshot
     snapshot=$(generate_snapshot "$INPUT_DIR")
-    echo "cycle 1"
+
     compare_snapshots "$old_snapshot" "$snapshot"
-    echo "cycle 2"
+
     sleep 3
   done
 }
