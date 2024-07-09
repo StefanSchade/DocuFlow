@@ -25,7 +25,6 @@ find_dirs_containing_adoc_below() {
     done
 }
 
-
 partial_refresh_output() {
   local relative_start_path=$1
   local absolute_input_start_path="${INPUT_DIR}/$1"
