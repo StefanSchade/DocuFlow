@@ -1,8 +1,9 @@
 = Developer Guide 
 
-jhg
-
 == Abstract
+
+abc
+
 
 == Setup for development in a Container (VSCode)
 
