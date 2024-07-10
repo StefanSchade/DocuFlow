@@ -1,0 +1,104 @@
+= Neovim Cheat Sheet
+
+== Modes and Transition between them
+
+=== Normal Mode
+
+* purpouse is navitation and manipulation of text
+
+* default mode on startup
+
+* common commands
+
+  ** `h`, `j`, `k`, `l` - move left, down, up, right
+  ** `b`, `{`, `w`, `}` - move by word / paragraph back
+  ** `x` - delete character under cursor
+  ** `dw` - delete word
+  ** `dd` - delete line
+  ** `d$` - delete cursor to rest of the line
+  ** `d0` - delete cursor to start of the line
+
+=== Insert Mode
+
+* purpose is inserting text
+
+* Transitions into insert mode
+
+  ** `i` - insert before cursor
+  ** `I` - insert at begining of line
+  ** `a` - insert after the cursor
+  ** `A` - insert at the end of the line
+  ** `o` - open new line below current line
+  ** `O` - open new line above the current line
+
+* Transition to Normal mode
+
+ ** `Esc` or `Ctrl`+`[`
+
+=== Comand-Line Mode
+
+* purpose is 2o enter Neovim commands
+
+* transition into Comand-Line mode
+
+  ** `:` - Start command-line mode for Ex commands
+  ** `/` - start forward search
+  ** `?` - start backward search
+
+* transition to normal mode
+
+  * `Enter` to execute command
+  * `Esc` or `Ctrl` + `[`
+
+=== Replace Mode
+
+* purpose is replacing text
+* Transition to Replace mode
+
+  ** `R` - Start replacing characters until `Esc` is pressed
+
+* Transition into Normal mode
+
+  ** `Esc` or `Ctrl` + `[`
+
+=== Visual Block Mode
+
+* **Purpose**: Selecting blocks of text.
+* **Transition to Visual Block mode**:
+  ** `Ctrl` + `v` - Start visual block mode
+* **Transition to Normal mode**:
+  ** `Esc` or `Ctrl` + `[`
+
+== Working with Buffers
+
+=== Opening and Creating Buffers
+
+* `:e filename` - open a file as new buffer
+* `:new` - open a new empty buffer in a horizontally split window
+* `:vnew` - open a new empty buffer in a vertically split window
+
+=== Navigating Buffers
+
+* `:ls` or `:buffers` - list all buffers
+* `:bnext` or `:bn` - switch to next buffer
+* `:bprev' or `:bp` - switch to previous buffer
+* `:bfirst` or `:bf` - switch to first buffer
+* `:blast` or `:bl` - switch to last buffer
+* `:buffer [N]` - switch to buffer number N
+* `:b [Name] - switch to buffer with a specified name
+* `:b#` - move to alternate (i.e. last visisted) buffer
+
+=== Deleting and Unloading Buffers
+
+* `:bdelete` or `:bd` - delete current buffer
+* `:bd [N]` - delete buffer number N
+* `:bwipeot` or `:bw` - wipe out current buffer (removes buffer and associated data)
+* `:bw [N]` - wipe out buffer number N
+
+
+
+
+
+== Plugins
+
+=== Neo-Tree

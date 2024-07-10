@@ -3,7 +3,7 @@
 start_watching_input_changes() {
   generate_snapshot "$INPUT_DIR" old_snapshot
   while true; do
-    sleep 15
+    sleep 3
     echo "start_watching_input_changes: generate snapshots" >&2
     generate_snapshot "$INPUT_DIR" new_snapshot
     echo "Contents of new_snapshot:" >&2
@@ -125,14 +125,16 @@ compare_snapshots() {
   # Use an associative array to ensure no redundant processing of subdirectories
   declare -A processed_dirs
 
-  for dir in "${unique_dirs[@]}"; do
-    if [[ ! -v processed_dirs["$dir"] ]]; then
-      processed_dirs["$dir"]=1
-      local relative_subdir="${dir#$INPUT_DIR/}" # Remove base path
-      echo "compare_snapshots: calling handle_directory_refresh for $relative_subdir" >&2
-      partial_refresh_output "$relative_subdir"
-    fi
-  done
+for dir in "${unique_dirs[@]}"; do
+  if [[ ! -v processed_dirs["$dir"] ]]; then
+    processed_dirs["$dir"]=1
+    echo "compare_snapshots: calling handle_directory_refresh for $dir" >&2
+    local relative_subdir="${dir#$INPUT_DIR/}" # Remove base path
+    echo "compare_snapshots: relative path for handle_directory_refresh $relative_subdir" >&2
+    partial_refresh_output "$relative_subdir"
+  fi
+done
+
 }
   # file is added / deleted (rename -> both) parent dir -> list of dirs to be refreshed
   collect_dirs_to_refresh_cause_file_events() {

@@ -59,4 +59,49 @@ echo "abc"
 
 #export PATH="$(ruby -e 'print Gem.user_dir')/bin:$PATH"
 
-tmux source-file ~/.tmux.conf
+#mkdir -p /tmp/tmux-0
+#chown root:root /tmp/tmux-0
+#chmod 755 /tmp/tmux-0
+
+
+# mkdir -p /tmp/tmux-0
+# chown root:root /tmp/tmux-0
+# chmod 700 /tmp/tmux-0
+
+# tmux source-file ~/.tmux.conf
+
+
+# Ensure tmux directory exists with correct permissions
+
+# Ensure tmux directory exists with correct permissions
+if [ ! -d /tmp/tmux-0 ]; then
+    echo "Creating /tmp/tmux-0 directory"
+    mkdir -p /tmp/tmux-0
+fi
+
+chown root:root /tmp/tmux-0
+chmod 700 /tmp/tmux-0
+
+# Start tmux server
+tmux start-server
+
+# Source tmux configuration
+if tmux source-file ~/.tmux.conf; then
+    echo "tmux configuration sourced successfully"
+else
+    echo "Failed to source tmux configuration"
+fi
+
+# Manually test cloning a repository to ensure connectivity
+echo "Testing git clone to ensure connectivity"
+if [ -d "/root/.local/share/nvim/lazy/catppuccin" ]; then
+    echo "Directory already exists. Skipping git clone."
+else
+    git clone https://github.com/catppuccin/nvim.git /root/.local/share/nvim/lazy/catppuccin
+    if [ $? -ne 0 ]; then
+        echo "Git clone failed. Check your network and proxy settings."
+        exit 1
+    else
+        echo "Git clone succeeded."
+    fi
+fi

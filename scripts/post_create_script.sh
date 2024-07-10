@@ -108,6 +108,12 @@ echo "REPO_ROOT: $REPO_ROOT"
 echo "REPO_NAME: $REPO_NAME"
 echo "HOME: $HOME"
 
+# Ensure the tmux directory exists
+if [ ! -d /tmp/tmux-0 ]; then
+    echo "Creating /tmp/tmux-0 directory"
+    mkdir -p /tmp/tmux-0
+fi
+
 # Rename the container
 echo "Renaming the container to: $REPO_NAME"
 docker rename dev_container_startup $REPO_NAME
