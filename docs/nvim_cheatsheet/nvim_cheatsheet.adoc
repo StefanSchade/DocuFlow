@@ -96,9 +96,81 @@
 * `:bw [N]` - wipe out buffer number N
 
 
+:bufdo if !&modified | bdelete | endif
+
+
+
 
 
 
 == Plugins
 
 === Neo-Tree
+
+=== Custom
+
+SwapSplit
+
+Command Explanation
+wincmd: A prefix used in Vim to execute window commands.
+L: Moves the current window to the far right.
+K: Moves the current window to the top.
+J: Moves the current window to the bottom.
+H: Moves the current window to the far left.
+Custom Command
+
+
+
+Yes, the wincmd commands are native to both Vim and Neovim. They are used to manipulate window layouts directly. You can indeed use these commands interactively in your Neovim session or map them to keys for convenience.
+
+Using wincmd Commands Directly
+You can use the wincmd commands directly from the command mode in Neovim. Here's how you can do it:
+
+Enter Command Mode:
+
+Press : to enter command mode.
+Execute wincmd Commands:
+
+Type wincmd followed by the command letter (e.g., L, H, J, K).
+
+
+
+
+Key Mappings for Convenience
+To make it even more convenient, you can map these commands to specific key combinations in your init.vim or init.lua configuration file. Here’s how you can do it:
+
+For init.vim:
+
+vim
+Copy code
+" Move current window to the far right
+nnoremap <Leader>wr :wincmd L<CR>
+
+" Move current window to the far left
+nnoremap <Leader>wl :wincmd H<CR>
+
+" Move current window to the top
+nnoremap <Leader>wk :wincmd K<CR>
+
+" Move current window to the bottom
+nnoremap <Leader>wj :wincmd J<CR>
+For init.lua:
+
+lua
+Copy code
+-- Move current window to the far right
+vim.api.nvim_set_keymap('n', '<Leader>wr', ':wincmd L<CR>', { noremap = true, silent = true })
+
+-- Move current window to the far left
+vim.api.nvim_set_keymap('n', '<Leader>wl', ':wincmd H<CR>', { noremap = true, silent = true })
+
+-- Move current window to the top
+vim.api.nvim_set_keymap('n', '<Leader>wk', ':wincmd K<CR>', { noremap = true, silent = true })
+
+-- Move current window to the bottom
+vim.api.nvim_set_keymap('n', '<Leader>wj', ':wincmd J<CR>', { noremap = true, silent = true })
+In these mappings, <Leader> is a placeholder for your leader key (commonly set to \ or ,). You can invoke these commands with <Leader>wr to move the current window to the far right, and so on.
+
+
+
+for f in $(ls | grep -v "important_file.txt"); do mv "$f" "_$f"; done

@@ -29,9 +29,17 @@ local opts = {}
 require("vim-options")
 require("lazy").setup("plugins", opts)
 
+-- swap splits
+vim.api.nvim_exec([[
+function! SwapSplits()
+    wincmd L
+    wincmd K
+    wincmd J
+    wincmd H
+endfunction
 
-
-
+command! SwapSplits call SwapSplits()
+]], false)
 
 
 
