@@ -1,7 +1,7 @@
 @echo off
 REM Script to start the Docker container for development
 
-REM Check if data directory argument is provided
+REM Check if data directory argument is providedc
 if "%1"=="" (
     echo Usage: dev_start_container.cmd [data_directory_path]
     exit /b 1

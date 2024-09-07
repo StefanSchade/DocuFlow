@@ -1,5 +1,26 @@
 #!/bin/bash
 
+# author: Stefan Schade
+#
+# description:
+# This is an entrypoint for a dockerfile dedicated to perform 3 tasks
+# 1. scan INPUT_DIR for asciidoc files (*.adoc), transform them into
+#    html and replicate the input structure in OUTPUT_DIR
+# 2. setting up a local web server that serves the html files to
+#    localhost:4000. This server will refresh in case the html changes
+# 3. watch the INPUT_DIR for changes to the asciidoc files or directories
+#    and update the html.
+#
+# The result is a live preview when editing asciidoc files with a text
+# editor in the browser.
+# 
+# As we operate in a dockerfile on a foreign (mounted) filesystem, tools
+# that watch the filesystem relying on linux kernel features (eg. fswatch,
+# inotifywait) do not work reliably - therefore we primitively poll the 
+# file system repeatedly and look for changes. this assumes we have a 
+# managable amount of data in the INPUT_DIR which seems reasonalbe for the
+# use case.
+
 # Get the directory of the currently executing script
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
@@ -17,6 +38,7 @@ mkdir -p $LOG_DIR
 exec 2>>"$LOG_FILE"
 
 # Source helper scripts
+#
 source "$SCRIPT_DIR/../helper/log_helper.sh" && log_script_name
 source "$SCRIPT_DIR/_cleanup.sh"
 

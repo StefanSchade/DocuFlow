@@ -98,8 +98,41 @@
 
 :bufdo if !&modified | bdelete | endif
 
+== Working with Splits
+
+=== creating Splits
+
+* horizontal split `:slit` or `:sp`
+* vertical split `:vsplit` or `:vs`
+
+to open split with a specific file each can be complemented with `filename`
 
 
+* open split with a new file `:new filename`
+* open split with a new file `:vnew filename`
+
+
+=== navigating splits
+
+
+* move to split above `Ctrl-w k`
+* move to split below `Ctrl-w j`
+* move to split on the left `Ctrl-w h`
+* move to split on the right `Ctrl-w l`
+* cycle throguh splits `Ctrl-w w`
+* move to a specific split by number `Ctrl-w <number>w`
+
+
+=== resizing splits
+
+* increase / decrease height `Ctrl-w +` / `Ctrl-w -`
+* increase / decrease width `Ctrl-w >` / `Ctrl-w <`
+* equalize splits `Ctrl-w =`
+
+=== closing splits
+
+* close current split `:close` or `Ctrl-w c`
+* close all others `:only` or `Ctrl-w o`
 
 
 
